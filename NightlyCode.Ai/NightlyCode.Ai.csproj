@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>0.4.0-preview</Version>
+        <AssemblyVersion>0.4.0</AssemblyVersion>
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+
+</Project>
