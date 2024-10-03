@@ -1,4 +1,4 @@
-using NightlyCode.Ai.Net.Configurations;
+using NightlyCode.Ai.Extern;
 
 namespace NightlyCode.Ai.Genetics;
 
@@ -11,7 +11,6 @@ public interface IMutatingChromosome<T> : IChromosome<T> {
     /// <summary>
     /// mutates the chromosome
     /// </summary>
-    /// <param name="setup">setup to apply</param>
     /// <returns>mutated chromosome</returns>
-    T Mutate(CrossSetup setup);
+    T Mutate(IRng rng, float mutationRange);
 }

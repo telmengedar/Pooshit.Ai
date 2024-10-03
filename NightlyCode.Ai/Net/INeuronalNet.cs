@@ -1,5 +1,3 @@
-using NightlyCode.Ai.Neurons;
-
 namespace NightlyCode.Ai.Net;
 
 /// <summary>
@@ -7,17 +5,7 @@ namespace NightlyCode.Ai.Net;
 /// </summary>
 /// <typeparam name="T">type of neuronal configuration</typeparam>
 public interface INeuronalNet<T> {
-
-    /// <summary>
-    /// input neurons
-    /// </summary>
-    NamedNeurons Input { get; }
-
-    /// <summary>
-    /// neurons holding result
-    /// </summary>
-    NamedNeurons Output { get; }
-
+    
     /// <summary>
     /// computes the state of the neuronal net
     /// </summary>

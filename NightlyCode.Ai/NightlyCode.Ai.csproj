@@ -5,9 +5,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>0.4.0-preview</Version>
-        <AssemblyVersion>0.4.0</AssemblyVersion>
+        <Version>0.4.9-preview</Version>
+        <AssemblyVersion>0.4.9</AssemblyVersion>
         <LangVersion>default</LangVersion>
+        <Copyright>Toni Gottschall</Copyright>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Include="LICENSE" Pack="true" PackagePath="" />
+        <None Include="readme.md" Pack="true" PackagePath="" />
+    </ItemGroup>
 </Project>

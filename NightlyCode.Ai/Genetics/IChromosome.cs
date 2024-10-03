@@ -23,4 +23,11 @@ public interface IChromosome<T> {
     /// modifier for fitness to push certain structures
     /// </summary>
     float FitnessModifier { get; }
+    
+    /// <summary>
+    /// tries to optimize connections of the chromosome
+    /// </summary>
+    /// <param name="test">function used to test an optimized candidate</param>
+    /// <returns>optimized chromosome</returns>
+    T Optimize(Func<T, bool> test);
 }

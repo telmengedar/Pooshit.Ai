@@ -1,8 +1,9 @@
+using System.Collections.Concurrent;
+using NightlyCode.Ai.Extern;
 using NightlyCode.Ai.Genetics;
 using NightlyCode.Ai.Net;
 using NightlyCode.Ai.Net.Configurations;
 using NightlyCode.Ai.Net.DynamicBinOp;
-using NightlyCode.Ai.Net.Operations;
 using NightlyCode.Json;
 
 namespace NightlyCode.Ai.Tests;
@@ -23,7 +24,7 @@ public class CalculatorTests {
             return Math.Abs(expected - result);
         }
 
-        Population<NeuronalOperationNetConfiguration> population = new(100, () => new(["x"], ["result"], 3, 3));
+        Population<NeuronalOperationNetConfiguration> population = new(100, _ => new(["x"], ["result"], 3, 3));
         EvolutionSetup<NeuronalOperationNetConfiguration> setup = new() {
                                                                             TrainingSet = [
                                                                                               config => Test(config, 1, 1), config => Test(config, 4, 2), config => Test(config, 9, 3),
@@ -32,7 +33,6 @@ public class CalculatorTests {
                                                                                               config => Test(config, 100, 10), config=>Test(config, 121, 11), config=>Test(config, 144, 12)
                                                                                           ],
                                                                             Runs = 1000,
-                                                                            FitnessAggregate = AggregateType.Max
                                                                             //Threads = Environment.ProcessorCount
                                                                             /*Acceptable = config => {
                                                                                              net.UpdateWeights(config.Operations);
@@ -42,9 +42,9 @@ public class CalculatorTests {
                                                                                              return false;
                                                                                          }*/
                                                                         };
-        Tuple<NeuronalOperationNetConfiguration, double> result=population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Item2:F2}");
-        net.Update(result.Item1);
+        PopulationEntry<NeuronalOperationNetConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        net.Update(result.Chromosome);
         for (int i = 1; i < 20; ++i) {
             net.Input["x"] = i;
             net.Compute();  
@@ -70,7 +70,7 @@ public class CalculatorTests {
             return Math.Abs(expected - result);
         }
 
-        Population<FeedForwardConfiguration> population = new(100, () => new(["x"], ["result"], 3, 3));
+        Population<FeedForwardConfiguration> population = new(100, _ => new(["x"], ["result"], 3, 3));
         EvolutionSetup<FeedForwardConfiguration> setup = new() {
                                                                    TrainingSet = [
                                                                                      config => Test(config, 1, 1), config => Test(config, 4, 2), config => Test(config, 9, 3),
@@ -79,7 +79,6 @@ public class CalculatorTests {
                                                                                      config => Test(config, 100, 10), config=>Test(config, 121, 11), config=>Test(config, 144, 12)
                                                                                  ],
                                                                    Runs = 1000,
-                                                                   FitnessAggregate = AggregateType.Average
                                                                    //Threads = Environment.ProcessorCount
                                                                    /*Acceptable = config => {
                                                                                     net.UpdateWeights(config.Operations);
@@ -89,9 +88,9 @@ public class CalculatorTests {
                                                                                     return false;
                                                                                 }*/
                                                                };
-        Tuple<FeedForwardConfiguration, double> result=population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Item2:F2}");
-        net.Update(result.Item1);
+        PopulationEntry<FeedForwardConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        net.Update(result.Chromosome);
         for (int i = 1; i < 20; ++i) {
             net.Input["x"] = i;
             net.Compute();  
@@ -100,7 +99,7 @@ public class CalculatorTests {
         net.Input["x"] = 422933.0f;
         net.Compute();
         Console.WriteLine($"sqrt(422933)={net.Output["result"]}");
-        Console.WriteLine(Json.Json.WriteString(result.Item1));
+        Console.WriteLine(Json.Json.WriteString(result.Chromosome));
         //Console.WriteLine(Json.Json.WriteString(result.Item1.ExportDictionary()));
     }
     
@@ -119,7 +118,7 @@ public class CalculatorTests {
             return Math.Abs(expected - result);
         }
 
-        Population<NeuronalOperationNetConfiguration> population = new(100, () => new(["x", "y", "z"], ["result"], 3, 3));
+        Population<NeuronalOperationNetConfiguration> population = new(100, _ => new(["x", "y", "z"], ["result"], 3, 3));
         EvolutionSetup<NeuronalOperationNetConfiguration> setup = new() {
                                                                             TrainingSet = [
                                                                                               config => Test(config, 5, 2, 7, 3),
@@ -145,7 +144,6 @@ public class CalculatorTests {
                                                                                               config => Test(config, -3, -8, 20, 4)
                                                                                           ],
                                                                             Runs = 5000,
-                                                                            FitnessAggregate = AggregateType.Average,
                                                                             //Threads = Environment.ProcessorCount
                                                                             /*Acceptable = config => {
                                                                                              net.UpdateWeights(config.Operations);
@@ -155,9 +153,9 @@ public class CalculatorTests {
                                                                                              return false;
                                                                                          }*/
                                                                         };
-        Tuple<NeuronalOperationNetConfiguration, double> result=population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Item2:F2}");
-        net.Update(result.Item1);
+        PopulationEntry<NeuronalOperationNetConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        net.Update(result.Chromosome);
         net.Input["x"] = -3;
         net.Input["y"] = 7;
         net.Input["z"] = 20;
@@ -184,7 +182,7 @@ public class CalculatorTests {
             return Math.Abs(expected - result);
         }
 
-        Population<FeedForwardConfiguration> population = new(100, () => new(["x", "y", "z"], ["result"], 3, 3));
+        Population<FeedForwardConfiguration> population = new(100, _ => new(["x", "y", "z"], ["result"], 3, 3));
         EvolutionSetup<FeedForwardConfiguration> setup = new() {
                                                                    TrainingSet = [
                                                                                      config => Test(config, 5, 2, 7, 3),
@@ -210,11 +208,10 @@ public class CalculatorTests {
                                                                                      config => Test(config, -3, -8, 20, 4)
                                                                                  ],
                                                                    Runs = 5000,
-                                                                   FitnessAggregate = AggregateType.Average
                                                                };
-        Tuple<FeedForwardConfiguration, double> result=population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Item2:F2}");
-        net.Update(result.Item1);
+        PopulationEntry<FeedForwardConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        net.Update(result.Chromosome);
         net.Input["x"] = -3;
         net.Input["y"] = 7;
         net.Input["z"] = 20;
@@ -226,20 +223,23 @@ public class CalculatorTests {
     
     [Test, Parallelizable]
     public void MultiplyMinusDynamicBinOp() {
-        DynamicBinOpConfiguration configuration = new(["x", "y", "z"], ["result"]);
-        DynamicBinOpNet net = new(configuration);
-
+        ConcurrentStack<DynamicBinOpNet> netStack = new();
         float Test(DynamicBinOpConfiguration config, float x, float y, float z, float expected) {
-            net.Update(config);
-            net.Input["x"] = x;
-            net.Input["y"] = y;
-            net.Input["z"] = z;
+            if (!netStack.TryPop(out DynamicBinOpNet net))
+                net = new(config);
+            else net.Update(config);
+            
+            net["x"] = x;
+            net["y"] = y;
+            net["z"] = z;
             net.Compute();
-            float result = net.Output["result"];
+            float result = net["result"];
+
+            netStack.Push(net);
             return Math.Abs(expected - result);
         }
 
-        Population<DynamicBinOpConfiguration> population = new(100, () => new(["x", "y", "z"], ["result"]));
+        Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
                                                                     TrainingSet = [
                                                                                       config => Test(config, 5, 2, 7, 3),
@@ -265,21 +265,192 @@ public class CalculatorTests {
                                                                                       config => Test(config, -3, -8, 20, 4)
                                                                                   ],
                                                                     Runs = 5000,
-                                                                    FitnessAggregate = AggregateType.Average,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
                                                                                        Console.WriteLine("{0}: {1}", index, fitness);
-                                                                               }
+                                                                               },
+                                                                    Threads = 2
                                                                 };
-        Tuple<DynamicBinOpConfiguration, double> result=population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Item2:F2}");
-        net.Update(result.Item1);
-        net.Input["x"] = -3;
-        net.Input["y"] = 7;
-        net.Input["z"] = 20;
-        net.Compute();
-        Console.WriteLine($"f(-3,7,20)={net.Output["result"]}");
+        PopulationEntry<DynamicBinOpConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
 
-        Console.WriteLine(Json.Json.WriteString(result.Item1, JsonOptions.Camel));
+        if (!netStack.TryPop(out DynamicBinOpNet net))
+            net = new(result.Chromosome);
+        else net.Update(result.Chromosome);
+        
+        net["x"] = -3;
+        net["y"] = 7;
+        net["z"] = 20;
+        net.Compute();
+        Console.WriteLine($"f(-3,7,20)={net["result"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+    
+    [Test, Parallelizable]
+    public void ExcellenceDynamicBinOp() {
+        ConcurrentStack<DynamicBinOpNet> netStack = new();
+        
+        float Test(DynamicBinOpConfiguration config, float visits, float appclicks, float applications, float profit, float expected) {
+            if (!netStack.TryPop(out DynamicBinOpNet net))
+                net = new(config);
+            else net.Update(config);
+
+            net["visits"] = visits;
+            net["appclicks"] = appclicks;
+            net["applications"] = applications;
+            net["profit"] = profit;
+            net.Compute();
+            float result = net["excellence"];
+            return Math.Abs(expected - result);
+        }
+
+        Dictionary<string, object> samples = Json.Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
+        
+        Population<DynamicBinOpConfiguration> population = new(100, rng => new(["visits", "appclicks", "applications", "profit"], ["excellence"], rng));
+        EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
+                                                                    TrainingSet = JPath.Select<object[]>(samples, "samples")
+                                                                                       .Select(s => new Func<DynamicBinOpConfiguration, float>(config => Test(config,
+                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/visits")),
+                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/appclicks")),
+                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/applications")),
+                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/profit")),
+                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "outputs/excellence")))))
+                                                                                       .ToArray(),
+                                                                    Runs = 5000,
+                                                                    AfterRun = (index, fitness) => {
+                                                                                   if ((index & 511) == 0)
+                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
+                                                                               },
+                                                                    Threads = 2
+                                                                };
+        PopulationEntry<DynamicBinOpConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        if (!netStack.TryPop(out DynamicBinOpNet net))
+            net = new(result.Chromosome);
+        else net.Update(result.Chromosome);
+
+        net["visits"] = 50;
+        net["appclicks"] = 4;
+        net["applications"] = 4;
+        net["profit"] = 300;
+        net.Compute();
+        Console.WriteLine($"Excellence {net["excellence"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+    
+    [Test, Parallelizable]
+    public void SequenceDynamicBinOp() {
+        ConcurrentStack<DynamicBinOpNet> netStack = new();
+        
+        float Test(DynamicBinOpConfiguration config, float x, float expected) {
+            if (!netStack.TryPop(out DynamicBinOpNet net))
+                net = new(config);
+            else net.Update(config);
+
+            net["x"] = x;
+            net.Compute();
+            float result = net["y"];
+            return Math.Abs(expected - result);
+        }
+
+        Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
+        EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
+                                                                    TrainingSet = [
+                                                                                      c => Test(c, 1,2),
+                                                                                      c => Test(c, 2, 6),
+                                                                                      c=>Test(c, 3, 12),
+                                                                                      c=>Test(c, 4, 20),
+                                                                                      c=>Test(c, 5, 30),
+                                                                                      c=>Test(c, 6, 42),
+                                                                                      c=>Test(c, 7, 56),
+                                                                                      c=>Test(c, 8, 72),
+                                                                                      c=>Test(c, 9, 90),
+                                                                                      c=>Test(c, 10, 110)
+                                                                                  ],
+                                                                    Runs = 5000,
+                                                                    AfterRun = (index, fitness) => {
+                                                                                   if ((index & 511) == 0)
+                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
+                                                                               },
+                                                                    Threads = 2
+                                                                };
+        PopulationEntry<DynamicBinOpConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        if (!netStack.TryPop(out DynamicBinOpNet net))
+            net = new(result.Chromosome);
+        else net.Update(result.Chromosome);
+
+        net["x"] = 20;
+        net.Compute();
+        Console.WriteLine($"{net["y"]}");
+
+        Console.WriteLine(result.Chromosome);
+        Console.WriteLine(Json.Json.WriteString(result.Chromosome));
+    }
+    
+    [Test, Parallelizable]
+    public void SequenceDynamicBinOpTwice() {
+        ConcurrentStack<DynamicBinOpNet> netStack = new();
+        float Test(DynamicBinOpConfiguration config, float x, float expected) {
+            if (!netStack.TryPop(out DynamicBinOpNet localNet))
+                localNet = new(config);
+            else localNet.Update(config);
+
+            localNet["x"] = x;
+            localNet.Compute();
+            float result = localNet["y"];
+            netStack.Push(localNet);
+            return Math.Abs(expected - result);
+        }
+
+        Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
+        EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
+                                                                    TrainingSet = [
+                                                                                      c => Test(c, 1,2),
+                                                                                      c => Test(c, 2, 6),
+                                                                                      c=>Test(c, 3, 12),
+                                                                                      c=>Test(c, 4, 20),
+                                                                                      c=>Test(c, 5, 30),
+                                                                                      c=>Test(c, 6, 42),
+                                                                                      c=>Test(c, 7, 56),
+                                                                                      c=>Test(c, 8, 72),
+                                                                                      c=>Test(c, 9, 90),
+                                                                                      c=>Test(c, 10, 110)
+                                                                                  ],
+                                                                    Runs = 5000,
+                                                                    TargetFitness = 0.01f,
+                                                                    AfterRun = (index, fitness) => {
+                                                                                   if ((index & 511) == 0)
+                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
+                                                                               },
+                                                                    Threads = 2
+                                                                };
+        PopulationEntry<DynamicBinOpConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+
+        if (!netStack.TryPop(out DynamicBinOpNet resultNet))
+            resultNet = new(result.Chromosome);
+        else resultNet.Update(result.Chromosome);
+
+        resultNet["x"] = 20;
+        resultNet.Compute();
+        Console.WriteLine($"{resultNet["y"]}");
+
+        Console.WriteLine(result.Chromosome);
+        
+        result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        if (!netStack.TryPop(out resultNet))
+            resultNet = new(result.Chromosome);
+        else resultNet.Update(result.Chromosome);
+
+        resultNet["x"] = 20;
+
+        resultNet.Compute();
+        Console.WriteLine($"{resultNet["y"]}");
+
+        Console.WriteLine(result.Chromosome);
     }
 }

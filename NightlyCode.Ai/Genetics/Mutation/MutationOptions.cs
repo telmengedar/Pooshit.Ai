@@ -42,7 +42,7 @@ public abstract class MutationOptions<T> {
     /// selects an item based on the mutation probability
     /// </summary>
     /// <returns>selected item</returns>
-    public T SelectItem(Rng rng) {
+    public T SelectItem(IRng rng) {
         if (entries.Length == 0)
             return default;
         if (entries.Length == 1)

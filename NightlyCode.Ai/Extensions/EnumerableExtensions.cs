@@ -35,41 +35,18 @@ static class EnumerableExtensions {
     /// retrieves fitness value for a series of fitness test results
     /// </summary>
     /// <param name="input">fitness test results</param>
-    /// <param name="aggregate">aggregate function to use</param>
     /// <returns>fitness value</returns>
-    public static float Fitness(this IEnumerable<float> input, AggregateType aggregate) {
-        /*double[] values = input.ToArray();
-        if (values.Length == 0)
-            return -1.0;
-
-        if (values.Any(v => double.IsNaN(v) || double.IsInfinity(v) || double.IsNegativeInfinity(v)))
-            return -1.0;*/
-
-        float value;
-        switch (aggregate) {
-            default:
-            case AggregateType.Sum:
-                value = input.Sum();
-                break;
-            case AggregateType.Average:
-                value = input.Average();
-                break;
-            case AggregateType.Median:
-                float[] values = input.ToArray();
-                Array.Sort(values);
-                int middle = values.Length / 2;
-                value = values[middle];
-                break;
-            case AggregateType.Min:
-                value = input.Min();
-                break;
-            case AggregateType.Max:
-                value = input.Max();
-                break;
+    public static float Fitness(this IEnumerable<float> input) {
+        return input.Average();
+        /*float max = 0.0f;
+        float sum = 0.0f;
+        int count = 0;
+        foreach (float value in input) {
+            max = Math.Max(value, max);
+            sum += value;
+            ++count;
         }
 
-        if (double.IsNaN(value) || double.IsInfinity(value) || double.IsNegativeInfinity(value))
-            return -1.0f;
-        return value;
+        return sum / count;*/
     }
 }

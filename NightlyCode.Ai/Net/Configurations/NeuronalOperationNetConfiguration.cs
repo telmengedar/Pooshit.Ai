@@ -156,11 +156,11 @@ public class NeuronalOperationNetConfiguration : ICrossChromosome<NeuronalOperat
         for (int i = 0; i < Operations.Length; ++i)
             connections[i] = Operations[i].Clone();
 
-        return new NeuronalOperationNetConfiguration(Inputs, Outputs, Layers, LayerSize, connections, OperationGroups);
+        return new(Inputs, Outputs, Layers, LayerSize, connections, OperationGroups);
     }
 
     public NeuronalOperationNetConfiguration Cross(NeuronalOperationNetConfiguration other, CrossSetup setup) {
-        setup.Rng ??= new();
+        setup.Rng ??= new Rng();
         setup.OperationTypes ??= new();
         setup.AggregateTypes ??= new();
         setup.ActivationFuncs ??= new();
@@ -209,7 +209,7 @@ public class NeuronalOperationNetConfiguration : ICrossChromosome<NeuronalOperat
 
     public void Randomize(CrossSetup setup) {
         setup ??= new();
-        setup.Rng ??= new();
+        setup.Rng ??= new Rng();
         setup.OperationTypes ??= new();
         setup.AggregateTypes ??= new();
         setup.ActivationFuncs ??= new();
@@ -242,4 +242,6 @@ public class NeuronalOperationNetConfiguration : ICrossChromosome<NeuronalOperat
 
     /// <inheritdoc />
     public float FitnessModifier => 1.0f;
+
+    public NeuronalOperationNetConfiguration Optimize(Func<NeuronalOperationNetConfiguration, bool> test) => this;
 }

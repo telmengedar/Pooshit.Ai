@@ -1,4 +1,5 @@
-using NightlyCode.Ai.Extensions;
+using System.Text;
+using NightlyCode.Ai.Extern;
 using NightlyCode.Ai.Genetics;
 using NightlyCode.Ai.Genetics.Mutation;
 using NightlyCode.Ai.Net.Configurations;
@@ -10,6 +11,30 @@ namespace NightlyCode.Ai.Net.DynamicBinOp;
 /// configuration for a dynamic binary operation net
 /// </summary>
 public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfiguration> {
+    static readonly OperationTypeOptions operationTypes = new(new MutationEntry<OperationType>(OperationType.Multiply, 1.0),
+                                                              new MutationEntry<OperationType>(OperationType.Add, 1.0),
+                                                              new MutationEntry<OperationType>(OperationType.Div, 1.0),
+                                                              new MutationEntry<OperationType>(OperationType.Sub, 1.0));
+
+    readonly AggregateTypeOptions aggregateTypes = new(new MutationEntry<AggregateType>(AggregateType.Sum, 1.0),
+                                                       new MutationEntry<AggregateType>(AggregateType.Average, 1.0),
+                                                       new MutationEntry<AggregateType>(AggregateType.Median, 0.1),
+                                                       new MutationEntry<AggregateType>(AggregateType.Min, 1.0),
+                                                       new MutationEntry<AggregateType>(AggregateType.Max, 1.0));
+
+    readonly ActivationFuncOptions activationFuncs = new(new MutationEntry<ActivationFunc>(ActivationFunc.None, 1.0),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.BinaryStep, 0.4),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Sigmoid, 0.25),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Sin, 0.2),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.ReLU, 0.08),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.LeakyReLU, 0.08),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Tanh, 0.2),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Reciprocal, 0.4),
+                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Swish, 0.05));
+
+    NeuronConfig[] neuronsByIndex;
+
+    ILookup<int, BinOpConnection> groupedConnections;
     
     /// <summary>
     /// creates a new <see cref="DynamicBinOpConfiguration"/>
@@ -21,79 +46,109 @@ public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfigu
     /// </summary>
     /// <param name="inputs">name of input nodes</param>
     /// <param name="outputs">name of output nodes</param>
-    /// <param name="setup">initialization parameters</param>
-    public DynamicBinOpConfiguration(string[] inputs, string[] outputs, CrossSetup setup=null) {
-        setup ??= new();
-        setup.Rng ??= new();
-        setup.OperationTypes ??= new(new MutationEntry<OperationType>(OperationType.Add, 1.0));
-        setup.AggregateTypes ??= new(new MutationEntry<AggregateType>(AggregateType.Sum, 1.0));
-        setup.ActivationFuncs ??= new(new MutationEntry<ActivationFunc>(ActivationFunc.None, 1.0));
-
+    /// <param name="rng">randomizer</param>
+    public DynamicBinOpConfiguration(string[] inputs, string[] outputs, IRng rng=null) {
+        rng ??= new Rng();
         int index = 0;
-        Inputs = inputs.Select(i => new NamedBinOpNeuronData {
-                                                                 Name = i,
-                                                                 Index = index++,
-                                                                 OrderNumber = 0.0f,
-                                                             }).ToArray();
-        Outputs = outputs.Select(o => new NamedBinOpNeuronData {
+        Inputs = inputs.Select(i => new NamedNeuronConfig {
+                                                              Name = i,
+                                                              Index = index++,
+                                                              OrderNumber = 0.0f,
+                                                          }).ToArray();
+        Outputs = outputs.Select(o => new NamedTargetNeuronConfig {
                                                                    Name = o,
                                                                    Index = index++,
                                                                    OrderNumber = 1.0f,
-                                                                   Aggregate = setup.NextAggregate(),
-                                                                   Activation = setup.NextFunc()
+                                                                   Aggregate = aggregateTypes.SelectItem(rng),
+                                                                   Activation = activationFuncs.SelectItem(rng)
                                                                }).ToArray();
         Neurons = [];
         Connections = [];
     }
 
     /// <summary>
+    /// creates a new <see cref="DynamicBinOpConfiguration"/>
+    /// </summary>
+    /// <param name="inputs">input neurons</param>
+    /// <param name="outputs">output neurons</param>
+    /// <param name="neurons">neurons</param>
+    /// <param name="connections"></param>
+    public DynamicBinOpConfiguration(NamedNeuronConfig[] inputs, NamedTargetNeuronConfig[] outputs, TargetNeuronConfig[] neurons, BinOpConnection[] connections) {
+        Inputs = inputs;
+        Outputs = outputs;
+        Neurons = neurons;
+        Connections = connections;
+    }
+
+    /// <summary>
+    /// indexer for neurons
+    /// </summary>
+    /// <param name="index">index of neuron</param>
+    public NeuronConfig this[int index] => NeuronsByIndex[index];
+
+    NeuronConfig[] NeuronsByIndex {
+        get {
+            return neuronsByIndex ??= Inputs.Concat(Outputs.Cast<NeuronConfig>()).Concat(Neurons).ToArray();
+        }
+    }
+
+    /// <summary>
     /// input neurons
     /// </summary>
-    public NamedBinOpNeuronData[] Inputs { get; private init; }
+    public NamedNeuronConfig[] Inputs { get; set; }
 
     /// <summary>
     /// output neurons
     /// </summary>
-    public NamedBinOpNeuronData[] Outputs { get; private init; }
+    public NamedTargetNeuronConfig[] Outputs { get; set; }
 
-    public BinOpNeuronData[] Neurons { get; private init; }
+    /// <summary>
+    /// free neurons
+    /// </summary>
+    public TargetNeuronConfig[] Neurons { get; set; }
 
     /// <summary>
     /// connection weights
     /// </summary>
-    public BinOpConnection[] Connections { get; private init; }
-    
-    BinOpConnection CreateConnection(CrossSetup setup) {
-        BinOpNeuronData[] unconnectedSources = Inputs.Concat(Neurons).Where(n => Connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index)).ToArray();
+    public BinOpConnection[] Connections { get; set; }
 
-        BinOpNeuronData[] candidates = unconnectedSources.Length > 0 ? unconnectedSources : All.Except(Outputs).ToArray();
+    public ILookup<int, BinOpConnection> GroupedConnections {
+        get { return groupedConnections ??= Connections.ToLookup(c => c.Target); }
+    }
+    
+    BinOpConnection CreateConnection(IRng rng, float mutationRange) {
+        NeuronConfig[] unconnectedSources = Inputs.Cast<NeuronConfig>()
+                                                  .Concat(Neurons)
+                                                  .Where(n => Connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index)).ToArray();
+
+        NeuronConfig[] candidates = unconnectedSources.Length > 0 ? unconnectedSources : NeuronsByIndex.Except(Outputs).ToArray();
         if (candidates.Length == 0)
             return null;
         
-        BinOpNeuronData lhs = candidates[setup.Rng.NextInt(candidates.Length)];
+        NeuronConfig lhs = candidates[rng.NextInt(candidates.Length)];
 
         unconnectedSources = unconnectedSources.Where(s => s != lhs).ToArray();
-        candidates = unconnectedSources.Length > 0 ? unconnectedSources : All.Except(Outputs).Where(n => n != lhs).ToArray();
+        candidates = unconnectedSources.Length > 0 ? unconnectedSources : NeuronsByIndex.Except(Outputs).Where(n => n != lhs).ToArray();
+
+        NeuronConfig rhs = null;
+        if(candidates.Length>0)
+            rhs = candidates[rng.NextInt(candidates.Length)];
+
+        float maxOrder = Math.Max(lhs.OrderNumber, rhs?.OrderNumber??0.0f);
+        candidates = NeuronsByIndex.Where(n => n.OrderNumber > maxOrder).ToArray();
         if (candidates.Length == 0)
             return null;
-        
-        BinOpNeuronData rhs = candidates[setup.Rng.NextInt(candidates.Length)];
 
-        float maxOrder = Math.Max(lhs.OrderNumber, rhs.OrderNumber);
-        candidates = All.Where(n => n.OrderNumber > maxOrder).ToArray();
-        if (candidates.Length == 0)
-            return null;
-
-        BinOpNeuronData target = candidates[setup.Rng.NextInt(candidates.Length)];
+        NeuronConfig target = candidates[rng.NextInt(candidates.Length)];
         if (target == null)
             return null;
 
         BinOpConnection connection = new() {
                                                Lhs = lhs.Index,
-                                               Rhs = rhs.Index,
+                                               Rhs = rhs?.Index ?? -1,
                                                Target = target.Index,
-                                               Weight = setup.NextWeight(),
-                                               Operation = setup.NextOperation()
+                                               Weight = rng.NextFloatRange(),
+                                               Operation = operationTypes.SelectItem(rng)
                                            };
 
         if (Connections.Any(c => c.Lhs == connection.Lhs && c.Rhs == connection.Rhs && c.Target == connection.Target))
@@ -102,144 +157,123 @@ public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfigu
         return connection;
     }
 
-    /// <inheritdoc />
-    public DynamicBinOpConfiguration Mutate(CrossSetup setup) {
-        setup.Rng ??= new();
-        setup.OperationTypes ??= new();
-        setup.AggregateTypes ??= new();
-        setup.ActivationFuncs ??= new();
 
-        List<BinOpNeuronData> neurons = [..Neurons.Select(n => n.Clone())];
-        List<NamedBinOpNeuronData> outputs = [..Outputs.Select(n => n.Clone())];
+    bool AddConnection(List<BinOpConnection> connections, IRng rng, float mutationRange) {
+        BinOpConnection connection = CreateConnection(rng, mutationRange);
+        if (connection != null) {
+            connections.Add(connection);
+            connections.Sort((lhs, rhs) => Comparer<float>.Default.Compare(this[lhs.Target].OrderNumber, this[rhs.Target].OrderNumber));
+            return true;
+        }
+
+        return false;
+    }
+
+    void ChangeConnectionWeight(List<BinOpConnection> connections, IRng rng, float mutationRange) {
+        if (connections.Count == 0)
+            return;
+        connections[rng.NextInt(connections.Count)].Weight += rng.NextFloatRange() * mutationRange;
+    }
+
+    void ChangeConnectionType(List<BinOpConnection> connections, IRng rng, float mutationRange) {
+        BinOpConnection connection = connections[rng.NextInt(connections.Count)];
+        connection.Operation = operationTypes.SelectItem(rng);
+        connection.Weight = rng.NextFloatRange() * mutationRange;
+    }
+
+    void ChangeNeuron(List<TargetNeuronConfig> neurons, List<NamedTargetNeuronConfig> outputs, IRng rng) {
+        int neuronIndex = rng.NextInt(outputs.Count + neurons.Count);
+        if (neuronIndex < Outputs.Length) {
+            Outputs[neuronIndex].Aggregate = aggregateTypes.SelectItem(rng);
+            Outputs[neuronIndex].Activation = activationFuncs.SelectItem(rng);
+        }
+        else {
+            Neurons[neuronIndex - Outputs.Length].Aggregate = aggregateTypes.SelectItem(rng);
+            Neurons[neuronIndex - Outputs.Length].Activation = activationFuncs.SelectItem(rng);
+        }
+    }
+    
+    /// <inheritdoc />
+    public DynamicBinOpConfiguration Mutate(IRng rng, float mutationRange) {
+        List<TargetNeuronConfig> neurons = [..Neurons.Select(n => n.Clone())];
+        List<NamedTargetNeuronConfig> outputs = [..Outputs.Select(n => n.Clone())];
         List<BinOpConnection> connections = [..Connections.Select(c => c.Clone())];
 
+        float dice = rng.NextFloat();
 
-        switch (setup.Rng.NextInt(12)) {
-            default:
-            case 0:
-            case 1:
-            case 2:
-            case 3: {
-                if (connections.Count > 0) {
-                    int connectionIndex = setup.Rng.NextInt(connections.Count);
-                    connections[connectionIndex].Weight += setup.NextWeight();
+        if (connections.Count==0 || dice < 0.5) {
+            if (connections.Any())
+                ChangeConnectionWeight(connections, rng, mutationRange);
+            else
+                AddConnection(connections, rng, mutationRange);
+        }
+        else if (dice < 0.65) {
+            if (connections.Any())
+                ChangeConnectionType(connections, rng, mutationRange);
+            else AddConnection(connections, rng, mutationRange);
+        }
+        else if (dice < 0.8) {
+            ChangeNeuron(neurons, outputs, rng);
+        }
+        else {
+            BinOpConnection[] unconnectedCandidates = connections.Where(c => c.Rhs == -1).ToArray();
+            if (unconnectedCandidates.Length > 0 && rng.NextFloat()<0.85f) {
+                BinOpConnection connection = unconnectedCandidates[rng.NextInt(unconnectedCandidates.Length)];
+                NeuronConfig lhs = this[connection.Lhs];
+                NeuronConfig target = this[connection.Target];
+                NeuronConfig[] candidates = NeuronsByIndex.Where(t => t != lhs && t.OrderNumber < target.OrderNumber).ToArray();
+                if (candidates.Length > 0) {
+                    NeuronConfig rhs = candidates[rng.NextInt(candidates.Length)];
+                    connection.Rhs = rhs.Index;
                 }
-                else {
-                    BinOpConnection connection = CreateConnection(setup);
-                    if (connection != null)
-                        connections.Add(connection);
+            }
+            else {
+                int count = neurons.Count(n => connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index)) + Inputs.Count(n => connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index));
+                if (count > 0) {
+                    if (!AddConnection(connections, rng, mutationRange))
+                        ChangeConnectionWeight(connections, rng, mutationRange);
                 }
-
-                break;
-            }
-            case 5: {
-                if (connections.Count > 0) {
-                    int connectionIndex = setup.Rng.NextInt(connections.Count);
-                    connections[connectionIndex].Operation = setup.NextOperation();
-                    connections[connectionIndex].Weight = setup.NextWeight();
-                }
-                else {
-                    BinOpConnection connection = CreateConnection(setup);
-                    if (connection != null)
-                        connections.Add(connection);
-                }
-
-                break;
-            }
-            case 7: {
-                int neuronIndex = setup.Rng.NextInt(Outputs.Length + Neurons.Length);
-                if (neuronIndex < Outputs.Length)
-                    Outputs[neuronIndex].Aggregate = setup.NextAggregate();
-                else Neurons[neuronIndex - Outputs.Length].Aggregate = setup.NextAggregate();
-                break;
-            }
-            case 8: {
-                int neuronIndex = setup.Rng.NextInt(Outputs.Length + Neurons.Length);
-                if (neuronIndex < Outputs.Length)
-                    Outputs[neuronIndex].Activation = setup.NextFunc();
-                else Neurons[neuronIndex - Outputs.Length].Activation = setup.NextFunc();
-                break;
-            }
-            case 4:
-            case 6:
-            case 9:
-            case 10:
-            case 11: {
-                int indexOf = connections.IndexOf(c => c.Rhs == -1);
-                if (indexOf > -1) {
-                    BinOpNeuronData lhs = GetNeuron(Inputs, outputs, neurons, connections[indexOf].Lhs);
-                    BinOpNeuronData target = GetNeuron(Inputs, outputs, neurons, connections[indexOf].Target);
-                    BinOpNeuronData[] candidates = All.Where(t => t != lhs && t.OrderNumber < target.OrderNumber).ToArray();
+                else if (connections.Count > 0) {
+                    BinOpConnection[] candidates = connections.Where(c => c.Lhs < Inputs.Length && c.Rhs < Inputs.Length && c.Target < Inputs.Length + Outputs.Length).ToArray();
                     if (candidates.Length > 0) {
-                        BinOpNeuronData rhs = candidates[setup.Rng.NextInt(candidates.Length)];
-                        connections[indexOf].Rhs = rhs.Index;
-                    }
-                }
-                else {
-                    int count = neurons.Count(n => connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index)) + Inputs.Count(n => connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index));
-                    if (count > 0) {
-                        BinOpConnection connection = CreateConnection(setup);
-                        if (connection != null)
-                            connections.Add(connection);
-                    }
-                    else if (connections.Count > 0) {
-                        BinOpConnection connection = connections[setup.Rng.NextInt(connections.Count)];
-                        float maxOrder = connection.Rhs == -1 ? GetNeuron(Inputs, outputs, neurons, connection.Lhs).OrderNumber : Math.Max(GetNeuron(Inputs, outputs, neurons, connection.Lhs).OrderNumber, GetNeuron(Inputs, outputs, neurons, connection.Rhs).OrderNumber);
-
-                        BinOpNeuronData neuron = new() {
-                                                           OrderNumber = (GetNeuron(Inputs, outputs, neurons, connection.Target).OrderNumber + maxOrder) * 0.5f,
-                                                           Index = neurons.Count,
-                                                           Aggregate = setup.NextAggregate(),
-                                                           Activation = setup.NextFunc()
-                                                       };
+                        BinOpConnection connection = candidates[rng.NextInt(candidates.Length)];
+                        TargetNeuronConfig neuron = new() {
+                                                              OrderNumber = rng.NextFloat(),
+                                                              Index = Inputs.Length + outputs.Count + neurons.Count,
+                                                              Aggregate = aggregateTypes.SelectItem(rng),
+                                                              Activation = activationFuncs.SelectItem(rng)
+                                                          };
                         BinOpConnection newConnection = new() {
-                                                                  Lhs = Inputs.Length + outputs.Count + neurons.Count,
+                                                                  Lhs = neuron.Index,
                                                                   Rhs = -1,
                                                                   Target = connection.Target,
-                                                                  Operation = setup.NextOperation(),
-                                                                  Weight = setup.NextWeight()
+                                                                  Operation = operationTypes.SelectItem(rng),
+                                                                  Weight = rng.NextFloatRange()
                                                               };
                         connection.Target = newConnection.Lhs;
                         neurons.Add(neuron);
                         connections.Add(newConnection);
+                        connections.Sort((lhs, rhs) => Comparer<float>.Default.Compare(GetNeuron(neurons, lhs.Target).OrderNumber, GetNeuron(neurons, rhs.Target).OrderNumber));
                     }
                     else {
-                        BinOpConnection connection = CreateConnection(setup);
-                        if (connection != null)
-                            connections.Add(connection);
+                        if (!AddConnection(connections, rng, mutationRange))
+                            ChangeConnectionWeight(connections, rng, mutationRange);
                     }
                 }
+                else {
+                    if (!AddConnection(connections, rng, mutationRange))
+                        ChangeConnectionWeight(connections, rng, mutationRange);
+                }
             }
-            break;
         }
 
-        return new() {
-                         Inputs = Inputs,
-                         Outputs = outputs.ToArray(),
-                         Neurons = neurons.ToArray(),
-                         Connections = connections.OrderBy(c => GetNeuron(Inputs, outputs, neurons, c.Target).OrderNumber).ToArray()
-                     };
-    }
-
-    IEnumerable<BinOpNeuronData> All {
-        get {
-            foreach (NamedBinOpNeuronData input in Inputs)
-                yield return input;
-            foreach (NamedBinOpNeuronData output in Outputs)
-                yield return output;
-            foreach (BinOpNeuronData neuron in Neurons)
-                yield return neuron;
-        }
+        return new(Inputs, outputs.ToArray(), neurons.ToArray(), connections.ToArray());
     }
     
-    BinOpNeuronData GetNeuron(NamedBinOpNeuronData[] inputs, List<NamedBinOpNeuronData> outputs, List<BinOpNeuronData> neurons, int index) {
-        if (index < inputs.Length)
-            return inputs[index];
-        index -= inputs.Length;
-        if (index < outputs.Count)
-            return outputs[index];
-        index -= outputs.Count;
-        return neurons[index];
+    NeuronConfig GetNeuron(List<TargetNeuronConfig> neurons, int index) {
+        if (index < NeuronsByIndex.Length)
+            return NeuronsByIndex[index];
+        return neurons.Last();
     }
     
     /// <summary>
@@ -247,46 +281,78 @@ public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfigu
     /// </summary>
     /// <param name="index">index of neuron to get</param>
     /// <returns>neuron</returns>
-    public BinOpNeuronData GetNeuron(int index) {
-        if (index < Inputs.Length)
-            return Inputs[index];
-        index -= Inputs.Length;
-        if (index < Outputs.Length)
-            return Outputs[index];
-        index -= Outputs.Length;
-        return Neurons[index];
+    public TargetNeuronConfig GetTargetNeuron(int index) {
+        return this[index] as TargetNeuronConfig;
     }
 
     /// <inheritdoc />
     public void Randomize(CrossSetup setup = null) {
         setup ??= new();
-        setup.Rng ??= new();
-        setup.OperationTypes ??= new();
-        setup.AggregateTypes ??= new();
-        setup.ActivationFuncs ??= new();
+        setup.Rng ??= new Rng();
 
-        foreach (NamedBinOpNeuronData output in Outputs)
-            output.Randomize(setup);
+        foreach (NamedTargetNeuronConfig output in Outputs) {
+            output.Aggregate = aggregateTypes.SelectItem(setup.Rng);
+            output.Activation = activationFuncs.SelectItem(setup.Rng);
+        }
 
-        foreach (BinOpNeuronData neuron in Neurons)
-            neuron.Randomize(setup);
+        foreach (TargetNeuronConfig neuron in Neurons) {
+            neuron.Aggregate = aggregateTypes.SelectItem(setup.Rng);
+            neuron.Activation = activationFuncs.SelectItem(setup.Rng);
+        }
     }
 
     public int StructureHash() {
         int hash = 0;
         foreach (BinOpConnection connection in Connections) {
             hash *= 397;
-            hash ^= connection.GetHashCode();
+            hash ^= connection.StructureHash;
         }
-
-        foreach (BinOpNeuronData neuron in Neurons) {
-            hash *= 397;
-            hash ^= neuron.GetHashCode();
-        }
-
+        
         return hash;
     }
 
     /// <inheritdoc />
     public float FitnessModifier => 1.0f / (Connections.Length * 0.01f + Neurons.Length * 0.008f);
+
+    /// <inheritdoc />
+    public DynamicBinOpConfiguration Optimize(Func<DynamicBinOpConfiguration, bool> test) {
+        List<TargetNeuronConfig> neurons = [..Neurons.Select(n => n.Clone())];
+        List<NamedTargetNeuronConfig> outputs = [..Outputs.Select(n => n.Clone())];
+        List<BinOpConnection> connections = [..Connections.Select(c => c.Clone())];
+
+        float threshold = 0.1f;
+        foreach (BinOpConnection connection in connections) {
+            float original = connection.Weight;
+            if (Math.Abs(connection.Weight - Math.Floor(connection.Weight)) <= threshold) {
+                connection.Weight = (float)Math.Floor(connection.Weight);
+                if (!test(new(Inputs, outputs.ToArray(), neurons.ToArray(), connections.ToArray())))
+                    connection.Weight = original;
+            }
+            else if (Math.Abs(connection.Weight - Math.Ceiling(connection.Weight)) <= threshold) {
+                connection.Weight = (float)Math.Ceiling(connection.Weight);
+                if (!test(new(Inputs, outputs.ToArray(), neurons.ToArray(), connections.ToArray())))
+                    connection.Weight = original;
+            }
+        }
+
+        return new(Inputs, outputs.ToArray(), neurons.ToArray(), connections.ToArray());
+    }
+
+    /// <inheritdoc />
+    public override string ToString() {
+        StringBuilder sb = new();
+        sb.AppendLine("Inputs:");
+        foreach (NamedNeuronConfig input in Inputs)
+            sb.Append("\t").AppendLine(input.ToString());
+        sb.AppendLine("Outputs:");
+        foreach (NamedTargetNeuronConfig output in Outputs)
+            sb.Append("\t").AppendLine(output.ToString());
+        sb.AppendLine("Neurons:");
+        foreach (TargetNeuronConfig neuron in Neurons)
+            sb.Append("\t").AppendLine(neuron.ToString());
+        sb.AppendLine("Connections:");
+        foreach (BinOpConnection connection in Connections)
+            sb.Append("\t").AppendLine(connection.ToString());
+        return sb.ToString();
+    }
 }

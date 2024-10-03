@@ -93,24 +93,21 @@ public static class NMath {
     /// <param name="input">input values</param>
     /// <param name="aggregate">aggregate func</param>
     public static float Aggregate(this IEnumerable<float> input, AggregateType aggregate) {
-        float[] values = input.ToArray();
-        if (values.Length == 0)
-            return 0.0f;
-        
         switch (aggregate) {
             default:
             case AggregateType.Sum:
-                return values.Sum();
+                return input.Sum();
             case AggregateType.Average:
-                return values.Average();
+                return input.Average();
             case AggregateType.Median:
+                float[] values = input.ToArray();
                 Array.Sort(values);
                 int middle = values.Length >> 1;
                 return values[middle];
             case AggregateType.Min:
-                return values.Min();
+                return input.Min();
             case AggregateType.Max:
-                return values.Max();
+                return input.Max();
         }
     }
 

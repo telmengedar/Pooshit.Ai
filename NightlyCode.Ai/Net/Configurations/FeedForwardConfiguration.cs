@@ -1,3 +1,4 @@
+using NightlyCode.Ai.Extern;
 using NightlyCode.Ai.Genetics;
 using NightlyCode.Ai.Genetics.Mutation;
 using NightlyCode.Ai.Net.Operations;
@@ -58,7 +59,7 @@ public class FeedForwardConfiguration : ICrossChromosome<FeedForwardConfiguratio
     /// <param name="layerSize">size of a layer</param>
     public FeedForwardConfiguration(string[] inputs, string[] outputs, int layers, int layerSize, CrossSetup setup=null) {
         setup ??= new();
-        setup.Rng ??= new();
+        setup.Rng ??= new Rng();
         setup.OperationTypes ??= new(new MutationEntry<OperationType>(OperationType.Add, 1.0));
         setup.AggregateTypes ??= new(new MutationEntry<AggregateType>(AggregateType.Average, 1.0));
         setup.ActivationFuncs ??= new(new MutationEntry<ActivationFunc>(ActivationFunc.None, 1.0));
@@ -105,7 +106,7 @@ public class FeedForwardConfiguration : ICrossChromosome<FeedForwardConfiguratio
 
     /// <inheritdoc />
     public FeedForwardConfiguration Cross(FeedForwardConfiguration other, CrossSetup setup) {
-        setup.Rng ??= new();
+        setup.Rng ??= new Rng();
         setup.OperationTypes ??= new();
         setup.AggregateTypes ??= new();
         setup.ActivationFuncs ??= new();
@@ -161,7 +162,7 @@ public class FeedForwardConfiguration : ICrossChromosome<FeedForwardConfiguratio
     /// <inheritdoc />
     public void Randomize(CrossSetup setup) {
         setup ??= new();
-        setup.Rng ??= new();
+        setup.Rng ??= new Rng();
         setup.OperationTypes ??= new();
         setup.AggregateTypes ??= new();
         setup.ActivationFuncs ??= new();
@@ -190,4 +191,6 @@ public class FeedForwardConfiguration : ICrossChromosome<FeedForwardConfiguratio
 
     /// <inheritdoc />
     public float FitnessModifier => 1.0f;
+
+    public FeedForwardConfiguration Optimize(Func<FeedForwardConfiguration, bool> test) => this;
 }

@@ -2,5 +2,8 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2cff1856_002De6ba_002D4001_002Daafc_002D799651fb03ec/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="MultiplyMinusDynamicBinOp" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.MultiplyMinusDynamicBinOp&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.ExcellenceDynamicBinOp&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.SequenceDynamicBinOp&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.SequenceDynamicBinOpTwice&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

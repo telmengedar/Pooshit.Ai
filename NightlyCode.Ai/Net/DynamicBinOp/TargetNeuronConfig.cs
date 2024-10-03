@@ -3,20 +3,11 @@ using NightlyCode.Ai.Net.Operations;
 
 namespace NightlyCode.Ai.Net.DynamicBinOp;
 
-public class BinOpNeuronData {
-    public float OrderNumber { get; set; }
-
-    public int Index { get; set; }
-    
+public class TargetNeuronConfig : NeuronConfig {
     public AggregateType Aggregate { get; set; }
     public ActivationFunc Activation { get; set; }
     
-    public void Randomize(CrossSetup setup) {
-        Aggregate = setup.NextAggregate();
-        Activation = setup.NextFunc();
-    }
-
-    public BinOpNeuronData Clone() {
+    public new TargetNeuronConfig Clone() {
         return new() {
                          OrderNumber = OrderNumber,
                          Index = Index,
@@ -27,5 +18,12 @@ public class BinOpNeuronData {
 
     public override int GetHashCode() {
         return HashCode.Combine(OrderNumber, Index, Aggregate, Activation);
+    }
+
+    /// <inheritdoc />
+    public override string ToString() {
+        if (Activation == ActivationFunc.None)
+            return $"{Index}: {OrderNumber:F2} ({Aggregate})";
+        return $"{Index}: {OrderNumber:F2} ({Activation}({Aggregate}))";
     }
 }

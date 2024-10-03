@@ -43,7 +43,7 @@ public class CrossSetup {
     /// <summary>
     /// random number generator to use
     /// </summary>
-    public Rng Rng { get; set; }
+    public IRng Rng { get; set; }
 
     public float NextWeight() {
         return -MutateRange + Rng.NextFloat() * MutateRange * 2.0f;

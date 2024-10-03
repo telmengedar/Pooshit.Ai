@@ -1,3 +1,4 @@
+using NightlyCode.Ai.Extensions;
 using NightlyCode.Ai.Net.Operations;
 
 namespace NightlyCode.Ai.Net.DynamicBinOp;
@@ -27,7 +28,11 @@ public class BinOpConnection {
         return HashCode.Combine(Lhs, Rhs, Target, Operation, Weight);
     }
 
+    public int StructureHash => HashCode.Combine(Lhs, Rhs, Target, Operation);
+    
     public override string ToString() {
-        return $"({Lhs} {Operation} {Rhs}) * {Weight} -> {Target}";
+        if(Rhs==-1)
+            return $"[{Lhs}] * {Weight:F2} -> [{Target}]";
+        return $"([{Lhs}] {Operation.ToDisplay()} [{Rhs}]) * {Weight} -> [{Target}]";
     }
 }

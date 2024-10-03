@@ -3,14 +3,15 @@ namespace NightlyCode.Ai.Extern;
 /// <summary>
 /// rng using xor-shift implementation
 /// </summary>
-public class Rng : IRng {
+public class LockedRng : IRng {
+    readonly object valueLock = new();
     long value;
 
     /// <summary>
     /// creates a new <see cref="Rng"/>
     /// </summary>
     /// <param name="seed">seed to use for rng</param>
-    public Rng(long seed=0) {
+    public LockedRng(long seed=0) {
         value = seed;
         if (value == 0)
             value = Environment.TickCount64; // can never be 0 (i guess)
@@ -21,10 +22,12 @@ public class Rng : IRng {
     /// </summary>
     /// <returns>random int64</returns>
     public long NextLong() {
-        value ^= value << 21;
-        value ^= (value >> 35) | (value << 29);
-        value ^= value << 4;
-        return value;
+        lock (valueLock) {
+            value ^= value << 21;
+            value ^= (value >> 35) | (value << 29);
+            value ^= value << 4;
+            return value;
+        }
     }
 
     /// <summary>

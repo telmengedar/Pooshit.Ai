@@ -1,62 +1,73 @@
-using NightlyCode.Ai.Neurons;
-
 namespace NightlyCode.Ai.Net.DynamicBinOp;
 
 public class DynamicBinOpNet : INeuronalNet<DynamicBinOpConfiguration> {
     DynamicBinOpConfiguration configuration;
-
+    float[] neuronValues;
+    readonly Dictionary<string, int> named = new();
+    
+    /// <summary>
+    /// creates a new <see cref="DynamicBinOpNet"/>
+    /// </summary>
+    /// <param name="configuration">net configuration</param>
     public DynamicBinOpNet(DynamicBinOpConfiguration configuration) {
         this.configuration = configuration;
-        Input = new(configuration.Inputs.Select(i => new NamedNeuron { Name = i.Name }).ToArray());
-        Output = new(configuration.Outputs.Select(n => new NamedNeuron { Name = n.Name }).ToArray());
-        Neurons = this.configuration.Neurons.Select(n => new Neuron()).ToArray();
-        for (int i = 0; i < Neurons.Length; ++i)
-            Neurons[i] = new();
-    }
-    
-    Neuron[] Neurons { get; set; }
+        foreach (NamedNeuronConfig input in configuration.Inputs)
+            named[input.Name] = input.Index;
+        foreach (NamedTargetNeuronConfig output in configuration.Outputs)
+            named[output.Name] = output.Index;
 
-    public NamedNeurons Input { get; }
-    
-    public NamedNeurons Output { get; }
-    
+        neuronValues = new float[configuration.Inputs.Length + configuration.Outputs.Length + configuration.Neurons.Length];
+    }
+
+    /// <summary>
+    /// indexer for values
+    /// </summary>
+    /// <param name="name"></param>
+    public float this[string name] {
+        get => neuronValues[named[name]];
+        set => neuronValues[named[name]] = value;
+    }
+
+    float this[int index] {
+        get => neuronValues[index];
+        set => neuronValues[index] = value;
+    }
+
+    /// <summary>
+    /// input names
+    /// </summary>
+    public IEnumerable<string> Inputs => configuration.Inputs.Select(i => i.Name);
+
+    /// <summary>
+    /// output names
+    /// </summary>
+    public IEnumerable<string> Outputs => configuration.Outputs.Select(i => i.Name);
+
+    /// <inheritdoc />
     public void Compute() {
-        foreach (IGrouping<int, BinOpConnection> group in configuration.Connections.GroupBy(c => c.Target)) {
-            BinOpNeuronData targetConfig=configuration.GetNeuron(group.Key);
-            Neuron target = GetNeuron(group.Key);
-            float order = targetConfig.OrderNumber;
+        foreach (IGrouping<int, BinOpConnection> group in configuration.GroupedConnections) {
+            TargetNeuronConfig targetConfig=configuration.GetTargetNeuron(group.Key);
 
-            foreach (BinOpConnection connection in group) {
-                if(connection.Rhs==-1)
-                    GetNeuron(connection.Target).Value = GetNeuron(connection.Lhs).Value * connection.Weight;
-                else {
-                    target.Value = group.Select(g => {
-                                                    if (g.Rhs == -1)
-                                                        return GetNeuron(connection.Lhs).Value * connection.Weight;
+            this[group.Key] = group.Select(g => {
+                                               if (g.Rhs == -1)
+                                                   return this[g.Lhs] * g.Weight;
 
-                                                    return NMath.Compute(GetNeuron(connection.Lhs).Value, GetNeuron(connection.Rhs).Value, connection.Operation) * connection.Weight;
-                                                }).Aggregate(targetConfig.Aggregate)
-                                        .Activation(targetConfig.Activation);
-                }
-            }
+                                               return NMath.Compute(this[g.Lhs],
+                                                                    this[g.Rhs],
+                                                                    g.Operation) * g.Weight;
+                                           }).Aggregate(targetConfig.Aggregate)
+                                   .Activation(targetConfig.Activation);
         }
-    }
-
-    Neuron GetNeuron(int index) {
-        if (index < Input.Length)
-            return Input.GetNeuron(index);
-        index -= Input.Length;
-        if (index < Output.Length)
-            return Output.GetNeuron(index);
-        index -= Output.Length;
-        return Neurons[index];
     }
     
     /// <inheritdoc />
     public void Update(DynamicBinOpConfiguration configuration) {
         this.configuration = configuration;
-        foreach (NamedNeuron output in Output)
-            output.Value = 0.0f;
-        Neurons = this.configuration.Neurons.Select(n => new Neuron()).ToArray();
+
+        if (neuronValues.Length < this.configuration.Inputs.Length + this.configuration.Outputs.Length + this.configuration.Neurons.Length)
+            neuronValues = new float[this.configuration.Inputs.Length + this.configuration.Outputs.Length + this.configuration.Neurons.Length];
+        else 
+            foreach (NamedTargetNeuronConfig output in configuration.Outputs)
+                this[output.Name] = 0.0f;
     }
 }

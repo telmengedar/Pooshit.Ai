@@ -1,0 +1,505 @@
+{
+  "runs": 5000,
+  "fitnessAggregate": 1,
+  "samples": [{
+    "inputs": {
+      "visits": 53,
+      "appclicks": 5,
+      "applications": 0,
+      "profit": -51.52
+    },
+    "outputs": {
+      "excellence": -3.4
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 2,
+      "profit": 220
+    },
+    "outputs": {
+      "excellence": 5.0
+    }
+  },{
+    "inputs": {
+      "visits": 82,
+      "appclicks": 3,
+      "applications": 1,
+      "profit": -5.0
+    },
+    "outputs": {
+      "excellence": 0.6
+    }
+  },{
+    "inputs": {
+      "visits": 69,
+      "appclicks": 6,
+      "applications": 5,
+      "profit": 54.0
+    },
+    "outputs": {
+      "excellence": 2.5
+    }
+  },{
+    "inputs": {
+      "visits": 43,
+      "appclicks": 14,
+      "applications": 13,
+      "profit": 433.43
+    },
+    "outputs": {
+      "excellence": 3.7
+    }
+  },{
+    "inputs": {
+      "visits": 43,
+      "appclicks": 8,
+      "applications": 6,
+      "profit": 175
+    },
+    "outputs": {
+      "excellence": 3.0
+    }
+  },{
+    "inputs": {
+      "visits": 115,
+      "appclicks": 54,
+      "applications": 15,
+      "profit": 674.96
+    },
+    "outputs": {
+      "excellence": 4.0
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 1,
+      "profit": 750
+    },
+    "outputs": {
+      "excellence": 5
+    }
+  },{
+    "inputs": {
+      "visits": 28,
+      "appclicks": 10,
+      "applications": 4,
+      "profit": 37
+    },
+    "outputs": {
+      "excellence": 2
+    }
+  },{
+    "inputs": {
+      "visits": 70,
+      "appclicks": 23,
+      "applications": 8,
+      "profit": 156.96
+    },
+    "outputs": {
+      "excellence": 2.5
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 1,
+      "profit": 40
+    },
+    "outputs": {
+      "excellence": 3
+    }
+  },{
+    "inputs": {
+      "visits": 81,
+      "appclicks": 22,
+      "applications": 12,
+      "profit": 26.47
+    },
+    "outputs": {
+      "excellence": 1
+    }
+  },{
+    "inputs": {
+      "visits": 95,
+      "appclicks": 11,
+      "applications": 0,
+      "profit": -84.5
+    },
+    "outputs": {
+      "excellence": -4.2
+    }
+  },{
+    "inputs": {
+      "visits": 83,
+      "appclicks": 10,
+      "applications": 3,
+      "profit": 10
+    },
+    "outputs": {
+      "excellence": 1
+    }
+  },{
+    "inputs": {
+      "visits": 110,
+      "appclicks": 50,
+      "applications": 13,
+      "profit": 279.96
+    },
+    "outputs": {
+      "excellence": 2
+    }
+  },{
+    "inputs": {
+      "visits": 134,
+      "appclicks": 7,
+      "applications": 4,
+      "profit": 172
+    },
+    "outputs": {
+      "excellence": 3.6
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 5,
+      "profit": 180
+    },
+    "outputs": {
+      "excellence": 3
+    }
+  },{
+    "inputs": {
+      "visits": 387,
+      "appclicks": 49,
+      "applications": 2,
+      "profit": -169.1
+    },
+    "outputs": {
+      "excellence": -5
+    }
+  },{
+    "inputs": {
+      "visits": 34,
+      "appclicks": 3,
+      "applications": 1,
+      "profit": 50
+    },
+    "outputs": {
+      "excellence": 4
+    }
+  },{
+    "inputs": {
+      "visits": 41,
+      "appclicks": 12,
+      "applications": 4,
+      "profit": -191.7
+    },
+    "outputs": {
+      "excellence": -5
+    }
+  },{
+    "inputs": {
+      "visits": 221,
+      "appclicks": 115,
+      "applications": 25,
+      "profit": 854.96
+    },
+    "outputs": {
+      "excellence": 3.7
+    }
+  },{
+    "inputs": {
+      "visits": 19,
+      "appclicks": 3,
+      "applications": 1,
+      "profit": 21
+    },
+    "outputs": {
+      "excellence": 2
+    }
+  },{
+    "inputs": {
+      "visits": 51,
+      "appclicks": 2,
+      "applications": 1,
+      "profit": 55
+    },
+    "outputs": {
+      "excellence": 4
+    }
+  },{
+    "inputs": {
+      "visits": 43,
+      "appclicks": 15,
+      "applications": 9,
+      "profit": -89.35
+    },
+    "outputs": {
+      "excellence": -2
+    }
+  },{
+    "inputs": {
+      "visits": 395,
+      "appclicks": 89,
+      "applications": 8,
+      "profit": 213.9
+    },
+    "outputs": {
+      "excellence": 2.8
+    }
+  },{
+    "inputs": {
+      "visits": 95,
+      "appclicks": 10,
+      "applications": 5,
+      "profit": 77
+    },
+    "outputs": {
+      "excellence": 1.3
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 2,
+      "profit": 65
+    },
+    "outputs": {
+      "excellence": 3
+    }
+  },{
+    "inputs": {
+      "visits": 32,
+      "appclicks": 4,
+      "applications": 1,
+      "profit": -432.61
+    },
+    "outputs": {
+      "excellence": -5
+    }
+  },{
+    "inputs": {
+      "visits": 111,
+      "appclicks": 7,
+      "applications": 1,
+      "profit": -68
+    },
+    "outputs": {
+      "excellence": -4
+    }
+  },{
+    "inputs": {
+      "visits": 20,
+      "appclicks": 5,
+      "applications": 1,
+      "profit": 5
+    },
+    "outputs": {
+      "excellence": 0.6
+    }
+  },{
+    "inputs": {
+      "visits": 103,
+      "appclicks": 36,
+      "applications": 4,
+      "profit": 206.06
+    },
+    "outputs": {
+      "excellence": 4
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 1,
+      "profit": 160
+    },
+    "outputs": {
+      "excellence": 5
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 1,
+      "profit": 55
+    },
+    "outputs": {
+      "excellence": 3.6
+    }
+  },{
+    "inputs": {
+      "visits": 40,
+      "appclicks": 15,
+      "applications": 4,
+      "profit": 12.96
+    },
+    "outputs": {
+      "excellence": 0.4
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 1,
+      "applications": 1,
+      "profit": 150
+    },
+    "outputs": {
+      "excellence": 5
+    }
+  },{
+    "inputs": {
+      "visits": 60,
+      "appclicks": 2,
+      "applications": 1,
+      "profit": 30
+    },
+    "outputs": {
+      "excellence": 3
+    }
+  },{
+    "inputs": {
+      "visits": 2,
+      "appclicks": 2,
+      "applications": 1,
+      "profit": 80
+    },
+    "outputs": {
+      "excellence": 4.5
+    }
+  },{
+    "inputs": {
+      "visits": 261,
+      "appclicks": 169,
+      "applications": 20,
+      "profit": 682.96
+    },
+    "outputs": {
+      "excellence": 3.2
+    }
+  },{
+    "inputs": {
+      "visits": 67,
+      "appclicks": 10,
+      "applications": 7,
+      "profit": 310
+    },
+    "outputs": {
+      "excellence": 3.7
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 0,
+      "profit": 0
+    },
+    "outputs": {
+      "excellence": 0
+    }
+  },{
+    "inputs": {
+      "visits": 7,
+      "appclicks": 3,
+      "applications": 0,
+      "profit": 0
+    },
+    "outputs": {
+      "excellence": 0.2
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 2,
+      "profit": 80
+    },
+    "outputs": {
+      "excellence": 3.5
+    }
+  },{
+    "inputs": {
+      "visits": 87,
+      "appclicks": 3,
+      "applications": 0,
+      "profit": -50
+    },
+    "outputs": {
+      "excellence": -3.5
+    }
+  },{
+    "inputs": {
+      "visits": 1,
+      "appclicks": 0,
+      "applications": 0,
+      "profit": 0
+    },
+    "outputs": {
+      "excellence": 0.1
+    }
+  },{
+    "inputs": {
+      "visits": 3,
+      "appclicks": 2,
+      "applications": 1,
+      "profit": 35
+    },
+    "outputs": {
+      "excellence": 3
+    }
+  },{
+    "inputs": {
+      "visits": 34,
+      "appclicks": 0,
+      "applications": 0,
+      "profit": 0
+    },
+    "outputs": {
+      "excellence": 1.6
+    }
+  },{
+    "inputs": {
+      "visits": 49,
+      "appclicks": 18,
+      "applications": 4,
+      "profit": 187.96
+    },
+    "outputs": {
+      "excellence": 3.5
+    }
+  },{
+    "inputs": {
+      "visits": 49,
+      "appclicks": 0,
+      "applications": 0,
+      "profit": 0
+    },
+    "outputs": {
+      "excellence": 1.4
+    }
+  },{
+    "inputs": {
+      "visits": 0,
+      "appclicks": 0,
+      "applications": 1,
+      "profit": 7
+    },
+    "outputs": {
+      "excellence": 0.8
+    }
+  },{
+    "inputs": {
+      "visits": 56,
+      "appclicks": 1,
+      "applications": 0,
+      "profit": 0
+    },
+    "outputs": {
+      "excellence": 1.8
+    }
+  }]
+}
