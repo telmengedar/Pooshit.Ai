@@ -184,12 +184,12 @@ public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfigu
     void ChangeNeuron(List<TargetNeuronConfig> neurons, List<NamedTargetNeuronConfig> outputs, IRng rng) {
         int neuronIndex = rng.NextInt(outputs.Count + neurons.Count);
         if (neuronIndex < Outputs.Length) {
-            Outputs[neuronIndex].Aggregate = aggregateTypes.SelectItem(rng);
-            Outputs[neuronIndex].Activation = activationFuncs.SelectItem(rng);
+            outputs[neuronIndex].Aggregate = aggregateTypes.SelectItem(rng);
+            outputs[neuronIndex].Activation = activationFuncs.SelectItem(rng);
         }
         else {
-            Neurons[neuronIndex - Outputs.Length].Aggregate = aggregateTypes.SelectItem(rng);
-            Neurons[neuronIndex - Outputs.Length].Activation = activationFuncs.SelectItem(rng);
+            neurons[neuronIndex - outputs.Count].Aggregate = aggregateTypes.SelectItem(rng);
+            neurons[neuronIndex - outputs.Count].Activation = activationFuncs.SelectItem(rng);
         }
     }
     
@@ -201,7 +201,7 @@ public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfigu
 
         float dice = rng.NextFloat();
 
-        if (connections.Count==0 || dice < 0.5) {
+        if (connections.Count == 0 || dice < 0.5) {
             if (connections.Any())
                 ChangeConnectionWeight(connections, rng, mutationRange);
             else
@@ -312,7 +312,7 @@ public class DynamicBinOpConfiguration : IMutatingChromosome<DynamicBinOpConfigu
     }
 
     /// <inheritdoc />
-    public float FitnessModifier => 1.0f / (Connections.Length * 0.01f + Neurons.Length * 0.008f);
+    public float FitnessModifier => 1.0f + (Connections.Length * 0.01f + Neurons.Length * 0.008f);
 
     /// <inheritdoc />
     public DynamicBinOpConfiguration Optimize(Func<DynamicBinOpConfiguration, bool> test) {

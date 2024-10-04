@@ -348,10 +348,11 @@ public class CalculatorTests {
             if (!netStack.TryPop(out DynamicBinOpNet net))
                 net = new(config);
             else net.Update(config);
-
+            
             net["x"] = x;
             net.Compute();
             float result = net["y"];
+            netStack.Push(net);
             return Math.Abs(expected - result);
         }
 

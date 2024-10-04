@@ -1,5 +1,4 @@
 using NightlyCode.Ai.Genetics.Mutation;
-using NightlyCode.Ai.Net.Operations;
 
 namespace NightlyCode.Ai.Genetics;
 

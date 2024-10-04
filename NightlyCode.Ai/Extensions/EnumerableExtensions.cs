@@ -30,23 +30,4 @@ static class EnumerableExtensions {
 
         return -1;
     }
-    
-    /// <summary>
-    /// retrieves fitness value for a series of fitness test results
-    /// </summary>
-    /// <param name="input">fitness test results</param>
-    /// <returns>fitness value</returns>
-    public static float Fitness(this IEnumerable<float> input) {
-        return input.Average();
-        /*float max = 0.0f;
-        float sum = 0.0f;
-        int count = 0;
-        foreach (float value in input) {
-            max = Math.Max(value, max);
-            sum += value;
-            ++count;
-        }
-
-        return sum / count;*/
-    }
 }

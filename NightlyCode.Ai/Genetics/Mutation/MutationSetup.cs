@@ -25,4 +25,8 @@ public class MutationSetup {
     /// </summary>
     public float IncestFactor { get; set; } = 7.5f;
 
+    /// <summary>
+    /// number of mutation runs
+    /// </summary>
+    public int Runs { get; set; } = 1;
 }

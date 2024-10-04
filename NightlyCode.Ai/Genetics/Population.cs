@@ -1,5 +1,5 @@
-using NightlyCode.Ai.Extensions;
 using NightlyCode.Ai.Extern;
+using NightlyCode.Ai.Genetics.Mutation;
 using NightlyCode.Ai.Net.Configurations;
 
 namespace NightlyCode.Ai.Genetics;
@@ -71,13 +71,13 @@ where T : class, IChromosome<T> {
                 break;
         }
 
-        float max = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
+        float max = Entries.Max(e => e.Fitness * e.Chromosome.FitnessModifier);
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value = (max - entry.Fitness / entry.Chromosome.FitnessModifier) / max;
+            float value = (max - entry.Fitness * entry.Chromosome.FitnessModifier) / max;
             value *= value;
             fitnessSum += value;
             entry.Fitness = fitnessSum;
@@ -126,35 +126,11 @@ where T : class, IChromosome<T> {
                              new() {
                                        MaxDegreeOfParallelism = setup.Threads
                                    },
-                             i => {
-                                 float first = rng.NextFloat() * fitnessSum;
-
-                                 PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[rng.NextInt(Entries.Length)];
-                                 
-                                 float mutationRange = setup.Mutation.Range;
-
-                                 float mutationScale = (float)i / Entries.Length;
-                                 mutationRange *= mutationScale;
-
-                                 next[i] = new() {
-                                                     Chromosome = ((IMutatingChromosome<T>)firstChromosome.Chromosome).Mutate(rng, mutationRange)
-                                                 };
-                             });
+                             i => { Mutate(next, rng, fitnessSum, setup.Mutation, i); });
             }
             else {
                 for (int i = offset; i < Entries.Length; ++i) {
-                    double first = rng.NextDouble() * fitnessSum;
-
-                    PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[rng.NextInt(Entries.Length)];
-
-                    float mutationRange = setup.Mutation.Range;
-
-                    float mutationScale = (float)i / Entries.Length;
-                    mutationRange *= mutationScale;
-
-                    next[i] = new() {
-                                        Chromosome = ((IMutatingChromosome<T>)firstChromosome.Chromosome).Mutate(rng, mutationRange)
-                                    };
+                    Mutate(next, rng, fitnessSum, setup.Mutation, i);
                 }
             }
         }
@@ -163,16 +139,35 @@ where T : class, IChromosome<T> {
         Entries = next;
     }
 
-    double GetOrderNumber(PopulationEntry<T> entry) {
+    void Mutate(PopulationEntry<T>[] next, IRng rng, float fitnessSum, MutationSetup setup, int i) {
+        float first = rng.NextFloat() * fitnessSum;
+
+        PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[rng.NextInt(Entries.Length)];
+
+        float mutationRange = setup.Range;
+
+        float mutationScale = (float)i / Entries.Length;
+        mutationRange *= mutationScale;
+
+        T chromosome = firstChromosome.Chromosome;
+        for (int k = 0; k < setup.Runs; ++k)
+            chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
+
+        next[i] = new() {
+                            Chromosome = chromosome
+                        };
+    }
+    float GetOrderNumber(PopulationEntry<T> entry) {
         if (entry.Fitness < 0.0)
-            return double.MaxValue;
+            return float.MaxValue;
         return entry.Fitness;
     }
 
     void EvaluateFitness(EvolutionSetup<T> setup) {
         foreach (PopulationEntry<T> entry in Entries)
-            entry.Fitness = setup.TrainingSet.Select(t => t(entry.Chromosome))
-                                 .Fitness();
+            entry.Fitness = setup.TrainingSet
+                                 .Select(t => t(entry.Chromosome))
+                                 .Average();
         Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
 
@@ -180,7 +175,11 @@ where T : class, IChromosome<T> {
         Parallel.ForEach(Entries, new() {
                                             MaxDegreeOfParallelism = setup.Threads
                                         },
-                         entry => { entry.Fitness = setup.TrainingSet.Select(t => t(entry.Chromosome)).Fitness(); });
+                         entry => {
+                             entry.Fitness = setup.TrainingSet
+                                                  .Select(t => t(entry.Chromosome))
+                                                  .Average();
+                         });
         Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
     
@@ -196,13 +195,24 @@ where T : class, IChromosome<T> {
         Rng rng = new();
 
         EvaluateFitness(setup);
+        float fitness = Entries[0].Fitness;
+        int bestRun = 0;
+
         for (int i = 0; i < setup.Runs; i++) {
-            if (i > 0)
-                Evolve(rng, setup);
+            Evolve(rng, setup);
 
             EvaluateFitness(setup);
             if (Entries[0].Fitness >= 0.0 && Entries[0].Fitness < setup.TargetFitness)
                 return Entries[0];
+
+            if (Math.Abs(Entries[0].Fitness - fitness) <= float.Epsilon)
+                setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
+            else {
+                setup.Mutation.Runs = 1;
+                fitness = Entries[0].Fitness;
+                bestRun = i;
+            }
+            
             setup.AfterRun?.Invoke(i, Entries[0].Fitness);
         }
 
@@ -217,13 +227,24 @@ where T : class, IChromosome<T> {
     PopulationEntry<T> TrainParallel(EvolutionSetup<T> setup) {
         IRng rng = new LockedRng();
         EvaluateParallel(setup);
+        float fitness = Entries[0].Fitness;
+        int bestRun = 0;
         for (int i = 0; i < setup.Runs; i++) {
-            if (i > 0)
-                Evolve(rng, setup);
+            Evolve(rng, setup);
 
             EvaluateParallel(setup);
+
             if (Entries[0].Fitness >= 0.0 && Entries[0].Fitness < setup.TargetFitness)
                 return Entries[0];
+            
+            if (Math.Abs(Entries[0].Fitness - fitness) <= float.Epsilon)
+                setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
+            else {
+                setup.Mutation.Runs = 1;
+                fitness = Entries[0].Fitness;
+                bestRun = i;
+            }
+
             setup.AfterRun?.Invoke(i, Entries[0].Fitness);
         }
 
