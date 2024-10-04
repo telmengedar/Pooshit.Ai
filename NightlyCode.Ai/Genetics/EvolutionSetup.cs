@@ -11,9 +11,9 @@ where T : IChromosome<T>
 {
     
     /// <summary>
-    /// functions to use to run the chromosomes
+    /// evaluator used to determine fitness of chromosomes
     /// </summary>
-    public Func<T, float>[] TrainingSet { get; set; }
+    public IFitnessEvaluator<T> Evaluator { get; set; }
 
     /// <summary>
     /// fitness threshold when training is complete

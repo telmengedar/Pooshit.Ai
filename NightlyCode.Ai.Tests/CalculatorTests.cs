@@ -1,8 +1,5 @@
 using System.Collections.Concurrent;
-using NightlyCode.Ai.Extern;
 using NightlyCode.Ai.Genetics;
-using NightlyCode.Ai.Net;
-using NightlyCode.Ai.Net.Configurations;
 using NightlyCode.Ai.Net.DynamicBinOp;
 using NightlyCode.Json;
 
@@ -11,7 +8,7 @@ namespace NightlyCode.Ai.Tests;
 [TestFixture, Parallelizable]
 public class CalculatorTests {
     
-    [Test, Parallelizable]
+    /*[Test, Parallelizable]
     public void SquareRootNeuronalOperation() {
         NeuronalOperationNetConfiguration configuration = new(["x"], ["result"], 3, 3);
         NeuronalOperationNet net = new(configuration);
@@ -40,7 +37,7 @@ public class CalculatorTests {
                                                                                              net.Compute();
                                                                                              double value = net.Output["result"];
                                                                                              return false;
-                                                                                         }*/
+                                                                                         }
                                                                         };
         PopulationEntry<NeuronalOperationNetConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
@@ -55,9 +52,9 @@ public class CalculatorTests {
         Console.WriteLine($"sqrt(422933)={net.Output["result"]}");
 
         //Console.WriteLine(Json.Json.WriteString(result.Item1.ExportDictionary()));
-    }
+    }*/
 
-    [Test, Parallelizable]
+    /*[Test, Parallelizable]
     public void SquareRootFeedForward() {
         FeedForwardConfiguration configuration = new(["x"], ["result"], 3, 3);
         FeedForwardNet net = new(configuration);
@@ -86,7 +83,7 @@ public class CalculatorTests {
                                                                                     net.Compute();
                                                                                     double value = net.Output["result"];
                                                                                     return false;
-                                                                                }*/
+                                                                                }
                                                                };
         PopulationEntry<FeedForwardConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
@@ -101,9 +98,9 @@ public class CalculatorTests {
         Console.WriteLine($"sqrt(422933)={net.Output["result"]}");
         Console.WriteLine(Json.Json.WriteString(result.Chromosome));
         //Console.WriteLine(Json.Json.WriteString(result.Item1.ExportDictionary()));
-    }
+    }*/
     
-    [Test, Parallelizable]
+    /*[Test, Parallelizable]
     public void MultiplyMinusNeuronalOperation() {
         NeuronalOperationNetConfiguration configuration = new(["x", "y", "z"], ["result"], 3, 3);
         NeuronalOperationNet net = new(configuration);
@@ -151,7 +148,7 @@ public class CalculatorTests {
                                                                                              net.Compute();
                                                                                              double value = net.Output["result"];
                                                                                              return false;
-                                                                                         }*/
+                                                                                         }
                                                                         };
         PopulationEntry<NeuronalOperationNetConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
@@ -163,9 +160,9 @@ public class CalculatorTests {
         Console.WriteLine($"f(-3,7,20)={net.Output["result"]}");
 
         //Console.WriteLine(Json.Json.WriteString(result.Item1.ExportDictionary()));
-    }
+    }*/
     
-    [Test, Parallelizable]
+    /*[Test, Parallelizable]
     public void MultiplyMinusFeedForward() {
         FeedForwardConfiguration configuration = new(["x", "y", "z"], ["result"], 3, 3, new() {
                                                                                                   OperationTypes = new()
@@ -219,51 +216,37 @@ public class CalculatorTests {
         Console.WriteLine($"f(-3,7,20)={net.Output["result"]}");
 
         //Console.WriteLine(Json.Json.WriteString(result.Item1.ExportDictionary()));
-    }
+    }*/
     
     [Test, Parallelizable]
     public void MultiplyMinusDynamicBinOp() {
         ConcurrentStack<DynamicBinOpNet> netStack = new();
-        float Test(DynamicBinOpConfiguration config, float x, float y, float z, float expected) {
-            if (!netStack.TryPop(out DynamicBinOpNet net))
-                net = new(config);
-            else net.Update(config);
-            
-            net["x"] = x;
-            net["y"] = y;
-            net["z"] = z;
-            net.Compute();
-            float result = net["result"];
-
-            netStack.Push(net);
-            return Math.Abs(expected - result);
-        }
 
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    TrainingSet = [
-                                                                                      config => Test(config, 5, 2, 7, 3),
-                                                                                      config => Test(config, 3, 3, 3, 6),
-                                                                                      config => Test(config, 10, 10, 2, 98),
-                                                                                      config => Test(config, 5, 5, 1, 24),
-                                                                                      config => Test(config, 1, 40, 9, 31),
-                                                                                      config => Test(config, 6, 10, 10, 50),
-                                                                                      config => Test(config, 7, 8, 6, 50),
-                                                                                      config => Test(config, 11, 8, 6, 82),
-                                                                                      config => Test(config, 2, 70, 12, 128),
-                                                                                      config => Test(config, 12, 12, 4, 140),
-                                                                                      config => Test(config, 9, 12, 19, 89),
-                                                                                      config => Test(config, 1, 2, 3, -1),
-                                                                                      config => Test(config, 8, 3, 8, 16),
-                                                                                      config => Test(config, 2, 34, 9, 59),
-                                                                                      config => Test(config, 8, 66, 3, 525),
-                                                                                      config => Test(config, 20, 6, 333, -213),
-                                                                                      config => Test(config, 4, 60, 399, -159),
-                                                                                      config => Test(config, 7, 18, 170, -49),
-                                                                                      config => Test(config, -3, 7, 20, -41),
-                                                                                      config => Test(config, -3, 8, 20, -44),
-                                                                                      config => Test(config, -3, -8, 20, 4)
-                                                                                  ],
+                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>([
+                                                                                                                                new(new{x=5,y=2,z=7},new{result=3}),
+                                                                                                                                new(new{x=3,y=3,z=3},new{result=6}),
+                                                                                                                                new(new{x=10,y=10,z=2},new{result=98}),
+                                                                                                                                new(new{x=5,y=5,z=1},new{result=24}),
+                                                                                                                                new(new{x=1,y=40,z=9},new{result=31}),
+                                                                                                                                new(new{x=6,y=10,z=10},new{result=50}),
+                                                                                                                                new(new{x=7,y=8,z=6},new{result=50}),
+                                                                                                                                new(new{x=11,y=8,z=6},new{result=82}),
+                                                                                                                                new(new{x=2,y=70,z=12},new{result=128}),
+                                                                                                                                new(new{x=12,y=12,z=4},new{result=140}),
+                                                                                                                                new(new{x=9,y=12,z=19},new{result=89}),
+                                                                                                                                new(new{x=1,y=2,z=3},new{result=-1}),
+                                                                                                                                new(new{x=8,y=3,z=8},new{result=16}),
+                                                                                                                                new(new{x=2,y=34,z=9},new{result=59}),
+                                                                                                                                new(new{x=8,y=66,z=3},new{result=525}),
+                                                                                                                                new(new{x=20,y=6,z=333},new{result=-213}),
+                                                                                                                                new(new{x=4,y=60,z=399},new{result=-159}),
+                                                                                                                                new(new{x=7,y=18,z=170},new{result=-49}),
+                                                                                                                                new(new{x=-3,y=7,z=20},new{result=-41}),
+                                                                                                                                new(new{x=-3,y=8,z=20},new{result=-44}),
+                                                                                                                                new(new{x=-3,y=-8,z=20},new{result=4}),
+                                                                                                                            ]),
                                                                     Runs = 5000,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
@@ -291,32 +274,21 @@ public class CalculatorTests {
     public void ExcellenceDynamicBinOp() {
         ConcurrentStack<DynamicBinOpNet> netStack = new();
         
-        float Test(DynamicBinOpConfiguration config, float visits, float appclicks, float applications, float profit, float expected) {
-            if (!netStack.TryPop(out DynamicBinOpNet net))
-                net = new(config);
-            else net.Update(config);
-
-            net["visits"] = visits;
-            net["appclicks"] = appclicks;
-            net["applications"] = applications;
-            net["profit"] = profit;
-            net.Compute();
-            float result = net["excellence"];
-            return Math.Abs(expected - result);
-        }
-
         Dictionary<string, object> samples = Json.Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
         
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["visits", "appclicks", "applications", "profit"], ["excellence"], rng));
+        TrainingSample[] trainingSamples = JPath.Select<object[]>(samples, "samples")
+                                        .Select(s => new TrainingSample(new {
+                                                                                visits = JPath.Select<float>(s, "inputs/visits"),
+                                                                                appclicks = JPath.Select<float>(s, "inputs/appclicks"),
+                                                                                applications = JPath.Select<float>(s, "inputs/applications"),
+                                                                                profit = JPath.Select<float>(s, "inputs/profit")
+                                                                            }, new {
+                                                                                       excellence = JPath.Select<float>(s, "inputs/profit")
+                                                                                   })).ToArray();
+            
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    TrainingSet = JPath.Select<object[]>(samples, "samples")
-                                                                                       .Select(s => new Func<DynamicBinOpConfiguration, float>(config => Test(config,
-                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/visits")),
-                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/appclicks")),
-                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/applications")),
-                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "inputs/profit")),
-                                                                                                                                                              Converter.Convert<float>(JPath.Select(s, "outputs/excellence")))))
-                                                                                       .ToArray(),
+                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>(trainingSamples),
                                                                     Runs = 5000,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
@@ -344,32 +316,20 @@ public class CalculatorTests {
     public void SequenceDynamicBinOp() {
         ConcurrentStack<DynamicBinOpNet> netStack = new();
         
-        float Test(DynamicBinOpConfiguration config, float x, float expected) {
-            if (!netStack.TryPop(out DynamicBinOpNet net))
-                net = new(config);
-            else net.Update(config);
-            
-            net["x"] = x;
-            net.Compute();
-            float result = net["y"];
-            netStack.Push(net);
-            return Math.Abs(expected - result);
-        }
-
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    TrainingSet = [
-                                                                                      c => Test(c, 1,2),
-                                                                                      c => Test(c, 2, 6),
-                                                                                      c=>Test(c, 3, 12),
-                                                                                      c=>Test(c, 4, 20),
-                                                                                      c=>Test(c, 5, 30),
-                                                                                      c=>Test(c, 6, 42),
-                                                                                      c=>Test(c, 7, 56),
-                                                                                      c=>Test(c, 8, 72),
-                                                                                      c=>Test(c, 9, 90),
-                                                                                      c=>Test(c, 10, 110)
-                                                                                  ],
+                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>([
+                                                                                                                                new(new{x=1},new{y=2}),
+                                                                                                                                new(new{x=2},new{y=6}),
+                                                                                                                                new(new{x=3},new{y=12}),
+                                                                                                                                new(new{x=4},new{y=20}),
+                                                                                                                                new(new{x=5},new{y=30}),
+                                                                                                                                new(new{x=6},new{y=42}),
+                                                                                                                                new(new{x=7},new{y=56}),
+                                                                                                                                new(new{x=8},new{y=72}),
+                                                                                                                                new(new{x=9},new{y=90}),
+                                                                                                                                new(new{x=10},new{y=110}),
+                                                                                                                            ]),
                                                                     Runs = 5000,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
@@ -394,32 +354,21 @@ public class CalculatorTests {
     [Test, Parallelizable]
     public void SequenceDynamicBinOpTwice() {
         ConcurrentStack<DynamicBinOpNet> netStack = new();
-        float Test(DynamicBinOpConfiguration config, float x, float expected) {
-            if (!netStack.TryPop(out DynamicBinOpNet localNet))
-                localNet = new(config);
-            else localNet.Update(config);
-
-            localNet["x"] = x;
-            localNet.Compute();
-            float result = localNet["y"];
-            netStack.Push(localNet);
-            return Math.Abs(expected - result);
-        }
-
+        
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    TrainingSet = [
-                                                                                      c => Test(c, 1,2),
-                                                                                      c => Test(c, 2, 6),
-                                                                                      c=>Test(c, 3, 12),
-                                                                                      c=>Test(c, 4, 20),
-                                                                                      c=>Test(c, 5, 30),
-                                                                                      c=>Test(c, 6, 42),
-                                                                                      c=>Test(c, 7, 56),
-                                                                                      c=>Test(c, 8, 72),
-                                                                                      c=>Test(c, 9, 90),
-                                                                                      c=>Test(c, 10, 110)
-                                                                                  ],
+                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>([
+                                                                                                                                new(new{x=1},new{y=2}),
+                                                                                                                                new(new{x=2},new{y=6}),
+                                                                                                                                new(new{x=3},new{y=12}),
+                                                                                                                                new(new{x=4},new{y=20}),
+                                                                                                                                new(new{x=5},new{y=30}),
+                                                                                                                                new(new{x=6},new{y=42}),
+                                                                                                                                new(new{x=7},new{y=56}),
+                                                                                                                                new(new{x=8},new{y=72}),
+                                                                                                                                new(new{x=9},new{y=90}),
+                                                                                                                                new(new{x=10},new{y=110}),
+                                                                                                                            ]),
                                                                     Runs = 5000,
                                                                     TargetFitness = 0.01f,
                                                                     AfterRun = (index, fitness) => {

@@ -71,13 +71,13 @@ where T : class, IChromosome<T> {
                 break;
         }
 
-        float max = Entries.Max(e => e.Fitness * e.Chromosome.FitnessModifier);
+        float max = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value = (max - entry.Fitness * entry.Chromosome.FitnessModifier) / max;
+            float value = (max - entry.Fitness / entry.Chromosome.FitnessModifier) / max;
             value *= value;
             fitnessSum += value;
             entry.Fitness = fitnessSum;
@@ -165,9 +165,7 @@ where T : class, IChromosome<T> {
 
     void EvaluateFitness(EvolutionSetup<T> setup) {
         foreach (PopulationEntry<T> entry in Entries)
-            entry.Fitness = setup.TrainingSet
-                                 .Select(t => t(entry.Chromosome))
-                                 .Average();
+            entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome);
         Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
 
@@ -176,9 +174,7 @@ where T : class, IChromosome<T> {
                                             MaxDegreeOfParallelism = setup.Threads
                                         },
                          entry => {
-                             entry.Fitness = setup.TrainingSet
-                                                  .Select(t => t(entry.Chromosome))
-                                                  .Average();
+                             entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome);
                          });
         Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
