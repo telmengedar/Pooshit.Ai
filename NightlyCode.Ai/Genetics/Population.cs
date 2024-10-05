@@ -163,18 +163,18 @@ where T : class, IChromosome<T> {
         return entry.Fitness;
     }
 
-    void EvaluateFitness(EvolutionSetup<T> setup) {
+    void EvaluateFitness(EvolutionSetup<T> setup, IRng rng, bool fullSet) {
         foreach (PopulationEntry<T> entry in Entries)
-            entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome);
+            entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, fullSet);
         Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
 
-    void EvaluateParallel(EvolutionSetup<T> setup) {
+    void EvaluateParallel(EvolutionSetup<T> setup, IRng rng, bool fullSet) {
         Parallel.ForEach(Entries, new() {
                                             MaxDegreeOfParallelism = setup.Threads
                                         },
                          entry => {
-                             entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome);
+                             entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, fullSet);
                          });
         Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
@@ -186,18 +186,15 @@ where T : class, IChromosome<T> {
     /// <returns>best training result</returns>
     public PopulationEntry<T> Train(EvolutionSetup<T> setup) {
         IRng rng = setup.Threads > 1 ? new LockedRng() : new Rng();
-        Action<EvolutionSetup<T>> evaluation = setup.Threads > 1 ? EvaluateParallel : EvaluateFitness;
-        evaluation(setup);
+        Action<EvolutionSetup<T>, IRng, bool> evaluation = setup.Threads > 1 ? EvaluateParallel : EvaluateFitness;
+        evaluation(setup, rng, true);
         float fitness = Entries[0].Fitness;
         int bestRun = 0;
 
         for (int i = 0; i < setup.Runs; i++) {
             Evolve(rng, setup);
 
-            evaluation(setup);
-            if (Entries[0].Fitness >= 0.0 && Entries[0].Fitness < setup.TargetFitness)
-                return Entries[0];
-
+            evaluation(setup, rng, false);
             if (Math.Abs(Entries[0].Fitness - fitness) <= float.Epsilon)
                 setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
             else {
@@ -208,6 +205,7 @@ where T : class, IChromosome<T> {
             
             setup.AfterRun?.Invoke(i, Entries[0].Fitness);
         }
+        evaluation(setup, rng, true);
 
         return Entries[0];
     }

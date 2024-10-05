@@ -27,33 +27,19 @@ Then a setup is needed which contains the training samples used to train the con
 
 ```cs
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    TrainingSet = [...],
+                                                                    Evaluator = new DboEvaluator([...]),
                                                                     Runs = 5000,
                                                                     Threads = 2
 };
 ```
+The Evaluator property needs to be an evaluation logic which measures the deviation of model results to the expected values. The evaluator above needs to be filled with samples which are then used in training.
 
-The TrainingSet property is a collection of test cases which return a deviation value based on a configuration. Usually one would feed a neuronal net with the provided configuration, fill the input values of the net and then compute the results. Then a good return would be the average or summed up deviation of the result values to the expected values.
-
-A good template for a test func for the upper case would be
-```csharp
-ConcurrentStack<DynamicBinOpNet> netStack = new();
-float Test(DynamicBinOpConfiguration config, float x, float expected) {
-    if (!netStack.TryPop(out DynamicBinOpNet net))
-        net = new(config);
-    else net.Update(config);
-
-    net["x"] = x;
-    net.Compute();
-    float result = net["y"];
-    return Math.Abs(expected - result);
-}
 ```
 
 When the setup is created with samples the population can be trained with
 
 ```cs
-Tuple<DynamicBinOpConfiguration, double> result=population.Train(setup);
+PopulationEntry<DynamicBinOpConfiguration> result=population.Train(setup);
 ```
 
 The population returns the best configuration based on the training set after the number of runs are completed or a threshold is reached. This configuration can be used to feed a neuronal net and compute values.

@@ -11,7 +11,6 @@ namespace NightlyCode.Ai.Net.DynamicBinOp;
 /// <typeparam name="T">type of chromosome to evaluate</typeparam>
 public class DboEvaluator<T> : IFitnessEvaluator<T> 
     where T : DynamicBinOpConfiguration, IChromosome<T> {
-    readonly Rng rng = new();
     readonly TrainingSample[] samples;
     readonly ConcurrentStack<DynamicBinOpNet> nets = [];
 
@@ -27,18 +26,18 @@ public class DboEvaluator<T> : IFitnessEvaluator<T>
     public int SampleCount { get; init; }
 
     /// <inheritdoc />
-    public float EvaluateFitness(T chromosome) {
+    public float EvaluateFitness(T chromosome, IRng rng, bool fullSet) {
         if (!nets.TryPop(out DynamicBinOpNet net))
             net = new(chromosome);
         else net.Update(chromosome);
-        
-        TrainingSample[] sampleBase = SampleCount == 0 ? samples : samples.Shuffle(rng).Take(SampleCount).ToArray();
-        float result=sampleBase.Select(s => {
-                                     foreach (KeyValuePair<string, float> input in s.Inputs)
-                                         net[input.Key] = input.Value;
-                                     net.Compute();
-                                     return s.Outputs.Select(o => Math.Abs(net[o.Key] - o.Value)).Average();
-                                 }).Average();
+
+        TrainingSample[] sampleBase = SampleCount == 0 || fullSet ? samples : samples.Shuffle(rng).Take(SampleCount).ToArray();
+        float result = sampleBase.Select(s => {
+                                             foreach (KeyValuePair<string, float> input in s.Inputs)
+                                                 net[input.Key] = input.Value;
+                                             net.Compute();
+                                             return s.Outputs.Select(o => Math.Abs(net[o.Key] - o.Value)).Average();
+                                         }).Average();
         nets.Push(net);
         return result;
     }
