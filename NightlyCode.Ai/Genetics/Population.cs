@@ -185,19 +185,16 @@ where T : class, IChromosome<T> {
     /// <param name="setup">configuration values used for evolution</param>
     /// <returns>best training result</returns>
     public PopulationEntry<T> Train(EvolutionSetup<T> setup) {
-        if (setup.Threads > 1)
-            return TrainParallel(setup);
-        
-        Rng rng = new();
-
-        EvaluateFitness(setup);
+        IRng rng = setup.Threads > 1 ? new LockedRng() : new Rng();
+        Action<EvolutionSetup<T>> evaluation = setup.Threads > 1 ? EvaluateParallel : EvaluateFitness;
+        evaluation(setup);
         float fitness = Entries[0].Fitness;
         int bestRun = 0;
 
         for (int i = 0; i < setup.Runs; i++) {
             Evolve(rng, setup);
 
-            EvaluateFitness(setup);
+            evaluation(setup);
             if (Entries[0].Fitness >= 0.0 && Entries[0].Fitness < setup.TargetFitness)
                 return Entries[0];
 
@@ -209,38 +206,6 @@ where T : class, IChromosome<T> {
                 bestRun = i;
             }
             
-            setup.AfterRun?.Invoke(i, Entries[0].Fitness);
-        }
-
-        return Entries[0];
-    }
-    
-    /// <summary>
-    /// trains the population
-    /// </summary>
-    /// <param name="setup">configuration values used for evolution</param>
-    /// <returns>best training result</returns>
-    PopulationEntry<T> TrainParallel(EvolutionSetup<T> setup) {
-        IRng rng = new LockedRng();
-        EvaluateParallel(setup);
-        float fitness = Entries[0].Fitness;
-        int bestRun = 0;
-        for (int i = 0; i < setup.Runs; i++) {
-            Evolve(rng, setup);
-
-            EvaluateParallel(setup);
-
-            if (Entries[0].Fitness >= 0.0 && Entries[0].Fitness < setup.TargetFitness)
-                return Entries[0];
-            
-            if (Math.Abs(Entries[0].Fitness - fitness) <= float.Epsilon)
-                setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
-            else {
-                setup.Mutation.Runs = 1;
-                fitness = Entries[0].Fitness;
-                bestRun = i;
-            }
-
             setup.AfterRun?.Invoke(i, Entries[0].Fitness);
         }
 
