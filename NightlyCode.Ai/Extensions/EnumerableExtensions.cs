@@ -44,4 +44,11 @@ static class EnumerableExtensions {
             elements[swapIndex] = elements[i];
         }
     }
+
+    public static T RandomItem<T>(this IEnumerable<T> source, IRng rng) {
+        T[] elements = source as T[] ?? source.ToArray();
+        if (elements.Length == 0)
+            return default;
+        return elements[rng.NextInt(elements.Length)];
+    }
 }

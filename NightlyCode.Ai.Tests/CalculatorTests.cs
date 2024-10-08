@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using NightlyCode.Ai.Genetics;
+using NightlyCode.Ai.Net;
+using NightlyCode.Ai.Net.Dynamic;
 using NightlyCode.Ai.Net.DynamicBinOp;
 using NightlyCode.Json;
 
@@ -224,29 +226,29 @@ public class CalculatorTests {
 
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>([
-                                                                                                                                new(new{x=5,y=2,z=7},new{result=3}),
-                                                                                                                                new(new{x=3,y=3,z=3},new{result=6}),
-                                                                                                                                new(new{x=10,y=10,z=2},new{result=98}),
-                                                                                                                                new(new{x=5,y=5,z=1},new{result=24}),
-                                                                                                                                new(new{x=1,y=40,z=9},new{result=31}),
-                                                                                                                                new(new{x=6,y=10,z=10},new{result=50}),
-                                                                                                                                new(new{x=7,y=8,z=6},new{result=50}),
-                                                                                                                                new(new{x=11,y=8,z=6},new{result=82}),
-                                                                                                                                new(new{x=2,y=70,z=12},new{result=128}),
-                                                                                                                                new(new{x=12,y=12,z=4},new{result=140}),
-                                                                                                                                new(new{x=9,y=12,z=19},new{result=89}),
-                                                                                                                                new(new{x=1,y=2,z=3},new{result=-1}),
-                                                                                                                                new(new{x=8,y=3,z=8},new{result=16}),
-                                                                                                                                new(new{x=2,y=34,z=9},new{result=59}),
-                                                                                                                                new(new{x=8,y=66,z=3},new{result=525}),
-                                                                                                                                new(new{x=20,y=6,z=333},new{result=-213}),
-                                                                                                                                new(new{x=4,y=60,z=399},new{result=-159}),
-                                                                                                                                new(new{x=7,y=18,z=170},new{result=-49}),
-                                                                                                                                new(new{x=-3,y=7,z=20},new{result=-41}),
-                                                                                                                                new(new{x=-3,y=8,z=20},new{result=-44}),
-                                                                                                                                new(new{x=-3,y=-8,z=20},new{result=4}),
-                                                                                                                            ]),
+                                                                    Evaluator = new SamplesEvaluator<DynamicBinOpConfiguration, DynamicBinOpNet>([
+                                                                                                                                                     new(new{x=5,y=2,z=7},new{result=3}),
+                                                                                                                                                     new(new{x=3,y=3,z=3},new{result=6}),
+                                                                                                                                                     new(new{x=10,y=10,z=2},new{result=98}),
+                                                                                                                                                     new(new{x=5,y=5,z=1},new{result=24}),
+                                                                                                                                                     new(new{x=1,y=40,z=9},new{result=31}),
+                                                                                                                                                     new(new{x=6,y=10,z=10},new{result=50}),
+                                                                                                                                                     new(new{x=7,y=8,z=6},new{result=50}),
+                                                                                                                                                     new(new{x=11,y=8,z=6},new{result=82}),
+                                                                                                                                                     new(new{x=2,y=70,z=12},new{result=128}),
+                                                                                                                                                     new(new{x=12,y=12,z=4},new{result=140}),
+                                                                                                                                                     new(new{x=9,y=12,z=19},new{result=89}),
+                                                                                                                                                     new(new{x=1,y=2,z=3},new{result=-1}),
+                                                                                                                                                     new(new{x=8,y=3,z=8},new{result=16}),
+                                                                                                                                                     new(new{x=2,y=34,z=9},new{result=59}),
+                                                                                                                                                     new(new{x=8,y=66,z=3},new{result=525}),
+                                                                                                                                                     new(new{x=20,y=6,z=333},new{result=-213}),
+                                                                                                                                                     new(new{x=4,y=60,z=399},new{result=-159}),
+                                                                                                                                                     new(new{x=7,y=18,z=170},new{result=-49}),
+                                                                                                                                                     new(new{x=-3,y=7,z=20},new{result=-41}),
+                                                                                                                                                     new(new{x=-3,y=8,z=20},new{result=-44}),
+                                                                                                                                                     new(new{x=-3,y=-8,z=20},new{result=4}),
+                                                                                                                                                 ]),
                                                                     Runs = 5000,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
@@ -284,11 +286,11 @@ public class CalculatorTests {
                                                                                 applications = JPath.Select<float>(s, "inputs/applications"),
                                                                                 profit = JPath.Select<float>(s, "inputs/profit")
                                                                             }, new {
-                                                                                       excellence = JPath.Select<float>(s, "inputs/profit")
+                                                                                       excellence = JPath.Select<float>(s, "outputs/excellence")
                                                                                    })).ToArray();
             
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>(trainingSamples),
+                                                                    Evaluator = new SamplesEvaluator<DynamicBinOpConfiguration, DynamicBinOpNet>(trainingSamples),
                                                                     Runs = 5000,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
@@ -318,18 +320,18 @@ public class CalculatorTests {
         
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>([
-                                                                                                                                new(new{x=1},new{y=2}),
-                                                                                                                                new(new{x=2},new{y=6}),
-                                                                                                                                new(new{x=3},new{y=12}),
-                                                                                                                                new(new{x=4},new{y=20}),
-                                                                                                                                new(new{x=5},new{y=30}),
-                                                                                                                                new(new{x=6},new{y=42}),
-                                                                                                                                new(new{x=7},new{y=56}),
-                                                                                                                                new(new{x=8},new{y=72}),
-                                                                                                                                new(new{x=9},new{y=90}),
-                                                                                                                                new(new{x=10},new{y=110}),
-                                                                                                                            ]),
+                                                                    Evaluator = new SamplesEvaluator<DynamicBinOpConfiguration, DynamicBinOpNet>([
+                                                                                                                                                     new(new{x=1},new{y=2}),
+                                                                                                                                                     new(new{x=2},new{y=6}),
+                                                                                                                                                     new(new{x=3},new{y=12}),
+                                                                                                                                                     new(new{x=4},new{y=20}),
+                                                                                                                                                     new(new{x=5},new{y=30}),
+                                                                                                                                                     new(new{x=6},new{y=42}),
+                                                                                                                                                     new(new{x=7},new{y=56}),
+                                                                                                                                                     new(new{x=8},new{y=72}),
+                                                                                                                                                     new(new{x=9},new{y=90}),
+                                                                                                                                                     new(new{x=10},new{y=110}),
+                                                                                                                                                 ]),
                                                                     Runs = 5000,
                                                                     AfterRun = (index, fitness) => {
                                                                                    if ((index & 511) == 0)
@@ -350,25 +352,60 @@ public class CalculatorTests {
         Console.WriteLine(result.Chromosome);
         Console.WriteLine(Json.Json.WriteString(result.Chromosome));
     }
-    
+
+    [Test, Parallelizable]
+    public void SequenceDynamicFF() {
+        Population<DynamicFFConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
+        EvolutionSetup<DynamicFFConfiguration> setup = new() {
+                                                                 Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
+                                                                                                                                            new(new{x=1},new{y=2}),
+                                                                                                                                            new(new{x=2},new{y=6}),
+                                                                                                                                            new(new{x=3},new{y=12}),
+                                                                                                                                            new(new{x=4},new{y=20}),
+                                                                                                                                            new(new{x=5},new{y=30}),
+                                                                                                                                            new(new{x=6},new{y=42}),
+                                                                                                                                            new(new{x=7},new{y=56}),
+                                                                                                                                            new(new{x=8},new{y=72}),
+                                                                                                                                            new(new{x=9},new{y=90}),
+                                                                                                                                            new(new{x=10},new{y=110}),
+                                                                                                                                        ]),
+                                                                 Runs = 5000,
+                                                                 AfterRun = (index, fitness) => {
+                                                                                if ((index & 511) == 0)
+                                                                                    Console.WriteLine("{0}: {1}", index, fitness);
+                                                                            },
+                                                                 Threads = 2
+                                                             };
+        PopulationEntry<DynamicFFConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+
+        DynamicFFNet net = new(result.Chromosome) {
+                                                      ["x"] = 20
+                                                  };
+        net.Compute();
+        Console.WriteLine($"{net["y"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+
     [Test, Parallelizable]
     public void SequenceDynamicBinOpTwice() {
         ConcurrentStack<DynamicBinOpNet> netStack = new();
         
         Population<DynamicBinOpConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
         EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
-                                                                    Evaluator = new DboEvaluator<DynamicBinOpConfiguration>([
-                                                                                                                                new(new{x=1},new{y=2}),
-                                                                                                                                new(new{x=2},new{y=6}),
-                                                                                                                                new(new{x=3},new{y=12}),
-                                                                                                                                new(new{x=4},new{y=20}),
-                                                                                                                                new(new{x=5},new{y=30}),
-                                                                                                                                new(new{x=6},new{y=42}),
-                                                                                                                                new(new{x=7},new{y=56}),
-                                                                                                                                new(new{x=8},new{y=72}),
-                                                                                                                                new(new{x=9},new{y=90}),
-                                                                                                                                new(new{x=10},new{y=110}),
-                                                                                                                            ]),
+                                                                    Evaluator = new SamplesEvaluator<DynamicBinOpConfiguration, DynamicBinOpNet>([
+                                                                                                                                                     new(new{x=1},new{y=2}),
+                                                                                                                                                     new(new{x=2},new{y=6}),
+                                                                                                                                                     new(new{x=3},new{y=12}),
+                                                                                                                                                     new(new{x=4},new{y=20}),
+                                                                                                                                                     new(new{x=5},new{y=30}),
+                                                                                                                                                     new(new{x=6},new{y=42}),
+                                                                                                                                                     new(new{x=7},new{y=56}),
+                                                                                                                                                     new(new{x=8},new{y=72}),
+                                                                                                                                                     new(new{x=9},new{y=90}),
+                                                                                                                                                     new(new{x=10},new{y=110}),
+                                                                                                                                                 ]),
                                                                     Runs = 5000,
                                                                     TargetFitness = 0.01f,
                                                                     AfterRun = (index, fitness) => {
@@ -398,6 +435,106 @@ public class CalculatorTests {
 
         resultNet["x"] = 20;
 
+        resultNet.Compute();
+        Console.WriteLine($"{resultNet["y"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+    
+    [Test, Parallelizable]
+    public void CountVowels() {
+
+        float[] NameArray(string name) {
+            float[] values = new float[20];
+            for(int i=0;i<values.Length;++i)
+                values[i] = i < name.Length ? (byte)name[i] : 0.0f;
+
+            return values;
+        }
+        
+        Population<DynamicBinOpConfiguration> population = new(100, rng => new(20, ["y"], rng));
+        EvolutionSetup<DynamicBinOpConfiguration> setup = new() {
+                                                                    Evaluator = new SamplesEvaluator<DynamicBinOpConfiguration, DynamicBinOpNet>([
+                                                                                                                                                     new(NameArray("Spitzenplatz"),new{y=3}),
+                                                                                                                                                     new(NameArray("Kräuterbeet"),new{y=5}),
+                                                                                                                                                     new(NameArray("Muschelstrand"),new{y=3}),
+                                                                                                                                                     new(NameArray("Oldenburg"),new{y=3}),
+                                                                                                                                                     new(NameArray("Fernsehgarten"),new{y=4}),
+                                                                                                                                                     new(NameArray("Ananasrhabarbersalat"),new{y=8}),
+                                                                                                                                                     new(NameArray("Interkontinental"),new{y=6}),
+                                                                                                                                                     new(NameArray("Sonnenallee"),new{y=5}),
+                                                                                                                                                     new(NameArray("Gemüsebrühe"),new{y=5}),
+                                                                                                                                                     new(NameArray("Ölplattform"),new{y=3}),
+                                                                                                                                                     new(NameArray("Mandelbrot"), new{y=3}),
+                                                                                                                                                     new(NameArray("Sonderrecht"), new{y=3}),
+                                                                                                                                                     new(NameArray("Molekularbiologe"), new{y=8}),
+                                                                                                                                                     new(NameArray("Wetteransage"), new{y=5})
+                                                                                                                                                 ]),
+                                                                    Runs = 5000,
+                                                                    TargetFitness = 0.01f,
+                                                                    AfterRun = (index, fitness) => {
+                                                                                   if ((index & 511) == 0)
+                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
+                                                                               },
+                                                                    Threads = 2
+                                                                };
+        PopulationEntry<DynamicBinOpConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        
+        DynamicBinOpNet resultNet = new(result.Chromosome);
+
+        
+        resultNet.SetInputValues(NameArray("Ananas"));
+        resultNet.Compute();
+        Console.WriteLine($"{resultNet["y"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+    
+    [Test, Parallelizable]
+    public void CountVowelsFF() {
+
+        float[] NameArray(string name) {
+            float[] values = new float[20];
+            for(int i=0;i<values.Length;++i)
+                values[i] = i < name.Length ? (byte)name[i] : 0.0f;
+
+            return values;
+        }
+        
+        Population<DynamicFFConfiguration> population = new(100, rng => new(20, ["y"], rng));
+        EvolutionSetup<DynamicFFConfiguration> setup = new() {
+                                                                 Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
+                                                                                                                                               new(NameArray("Spitzenplatz"),new{y=3}),
+                                                                                                                                               new(NameArray("Kräuterbeet"),new{y=5}),
+                                                                                                                                               new(NameArray("Muschelstrand"),new{y=3}),
+                                                                                                                                               new(NameArray("Oldenburg"),new{y=3}),
+                                                                                                                                               new(NameArray("Fernsehgarten"),new{y=4}),
+                                                                                                                                               new(NameArray("Ananasrhabarbersalat"),new{y=8}),
+                                                                                                                                               new(NameArray("Interkontinental"),new{y=6}),
+                                                                                                                                               new(NameArray("Sonnenallee"),new{y=5}),
+                                                                                                                                               new(NameArray("Gemüsebrühe"),new{y=5}),
+                                                                                                                                               new(NameArray("Ölplattform"),new{y=3}),
+                                                                                                                                               new(NameArray("Mandelbrot"), new{y=3}),
+                                                                                                                                               new(NameArray("Sonderrecht"), new{y=3}),
+                                                                                                                                               new(NameArray("Molekularbiologe"), new{y=8}),
+                                                                                                                                               new(NameArray("Wetteransage"), new{y=5})
+                                                                                                                                           ]),
+                                                                 Runs = 5000,
+                                                                 TargetFitness = 0.01f,
+                                                                 AfterRun = (index, fitness) => {
+                                                                                if ((index & 511) == 0)
+                                                                                    Console.WriteLine("{0}: {1}", index, fitness);
+                                                                            },
+                                                                 Threads = 2
+                                                             };
+        PopulationEntry<DynamicFFConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        
+        DynamicFFNet resultNet = new(result.Chromosome);
+
+        
+        resultNet.SetInputValues(NameArray("Ananas"));
         resultNet.Compute();
         Console.WriteLine($"{resultNet["y"]}");
 

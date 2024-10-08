@@ -1,4 +1,4 @@
-using NightlyCode.Ai.Net.Configurations;
+using NightlyCode.Ai.Net;
 
 namespace NightlyCode.Ai.Genetics;
 

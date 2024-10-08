@@ -5,5 +5,8 @@
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.ExcellenceDynamicBinOp&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.SequenceDynamicBinOp&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.SequenceDynamicBinOpTwice&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.CountVowels&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.SequenceDynamicFF&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.CountVowelsFF&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

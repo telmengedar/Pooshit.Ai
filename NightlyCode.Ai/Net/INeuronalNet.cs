@@ -7,10 +7,22 @@ namespace NightlyCode.Ai.Net;
 public interface INeuronalNet<T> {
     
     /// <summary>
+    /// access to neurons
+    /// </summary>
+    /// <param name="name">name of neuron</param>
+    float this[string name] { get; set; }
+    
+    /// <summary>
     /// computes the state of the neuronal net
     /// </summary>
     void Compute();
 
+    /// <summary>
+    /// set an array of unnamed input values
+    /// </summary>
+    /// <param name="values">values to set</param>
+    void SetInputValues(float[] values);
+    
     /// <summary>
     /// updates connection weights of neuronal net
     /// </summary>

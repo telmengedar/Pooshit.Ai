@@ -1,3 +1,6 @@
+using NightlyCode.Ai.Extensions;
+using NightlyCode.Ai.Neurons;
+
 namespace NightlyCode.Ai.Net.DynamicBinOp;
 
 public class DynamicBinOpNet : INeuronalNet<DynamicBinOpConfiguration> {
@@ -11,12 +14,12 @@ public class DynamicBinOpNet : INeuronalNet<DynamicBinOpConfiguration> {
     /// <param name="configuration">net configuration</param>
     public DynamicBinOpNet(DynamicBinOpConfiguration configuration) {
         this.configuration = configuration;
-        foreach (NamedNeuronConfig input in configuration.Inputs)
-            named[input.Name] = input.Index;
-        foreach (NamedTargetNeuronConfig output in configuration.Outputs)
-            named[output.Name] = output.Index;
-
-        neuronValues = new float[configuration.Inputs.Length + configuration.Outputs.Length + configuration.Neurons.Length];
+        foreach (NeuronConfig input in configuration.Neurons) {
+            if(!string.IsNullOrEmpty(input.Name))
+                named[input.Name] = input.Index;
+        }
+        
+        neuronValues = new float[configuration.Neurons.Length];
     }
 
     /// <summary>
@@ -34,19 +37,32 @@ public class DynamicBinOpNet : INeuronalNet<DynamicBinOpConfiguration> {
     }
 
     /// <summary>
+    /// set unnamed input values
+    /// </summary>
+    /// <param name="values">values to set</param>
+    /// <exception cref="ArgumentException">thrown when length of value array doesn't match input neuron count</exception>
+    public void SetInputValues(float[] values) {
+        if (values.Length != configuration.InputCount)
+            throw new ArgumentException("Invalid number of values");
+        Array.Copy(values, neuronValues, values.Length);
+    }
+    
+    /// <summary>
     /// input names
     /// </summary>
-    public IEnumerable<string> Inputs => configuration.Inputs.Select(i => i.Name);
+    public IEnumerable<string> Inputs => configuration.Neurons.Take(configuration.InputCount).Select(i => i.Name);
 
     /// <summary>
     /// output names
     /// </summary>
-    public IEnumerable<string> Outputs => configuration.Outputs.Select(i => i.Name);
+    public IEnumerable<string> Outputs => configuration.Neurons.Skip(configuration.InputCount)
+                                                       .Take(configuration.OutputCount)
+                                                       .Select(i => i.Name);
 
     /// <inheritdoc />
     public void Compute() {
         foreach (IGrouping<int, BinOpConnection> group in configuration.GroupedConnections) {
-            TargetNeuronConfig targetConfig=configuration.GetTargetNeuron(group.Key);
+            NeuronConfig targetConfig=configuration.GetTargetNeuron(group.Key);
 
             this[group.Key] = group.Select(g => {
                                                if (g.Rhs == -1)
@@ -64,10 +80,10 @@ public class DynamicBinOpNet : INeuronalNet<DynamicBinOpConfiguration> {
     public void Update(DynamicBinOpConfiguration configuration) {
         this.configuration = configuration;
 
-        if (neuronValues.Length < this.configuration.Inputs.Length + this.configuration.Outputs.Length + this.configuration.Neurons.Length)
-            neuronValues = new float[this.configuration.Inputs.Length + this.configuration.Outputs.Length + this.configuration.Neurons.Length];
+        if (neuronValues.Length < this.configuration.Neurons.Length)
+            Array.Resize(ref neuronValues, configuration.Neurons.Length);
         else 
-            foreach (NamedTargetNeuronConfig output in configuration.Outputs)
+            foreach (NeuronConfig output in configuration.Neurons.Skip(configuration.InputCount).Take(configuration.OutputCount))
                 this[output.Name] = 0.0f;
     }
 }

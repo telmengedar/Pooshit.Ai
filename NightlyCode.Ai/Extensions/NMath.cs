@@ -1,6 +1,6 @@
 using NightlyCode.Ai.Net.Operations;
 
-namespace NightlyCode.Ai.Net;
+namespace NightlyCode.Ai.Extensions;
 
 /// <summary>
 /// math operations used for neuronal values
@@ -43,6 +43,12 @@ public static class NMath {
         return result;
     }
 
+    /// <summary>
+    /// executes the specified activation function
+    /// </summary>
+    /// <param name="value">value to be used as argument for function</param>
+    /// <param name="func">function to execute</param>
+    /// <returns>function result</returns>
     public static float Activation(this float value, ActivationFunc func) {
         float result;
         switch (func) {
@@ -79,6 +85,12 @@ public static class NMath {
                 break;
             case ActivationFunc.Sqrt:
                 result= (float)AMath.Power(value, 0.5);
+                break;
+            case ActivationFunc.Floor:
+                result = (float)Math.Floor(value);
+                break;
+            case ActivationFunc.Ceiling:
+                result = (float)Math.Ceiling(value);
                 break;
         }
 

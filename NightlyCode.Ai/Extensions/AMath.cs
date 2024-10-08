@@ -1,4 +1,4 @@
-namespace NightlyCode.Ai;
+namespace NightlyCode.Ai.Extensions;
 
 static class AMath {
     

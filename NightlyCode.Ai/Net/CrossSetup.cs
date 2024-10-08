@@ -2,7 +2,7 @@ using NightlyCode.Ai.Extern;
 using NightlyCode.Ai.Genetics.Mutation;
 using NightlyCode.Ai.Net.Operations;
 
-namespace NightlyCode.Ai.Net.Configurations;
+namespace NightlyCode.Ai.Net;
 
 /// <summary>
 /// setup for crossing chromosomes

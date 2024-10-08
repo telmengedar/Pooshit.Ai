@@ -14,5 +14,7 @@ public enum ActivationFunc {
     Reciprocal,
     Swish,
     Sqrt,
-    Pow2
+    Pow2,
+    Floor,
+    Ceiling
 }

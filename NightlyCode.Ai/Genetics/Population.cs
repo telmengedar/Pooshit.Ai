@@ -1,6 +1,6 @@
 using NightlyCode.Ai.Extern;
 using NightlyCode.Ai.Genetics.Mutation;
-using NightlyCode.Ai.Net.Configurations;
+using NightlyCode.Ai.Net;
 
 namespace NightlyCode.Ai.Genetics;
 
@@ -188,23 +188,25 @@ where T : class, IChromosome<T> {
         IRng rng = setup.Threads > 1 ? new LockedRng() : new Rng();
         Action<EvolutionSetup<T>, IRng, bool> evaluation = setup.Threads > 1 ? EvaluateParallel : EvaluateFitness;
         evaluation(setup, rng, true);
-        float fitness = Entries[0].Fitness;
+        int bestStructure = Entries[0].Chromosome.StructureHash();
         int bestRun = 0;
 
         for (int i = 0; i < setup.Runs; i++) {
             Evolve(rng, setup);
 
             evaluation(setup, rng, false);
-            if (Math.Abs(Entries[0].Fitness - fitness) <= float.Epsilon)
+            int structure = Entries[0].Chromosome.StructureHash();
+            if (structure == bestStructure)
                 setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
             else {
                 setup.Mutation.Runs = 1;
-                fitness = Entries[0].Fitness;
+                bestStructure = structure;
                 bestRun = i;
             }
-            
+
             setup.AfterRun?.Invoke(i, Entries[0].Fitness);
         }
+
         evaluation(setup, rng, true);
 
         return Entries[0];
