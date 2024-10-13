@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="2d7a1cc3-7ae4-4632-beb9-087681e0d1e7" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/NightlyCode.Ai.Tests/AMathTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.NightlyCode.Ai/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.NightlyCode.Ai/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.NightlyCode.Ai/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai.Tests/CalculatorTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai.Tests/CalculatorTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Pooshit.Ai.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Extensions/AMath.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Extensions/AMath.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Extensions/EnumerableExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Extensions/EnumerableExtensions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Extensions/NMath.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Extensions/NMath.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Net/Dynamic/DynamicFFConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicFF/DynamicFFConfiguration.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Net/Dynamic/DynamicFFNet.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicFF/DynamicFFNet.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Net/Dynamic/FFConnection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicFF/FFConnection.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicBinOp/BinOpConnection.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicBO/BOConnection.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicBinOp/DynamicBinOpConfiguration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicBO/DynamicBOConfiguration.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicBinOp/DynamicBinOpNet.cs" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/Net/DynamicBO/DynamicBONet.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NightlyCode.Ai/NightlyCode.Ai.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/NightlyCode.Ai/NightlyCode.Ai.csproj" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JSON File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="mock:///Dummy.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///Dummy.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///Dummy.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///Dummy.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/2d7eea252964e69be94cb9c847b371b23e4dd470/src/coreclr/System.Private.CoreLib/src/System/Threading/Monitor.CoreCLR.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/2d7eea252964e69be94cb9c847b371b23e4dd470/src/libraries/System.Linq/src/System/Linq/Aggregate.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/2d7eea252964e69be94cb9c847b371b23e4dd470/src/libraries/System.Linq/src/System/Linq/Sum.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/2d7eea252964e69be94cb9c847b371b23e4dd470/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/List.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/2d7eea252964e69be94cb9c847b371b23e4dd470/src/libraries/System.Private.CoreLib/src/System/Runtime/CompilerServices/DefaultInterpolatedStringHandler.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/2d7eea252964e69be94cb9c847b371b23e4dd470/src/libraries/System.Private.CoreLib/src/System/ThrowHelper.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/bd1154a8c2834548940500226b7d74b784908/b8/482241f7/IGrouping`2.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/dev/nightlycode/NightlyCode.Ai/NightlyCode.Ai/Genetics/Population.cs" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="KubernetesApiProvider">{
+  &quot;contexts&quot;: [
+    {
+      &quot;name&quot;: &quot;gke_px-system-273013_us-central1-c_xxio-cluster-1&quot;
+    }
+  ],
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="KubernetesSettings">
+    <option name="contextName" value="gke_px-system-273013_us-central1-c_xxio-cluster-1" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2bwjvNSq4TKt9G806TL5oTsJtrH" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "2cff1856-e6ba-4001-aafc-799651fb03ec.executor": "Debug",
+    "75242c3c-88ec-4fce-ab80-056b26fedf4b.executor": "Debug",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\Toni\\AppData\\Roaming\\JetBrains\\Rider2024.1\\resharper-host\\DecompilerCache",
+      "C:\\Users\\Toni\\AppData\\Roaming\\JetBrains\\Rider2024.1\\resharper-host\\SourcesCache",
+      "C:\\Users\\Toni\\AppData\\Local\\Symbols\\src"
+    ]
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2d7a1cc3-7ae4-4632-beb9-087681e0d1e7" name="Changes" comment="" />
+      <created>1707133264521</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1707133264521</updated>
+      <workItem from="1707133265609" duration="163426000" />
+      <workItem from="1710614681250" duration="598000" />
+      <workItem from="1715932544869" duration="2144000" />
+      <workItem from="1727182419551" duration="179460000" />
+    </task>
+    <task id="LOCAL-00001" summary="Add initial genetic algorithms and neural network configurations.&#10;&#10;Introduced key components including PopulationEntry, calculator tests, NeuronalOperationNetConfiguration, and basic genetic algorithms interfaces. These additions lay the foundation for evolving neural network configurations using genetic algorithms.">
+      <option name="closed" value="true" />
+      <created>1727638488251</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1727638488251</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Add initial project configuration and test setup&#10;&#10;Initialized project files and configurations for IDE support, including gitignore rules and version control settings. Added test project setup with essential packages and references for NUnit testing framework.">
+      <option name="closed" value="true" />
+      <created>1727638500538</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1727638500538</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Remove NamedBinOpNeuron and update tests with excellence samples&#10;&#10;Deleted `NamedBinOpNeuron` class and introduced `NeuronConfig` for better structure. Updated test configurations to use new neuron structure and added handling for excellence samples with dynamic binary operations. Improved parallel processing in tests.">
+      <option name="closed" value="true" />
+      <created>1727950156994</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1727950156994</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Add mutation runs property and improve evolution logic&#10;&#10;Introduced a new `Runs` property to `MutationSetup`. Refactored mutation logic to include multiple runs and adjusted fitness evaluation. Updated tests and project configuration to align with these changes.">
+      <option name="closed" value="true" />
+      <created>1728033715753</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1728033715753</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Add fitness evaluator and update genetic algorithm logic&#10;&#10;Implemented IFitnessEvaluator interface for customizable fitness evaluation. Replaced direct fitness calculation with the new evaluator in Population class, added TrainingSample, and updated related tests. Included version bump and dependency update.">
+      <option name="closed" value="true" />
+      <created>1728082388005</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1728082388005</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Refactor training logic in Population class&#10;&#10;Consolidate parallel and single-threaded training methods into a unified Train method. The new implementation determines the appropriate evaluation function based on the number of threads, reducing code duplication and simplifying the logic.">
+      <option name="closed" value="true" />
+      <created>1728093656364</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1728093656364</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Refactor fitness evaluation to include RNG and training flags&#10;&#10;Updated the EvaluateFitness method to accept an RNG instance and a boolean flag to determine full sample set training. This change affects fitness evaluation in both serial and parallel contexts and improves training accuracy by allowing more controlled sample set usage. Additionally, updated project version to 0.4.14 and revised readme for clarity.">
+      <option name="closed" value="true" />
+      <created>1728095631589</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1728095631589</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Remove DynamicBinOp and related network implementations&#10;&#10;The entire DynamicBinOp module, including classes like BinOpNeuron, DboEvaluator, and FeedForwardNet, has been removed from the codebase. This change simplifies the overall structure and removes redundant or outdated neuronal network implementations. Future development will focus on more efficient and maintainable architectures.">
+      <option name="closed" value="true" />
+      <created>1728370736061</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1728370736061</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Add initial genetic algorithms and neural network configurations.&#10;&#10;Introduced key components including PopulationEntry, calculator tests, NeuronalOperationNetConfiguration, and basic genetic algorithms interfaces. These additions lay the foundation for evolving neural network configurations using genetic algorithms." />
+    <MESSAGE value="Add initial project configuration and test setup&#10;&#10;Initialized project files and configurations for IDE support, including gitignore rules and version control settings. Added test project setup with essential packages and references for NUnit testing framework." />
+    <MESSAGE value="Remove NamedBinOpNeuron and update tests with excellence samples&#10;&#10;Deleted `NamedBinOpNeuron` class and introduced `NeuronConfig` for better structure. Updated test configurations to use new neuron structure and added handling for excellence samples with dynamic binary operations. Improved parallel processing in tests." />
+    <MESSAGE value="Add mutation runs property and improve evolution logic&#10;&#10;Introduced a new `Runs` property to `MutationSetup`. Refactored mutation logic to include multiple runs and adjusted fitness evaluation. Updated tests and project configuration to align with these changes." />
+    <MESSAGE value="Add fitness evaluator and update genetic algorithm logic&#10;&#10;Implemented IFitnessEvaluator interface for customizable fitness evaluation. Replaced direct fitness calculation with the new evaluator in Population class, added TrainingSample, and updated related tests. Included version bump and dependency update." />
+    <MESSAGE value="Refactor training logic in Population class&#10;&#10;Consolidate parallel and single-threaded training methods into a unified Train method. The new implementation determines the appropriate evaluation function based on the number of threads, reducing code duplication and simplifying the logic." />
+    <MESSAGE value="Refactor fitness evaluation to include RNG and training flags&#10;&#10;Updated the EvaluateFitness method to accept an RNG instance and a boolean flag to determine full sample set training. This change affects fitness evaluation in both serial and parallel contexts and improves training accuracy by allowing more controlled sample set usage. Additionally, updated project version to 0.4.14 and revised readme for clarity." />
+    <MESSAGE value="Remove DynamicBinOp and related network implementations&#10;&#10;The entire DynamicBinOp module, including classes like BinOpNeuron, DboEvaluator, and FeedForwardNet, has been removed from the codebase. This change simplifies the overall structure and removes redundant or outdated neuronal network implementations. Future development will focus on more efficient and maintainable architectures." />
+    <option name="LAST_COMMIT_MESSAGE" value="Remove DynamicBinOp and related network implementations&#10;&#10;The entire DynamicBinOp module, including classes like BinOpNeuron, DboEvaluator, and FeedForwardNet, has been removed from the codebase. This change simplifies the overall structure and removes redundant or outdated neuronal network implementations. Future development will focus on more efficient and maintainable architectures." />
+  </component>
+  <component name="XDebuggerManager">
+    <watches-manager>
+      <configuration name="RiderUnitTests">
+        <watch expression="Entries[0].Fitness" language="C#" />
+        <watch expression="Entries[0].Hash" language="C#" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>

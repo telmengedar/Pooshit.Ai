@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pooshit.Ai", "Pooshit.Ai\Pooshit.Ai.csproj", "{00D9EE05-ABA5-4FC0-A2F3-03EBCF21533B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pooshit.Ai.Tests", "Pooshit.Ai.Tests\Pooshit.Ai.Tests.csproj", "{7C531777-5FD9-447D-B3AB-3179D597B3A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{00D9EE05-ABA5-4FC0-A2F3-03EBCF21533B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00D9EE05-ABA5-4FC0-A2F3-03EBCF21533B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00D9EE05-ABA5-4FC0-A2F3-03EBCF21533B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00D9EE05-ABA5-4FC0-A2F3-03EBCF21533B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C531777-5FD9-447D-B3AB-3179D597B3A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C531777-5FD9-447D-B3AB-3179D597B3A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C531777-5FD9-447D-B3AB-3179D597B3A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C531777-5FD9-447D-B3AB-3179D597B3A8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
