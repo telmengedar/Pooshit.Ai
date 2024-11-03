@@ -10,7 +10,6 @@ namespace Pooshit.Ai.Genetics;
 /// <typeparam name="T">type of chromosome</typeparam>
 public class Population<T> 
 where T : class, IChromosome<T> {
-    readonly Func<IRng, T> generator;
 
     /// <summary>
     /// creates a new <see cref="Population{T}"/>
@@ -19,9 +18,9 @@ where T : class, IChromosome<T> {
     /// <param name="generator">used to generate new chromosomes</param>
     /// <param name="rng">rng to use to initialize population</param>
     public Population(int size, Func<IRng, T> generator, Rng rng=null) {
-        if (size <= 0)
+        if (size <= 0) 
             throw new ArgumentException("Size of population has to be a positive integer");
-        this.generator = generator;
+        Generator = generator;
         rng ??= new();
         
         Entries = new PopulationEntry<T>[size];
@@ -36,7 +35,7 @@ where T : class, IChromosome<T> {
             Entries[i].Chromosome.Randomize(crossSetup);
         }
     }
-
+    
     /// <summary>
     /// creates a new <see cref="Population{T}"/>
     /// </summary>
@@ -46,6 +45,11 @@ where T : class, IChromosome<T> {
             throw new ArgumentException("Invalid population size");
         Entries = population;
     }
+
+    /// <summary>
+    /// generates a new clean configuration
+    /// </summary>
+    public Func<IRng, T> Generator { get; }
 
     /// <summary>
     /// entries in population
@@ -73,11 +77,13 @@ where T : class, IChromosome<T> {
                 break;
         }
 
-        while (offset < (elitismCount << 1) && offset<next.Length) {
-            next[offset++] = new() {
-                                       Chromosome = generator(rng),
-                                       Fitness = -2.0f
-                                   };
+        if (Generator != null) {
+            while (offset < (elitismCount << 1) && offset < next.Length) {
+                next[offset++] = new() {
+                                           Chromosome = Generator(rng),
+                                           Fitness = -2.0f
+                                       };
+            }
         }
 
         float max = Entries.Max(e => e.Fitness);

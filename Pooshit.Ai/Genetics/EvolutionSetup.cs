@@ -31,7 +31,7 @@ where T : IChromosome<T>
     /// <summary>
     /// rate of chromosomes which is copied to next evolution
     /// </summary>
-    public double Elitism { get; set; } = 0.3;
+    public double Elitism { get; set; } = 0.1;
 
     /// <summary>
     /// rates for mutation
@@ -41,7 +41,7 @@ where T : IChromosome<T>
     /// <summary>
     /// action executed after training run
     /// </summary>
-    public Action<int, double> AfterRun { get; set; }
+    public Action<int, float> AfterRun { get; set; }
     
     /// <summary>
     /// threads to use
