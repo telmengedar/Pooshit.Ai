@@ -122,4 +122,25 @@ public static class NMath {
                 return input.Max();
         }
     }
+
+    /// <summary>
+    /// function used to compute fitness value
+    /// </summary>
+    /// <param name="values">deviation values</param>
+    /// <returns>fitness value</returns>
+    public static float Fitness(this IEnumerable<float> values) {
+        float max = 0.0f;
+        float sum = 0.0f;
+        int count = 0;
+        foreach (float value in values) {
+            max = MathF.Max(max, value);
+            sum += value;
+            ++count;
+        }
+
+        if (count == 0)
+            return 0.0f;
+
+        return (sum / count + max) * 0.5f;
+    }
 }

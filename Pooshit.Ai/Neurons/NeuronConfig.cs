@@ -52,4 +52,6 @@ public class NeuronConfig {
     public override string ToString() {
         return $"{Index}{(!string.IsNullOrEmpty(Name) ? $"({Name})" : "")} - {(Activation == ActivationFunc.None ? (Aggregate) : $"{Activation}({Aggregate})")}";
     }
+
+    public int StructureHash => HashCode.Combine(OrderNumber, Aggregate, Activation);
 }

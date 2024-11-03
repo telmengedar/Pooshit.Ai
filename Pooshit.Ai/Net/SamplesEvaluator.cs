@@ -42,7 +42,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
 
         TrainingSample[] sampleBase = SampleCount == 0 || fullSet ? samples : samples.Shuffle(rng).Take(SampleCount).ToArray();
         float result = sampleBase.Select(s => {
-                                             if(s.InputArray!=null)
+                                             if (s.InputArray != null)
                                                  net.SetInputValues(s.InputArray);
                                              else {
                                                  foreach (KeyValuePair<string, float> input in s.Inputs)
@@ -51,7 +51,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
 
                                              net.Compute();
                                              return s.Outputs.Select(o => Math.Abs(net[o.Key] - o.Value)).Average();
-                                         }).Average();
+                                         }).Fitness();
         nets.Push(net);
         return result;
     }

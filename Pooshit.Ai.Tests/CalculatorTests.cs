@@ -263,11 +263,11 @@ public class CalculatorTests {
             net = new(result.Chromosome);
         else net.Update(result.Chromosome);
         
-        net["x"] = -3;
-        net["y"] = 7;
-        net["z"] = 20;
+        net["x"] = 5;
+        net["y"] = 13;
+        net["z"] = 44;
         net.Compute();
-        Console.WriteLine($"f(-3,7,20)={net["result"]}");
+        Console.WriteLine($"f(5,13,44)={net["result"]}");
 
         Console.WriteLine(result.Chromosome);
     }
@@ -277,17 +277,31 @@ public class CalculatorTests {
         ConcurrentStack<DynamicBONet> netStack = new();
         
         Dictionary<string, object> samples = Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
+        foreach (Dictionary<string, object> sample in JPath.Select<object[]>(samples, "samples")) {
+            float visits = JPath.Select<float>(sample, "inputs/visits");
+            float appclicks = JPath.Select<float>(sample, "inputs/appclicks");
+            float applications = JPath.Select<float>(sample, "inputs/applications");
+            float profit = JPath.Select<float>(sample, "inputs/profit");
+            JPath.Set(sample, "inputs/vcr", appclicks / MathF.Max(visits, 1.0f));
+            JPath.Set(sample, "inputs/ccr", applications / MathF.Max(appclicks, 1.0f));
+            JPath.Set(sample, "inputs/ppa", profit / MathF.Max(applications, 1.0f));
+        }
         
-        Population<DynamicBOConfiguration> population = new(100, rng => new(["visits", "appclicks", "applications", "profit"], ["excellence"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(["visits", "appclicks", "applications", "profit", "vcr", "ccr", "ppa"], ["excellence"], rng));
         TrainingSample[] trainingSamples = JPath.Select<object[]>(samples, "samples")
                                         .Select(s => new TrainingSample(new {
                                                                                 visits = JPath.Select<float>(s, "inputs/visits"),
                                                                                 appclicks = JPath.Select<float>(s, "inputs/appclicks"),
                                                                                 applications = JPath.Select<float>(s, "inputs/applications"),
-                                                                                profit = JPath.Select<float>(s, "inputs/profit")
+                                                                                profit = JPath.Select<float>(s, "inputs/profit"),
+                                                                                vcr=JPath.Select<float>(s, "inputs/vcr"),
+                                                                                ccr=JPath.Select<float>(s, "inputs/ccr"),
+                                                                                ppa=JPath.Select<float>(s, "inputs/ppa"),
                                                                             }, new {
                                                                                        excellence = JPath.Select<float>(s, "outputs/excellence")
                                                                                    })).ToArray();
+
+        //Console.WriteLine(Json.WriteString(trainingSamples, JsonOptions.RestApi));
             
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
                                                                     Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>(trainingSamples),
@@ -304,10 +318,13 @@ public class CalculatorTests {
             net = new(result.Chromosome);
         else net.Update(result.Chromosome);
 
-        net["visits"] = 50;
+        net["visits"] = 144;
         net["appclicks"] = 4;
-        net["applications"] = 4;
-        net["profit"] = 300;
+        net["applications"] = 1;
+        net["profit"] = 5;
+        net["vcr"] = 0.02777777777777777777777777777778f;
+        net["ccr"] = 0.25f;
+        net["ppa"] = 5;
         net.Compute();
         Console.WriteLine($"Excellence {net["excellence"]}");
 
@@ -348,6 +365,43 @@ public class CalculatorTests {
         net["x"] = 20;
         net.Compute();
         Console.WriteLine($"{net["y"]}");
+
+        Console.WriteLine(result.Chromosome);
+        Console.WriteLine(Json.WriteString(result.Chromosome));
+    }
+
+    [Test, Parallelizable]
+    public void PredictProfitBinOp() {
+        ConcurrentStack<DynamicBONet> netStack = new();
+        
+        Population<DynamicBOConfiguration> population = new(100, rng => new(["year","month","budget"], ["profit"], rng));
+        EvolutionSetup<DynamicBOConfiguration> setup = new() {
+                                                                    Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                                                                                                                                                     new(new{year=4,month=5,budget=57615.586360627},new{profit=23575.7377141578}),
+                                                                                                                                                     new(new{year=4,month=6,budget=60395.3696294009},new{profit=19690.454525992}),
+                                                                                                                                                     new(new{year=4,month=7,budget=58837.037529195},new{profit=20603.8622427126}),
+                                                                                                                                                     new(new{year=4,month=8,budget=57075.7820036814},new{profit=18805.7086431028}),
+                                                                                                                                                     new(new{year=4,month=9,budget=66252.5692546513},new{profit=29562.2027050053}),
+                                                                                                                                                     new(new{year=4,month=10,budget=68492.1329769176},new{profit=32080.2357595928}),
+                                                                                                                                                 ]),
+                                                                    Runs = 5000,
+                                                                    AfterRun = (index, fitness) => {
+                                                                                   if ((index & 511) == 0)
+                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
+                                                                               },
+                                                                    Threads = 2
+                                                                };
+        PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        if (!netStack.TryPop(out DynamicBONet net))
+            net = new(result.Chromosome);
+        else net.Update(result.Chromosome);
+
+        net["year"] = 4;
+        net["month"] = 11;
+        net["budget"] = 75040.2678569351f;
+        net.Compute();
+        Console.WriteLine($"{net["profit"]}");
 
         Console.WriteLine(result.Chromosome);
         Console.WriteLine(Json.WriteString(result.Chromosome));

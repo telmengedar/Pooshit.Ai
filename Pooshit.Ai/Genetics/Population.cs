@@ -10,16 +10,18 @@ namespace Pooshit.Ai.Genetics;
 /// <typeparam name="T">type of chromosome</typeparam>
 public class Population<T> 
 where T : class, IChromosome<T> {
-    
+    readonly Func<IRng, T> generator;
+
     /// <summary>
     /// creates a new <see cref="Population{T}"/>
     /// </summary>
     /// <param name="size">size of population</param>
     /// <param name="generator">used to generate new chromosomes</param>
     /// <param name="rng">rng to use to initialize population</param>
-    public Population(int size, Func<Rng, T> generator, Rng rng=null) {
+    public Population(int size, Func<IRng, T> generator, Rng rng=null) {
         if (size <= 0)
             throw new ArgumentException("Size of population has to be a positive integer");
+        this.generator = generator;
         rng ??= new();
         
         Entries = new PopulationEntry<T>[size];
@@ -71,13 +73,24 @@ where T : class, IChromosome<T> {
                 break;
         }
 
-        float max = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
+        while (offset < (elitismCount << 1) && offset<next.Length) {
+            next[offset++] = new() {
+                                       Chromosome = generator(rng),
+                                       Fitness = -2.0f
+                                   };
+        }
+
+        float max = Entries.Max(e => e.Fitness);
+        float modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
+        foreach (PopulationEntry<T> entry in next.Skip(elitismCount).Take(elitismCount))
+            entry.Fitness = max;
+        
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value = (max - entry.Fitness / entry.Chromosome.FitnessModifier) / max;
+            float value = (modifiedMax - entry.Fitness / entry.Chromosome.FitnessModifier) / modifiedMax;
             value *= value;
             fitnessSum += value;
             entry.Fitness = fitnessSum;

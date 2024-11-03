@@ -190,6 +190,38 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
         connections.Sort((lhsC, rhsC) => Comparer<float>.Default.Compare(this[lhsC.Target].OrderNumber, this[rhsC.Target].OrderNumber));
     }
 
+    void RemoveConnection(BOConnection connectionToRemove, List<BOConnection> connections, List<NeuronConfig> neurons) {
+        if (!connections.Remove(connectionToRemove))
+            return;
+        
+        NeuronConfig[] obsolete = neurons.Where(n => n.OrderNumber is > 0.0f and < 1.0f && connections.All(c => c.Lhs != n.Index && c.Rhs != n.Index))
+                                         .Concat(neurons.Where(n => n.OrderNumber is > 0.0f and < 1.0f && connections.All(c => c.Target != n.Index)))
+                                         .ToArray();
+
+        BOConnection[] obsoleteConnections = connections.Where(c => obsolete.Any(n => n.Index == c.Lhs || n.Index == c.Rhs || n.Index == c.Target))
+                                                        .ToArray();
+        foreach (BOConnection obsoleteConnection in obsoleteConnections)
+            RemoveConnection(obsoleteConnection, connections, neurons);
+
+        foreach (NeuronConfig neuronToRemove in obsolete) {
+            if (!neurons.Remove(neuronToRemove))
+                continue;
+
+            foreach (BOConnection connection in connections) {
+                if (connection.Lhs > neuronToRemove.Index)
+                    --connection.Lhs;
+                if (connection.Rhs > neuronToRemove.Index)
+                    --connection.Rhs;
+                if (connection.Target > neuronToRemove.Index)
+                    --connection.Target;
+            }
+            
+            foreach(NeuronConfig neuron in neurons)
+                if (neuron.Index > neuronToRemove.Index)
+                    --neuron.Index;
+        }
+    }
+    
     /// <inheritdoc />
     public DynamicBOConfiguration Mutate(IRng rng, float mutationRange) {
         List<NeuronConfig> newNeurons = [..Neurons.Select(n => n.Clone())];
@@ -206,6 +238,13 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
             }
             else 
                 ChangeNeuron(newNeurons, rng);
+        }
+        else if (connections.Count > 0 && dice < 0.94) {
+            Tuple<int, int, int> connectionData = GetRandomConnection(rng);
+            BOConnection connection = connections.FirstOrDefault(c => c.Lhs == connectionData.Item1 && (c.Rhs == connectionData.Item2 || c.Rhs == -1) && c.Target == connectionData.Item3);
+            if (connection != null) {
+                RemoveConnection(connection, connections, newNeurons);
+            }
         }
         else {
             Tuple<int, int, int> connectionData = GetRandomConnection(rng);
@@ -275,6 +314,11 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
 
     public int StructureHash() {
         int hash = 0;
+        foreach (NeuronConfig neuron in Neurons) {
+            hash *= 397;
+            hash ^= neuron.StructureHash;
+        }
+        
         foreach (BOConnection connection in Connections) {
             hash *= 397;
             hash ^= connection.StructureHash;
