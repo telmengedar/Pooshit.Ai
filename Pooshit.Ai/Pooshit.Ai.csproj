@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>0.5.5-preview</Version>
-        <AssemblyVersion>0.5.5</AssemblyVersion>
+        <Version>0.6.1-preview</Version>
+        <AssemblyVersion>0.6.1</AssemblyVersion>
         <LangVersion>default</LangVersion>
         <Copyright>Toni Gottschall</Copyright>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -25,9 +25,5 @@
     <ItemGroup>
         <None Include="LICENSE" Pack="true" PackagePath="" />
         <None Include="readme.md" Pack="true" PackagePath="" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="ILGPU" Version="1.5.1" />
     </ItemGroup>
 </Project>

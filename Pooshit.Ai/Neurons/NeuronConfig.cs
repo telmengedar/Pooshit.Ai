@@ -36,6 +36,14 @@ public class NeuronConfig {
     public ActivationFunc Activation { get; set; }
 
     /// <summary>
+    /// generator code used to generate value for this neuron
+    /// </summary>
+    /// <remarks>
+    /// this is used for input neurons and is dependent on implementation of the actual neuronal net
+    /// </remarks>
+    public string Generator { get; set; }
+    
+    /// <summary>
     /// clones this neuron
     /// </summary>
     /// <returns>cloned neuron config</returns>

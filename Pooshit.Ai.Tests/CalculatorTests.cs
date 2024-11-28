@@ -404,7 +404,6 @@ public class CalculatorTests {
         Console.WriteLine($"{net["profit"]}");
 
         Console.WriteLine(result.Chromosome);
-        Console.WriteLine(Json.WriteString(result.Chromosome));
     }
 
     [Test, Parallelizable]

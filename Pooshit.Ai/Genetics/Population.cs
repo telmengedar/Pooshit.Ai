@@ -35,14 +35,16 @@ where T : class, IChromosome<T> {
             Entries[i].Chromosome.Randomize(crossSetup);
         }
     }
-    
+
     /// <summary>
     /// creates a new <see cref="Population{T}"/>
     /// </summary>
     /// <param name="population">entries of population</param>
-    public Population(PopulationEntry<T>[] population) {
+    /// <param name="generator">generator for new chromosome instances</param>
+    public Population(PopulationEntry<T>[] population, Func<IRng, T> generator) {
         if (population.Length <= 0)
             throw new ArgumentException("Invalid population size");
+        Generator = generator;
         Entries = population;
     }
 
@@ -77,19 +79,40 @@ where T : class, IChromosome<T> {
                 break;
         }
 
+        int startGenerator = offset;
         if (Generator != null) {
-            while (offset < (elitismCount << 1) && offset < next.Length) {
-                next[offset++] = new() {
-                                           Chromosome = Generator(rng),
-                                           Fitness = -2.0f
-                                       };
+            if (typeof(IMutatingChromosome<T>).IsAssignableFrom(typeof(T))) {
+                while (offset < elitismCount << 1 && offset < next.Length) {
+                    T chromosome = Generator(rng);
+
+                    while (!structureHashes.Add(chromosome.StructureHash()))
+                        chromosome = Mutate(chromosome as IMutatingChromosome<T>, rng, setup.Mutation);
+
+                    next[offset++] = new() {
+                                               Chromosome = chromosome,
+                                           };
+                }
+            }
+            else {
+                while (offset < elitismCount << 1 && offset < next.Length) {
+                    T chromosome = Generator(rng);
+
+                    if (!structureHashes.Add(chromosome.StructureHash()))
+                        break;
+
+                    next[offset++] = new() {
+                                               Chromosome = chromosome,
+                                           };
+                }
             }
         }
 
+        int endGenerator = offset;
+        
         float max = Entries.Max(e => e.Fitness);
         float modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
-        foreach (PopulationEntry<T> entry in next.Skip(elitismCount).Take(elitismCount))
-            entry.Fitness = max;
+        for (int i = startGenerator; i < endGenerator; ++i)
+            next[i].Fitness = max;
         
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
@@ -158,6 +181,15 @@ where T : class, IChromosome<T> {
         Entries = next;
     }
 
+    T Mutate(IMutatingChromosome<T> chromosome, IRng rng, MutationSetup setup) {
+        float mutationRange = setup.Range;
+
+        float mutationScale = rng.NextFloat();
+        mutationRange *= mutationScale;
+
+        return chromosome.Mutate(rng, mutationRange);
+    }
+    
     void Mutate(PopulationEntry<T>[] next, IRng rng, float fitnessSum, MutationSetup setup, int i) {
         float first = rng.NextFloat() * fitnessSum;
 

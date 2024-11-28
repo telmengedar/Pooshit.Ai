@@ -314,10 +314,10 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
 
     public int StructureHash() {
         int hash = 0;
-        foreach (NeuronConfig neuron in Neurons) {
+        /*foreach (NeuronConfig neuron in Neurons) {
             hash *= 397;
             hash ^= neuron.StructureHash;
-        }
+        }*/
         
         foreach (BOConnection connection in Connections) {
             hash *= 397;

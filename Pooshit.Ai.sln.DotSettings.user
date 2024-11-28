@@ -14,5 +14,7 @@
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AMathTests.TestInverseSquareRoot(9.0f,3.0f)&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AMathTests.TestInverseSquareRoot(16.0f,4.0f)&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.PredictProfitBinOp&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AiSerializationTests.SerializeAndDeserializeBO&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AiSerializationTests.SerializeAndDeserializeFF&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
