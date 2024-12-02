@@ -2,6 +2,7 @@ using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics;
 using Pooshit.Ai.Genetics.Mutation;
 using Pooshit.Ai.Net.Operations;
+using Pooshit.Ai.Neurons;
 using NeuronConfig = Pooshit.Ai.Neurons.NeuronConfig;
 
 namespace Pooshit.Ai.Net.DynamicFF;
@@ -39,21 +40,33 @@ public class DynamicFFConfiguration : IMutatingChromosome<DynamicFFConfiguration
     /// creates a new <see cref="DynamicFFConfiguration"/>
     /// </summary>
     public DynamicFFConfiguration() { }
-    
+
     /// <summary>
     /// creates a new <see cref="DynamicFFConfiguration"/>
     /// </summary>
     /// <param name="inputs">name of input nodes</param>
     /// <param name="outputs">name of output nodes</param>
     /// <param name="rng">randomizer</param>
-    public DynamicFFConfiguration(string[] inputs, string[] outputs, IRng rng=null) {
+    public DynamicFFConfiguration(string[] inputs, string[] outputs, IRng rng=null) 
+    : this(inputs.Select(i => new NeuronSpec { Name = i }).ToArray(), outputs, rng)
+    {
+    }
+
+    /// <summary>
+    /// creates a new <see cref="DynamicFFConfiguration"/>
+    /// </summary>
+    /// <param name="inputs">name of input nodes</param>
+    /// <param name="outputs">name of output nodes</param>
+    /// <param name="rng">randomizer</param>
+    public DynamicFFConfiguration(NeuronSpec[] inputs, string[] outputs, IRng rng=null) {
         rng ??= new Rng();
         int index = 0;
 
         Neurons = new NeuronConfig[inputs.Length + outputs.Length];
-        foreach (string input in inputs)
+        foreach (NeuronSpec input in inputs)
             Neurons[index] = new() {
-                                         Name = input,
+                                         Name = input.Name,
+                                         Generator = input.Generator,
                                          Index = index++,
                                          OrderNumber = 0.0f,
                                      };

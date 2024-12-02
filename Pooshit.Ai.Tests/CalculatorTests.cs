@@ -390,21 +390,21 @@ public class CalculatorTests {
         
         Population<DynamicBOConfiguration> population = new(100, rng => new(new []{"year","month","budget"}, ["profit"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
-                                                                    Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
-                                                                                                                                                     new(new{year=4,month=5,budget=57615.586360627},new{profit=23575.7377141578}),
-                                                                                                                                                     new(new{year=4,month=6,budget=60395.3696294009},new{profit=19690.454525992}),
-                                                                                                                                                     new(new{year=4,month=7,budget=58837.037529195},new{profit=20603.8622427126}),
-                                                                                                                                                     new(new{year=4,month=8,budget=57075.7820036814},new{profit=18805.7086431028}),
-                                                                                                                                                     new(new{year=4,month=9,budget=66252.5692546513},new{profit=29562.2027050053}),
-                                                                                                                                                     new(new{year=4,month=10,budget=68492.1329769176},new{profit=32080.2357595928}),
-                                                                                                                                                 ]),
-                                                                    Runs = 5000,
-                                                                    AfterRun = (index, fitness) => {
-                                                                                   if ((index & 511) == 0)
-                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
-                                                                               },
-                                                                    Threads = 2
-                                                                };
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new(new { year = 4, month = 5, budget = 57615.586360627 }, new { profit = 23575.7377141578 }),
+                new(new { year = 4, month = 6, budget = 60395.3696294009 }, new { profit = 19690.454525992 }),
+                new(new { year = 4, month = 7, budget = 58837.037529195 }, new { profit = 20603.8622427126 }),
+                new(new { year = 4, month = 8, budget = 57075.7820036814 }, new { profit = 18805.7086431028 }),
+                new(new { year = 4, month = 9, budget = 66252.5692546513 }, new { profit = 29562.2027050053 }),
+                new(new { year = 4, month = 10, budget = 68492.1329769176 }, new { profit = 32080.2357595928 }),
+            ]),
+            Runs = 5000,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
         if (!netStack.TryPop(out DynamicBONet net))
@@ -422,7 +422,7 @@ public class CalculatorTests {
 
     [Test, Parallelizable]
     public void SequenceDynamicFF() {
-        Population<DynamicFFConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
+        Population<DynamicFFConfiguration> population = new(100, rng => new(new[]{"x"}, ["y"], rng));
         EvolutionSetup<DynamicFFConfiguration> setup = new() {
                                                                  Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
                                                                                                                                             new(new{x=1},new{y=2}),
