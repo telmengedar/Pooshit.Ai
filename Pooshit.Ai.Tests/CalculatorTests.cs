@@ -3,12 +3,21 @@ using Pooshit.Ai.Genetics;
 using Pooshit.Ai.Net;
 using Pooshit.Ai.Net.DynamicBO;
 using Pooshit.Ai.Net.DynamicFF;
+using Pooshit.Ai.Neurons;
 using Pooshit.Json;
+using Pooshit.Scripting;
+using Pooshit.Scripting.Parser;
 
 namespace NightlyCode.Ai.Tests;
 
 [TestFixture, Parallelizable]
 public class CalculatorTests {
+
+    public IScriptParser CreateParser() {
+        ScriptParser parser = new();
+        parser.Extensions.AddExtensions(typeof(Math));
+        return parser;
+    }
     
     /*[Test, Parallelizable]
     public void SquareRootNeuronalOperation() {
@@ -224,7 +233,7 @@ public class CalculatorTests {
     public void MultiplyMinusDynamicBinOp() {
         ConcurrentStack<DynamicBONet> netStack = new();
 
-        Population<DynamicBOConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new[]{"x", "y", "z"}, ["result"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
                                                                     Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
                                                                                                                                                      new(new{x=5,y=2,z=7},new{result=3}),
@@ -277,41 +286,46 @@ public class CalculatorTests {
         ConcurrentStack<DynamicBONet> netStack = new();
         
         Dictionary<string, object> samples = Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
-        foreach (Dictionary<string, object> sample in JPath.Select<object[]>(samples, "samples")) {
-            float visits = JPath.Select<float>(sample, "inputs/visits");
-            float appclicks = JPath.Select<float>(sample, "inputs/appclicks");
-            float applications = JPath.Select<float>(sample, "inputs/applications");
-            float profit = JPath.Select<float>(sample, "inputs/profit");
-            JPath.Set(sample, "inputs/vcr", appclicks / MathF.Max(visits, 1.0f));
-            JPath.Set(sample, "inputs/ccr", applications / MathF.Max(appclicks, 1.0f));
-            JPath.Set(sample, "inputs/ppa", profit / MathF.Max(applications, 1.0f));
-        }
         
-        Population<DynamicBOConfiguration> population = new(100, rng => new(["visits", "appclicks", "applications", "profit", "vcr", "ccr", "ppa"], ["excellence"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new NeuronSpec[]{"visits", "appclicks", "applications", "profit", new("vcr", "net[\"appclicks\"]/net[\"visits\"].max(1.0)") , new("ccr", "net[\"applications\"]/net[\"appclicks\"].max(1.0)"), new("ppa", "net[\"profit\"]/net[\"applications\"].max(1.0)")}, ["excellence"], rng));
         TrainingSample[] trainingSamples = JPath.Select<object[]>(samples, "samples")
                                         .Select(s => new TrainingSample(new {
                                                                                 visits = JPath.Select<float>(s, "inputs/visits"),
                                                                                 appclicks = JPath.Select<float>(s, "inputs/appclicks"),
                                                                                 applications = JPath.Select<float>(s, "inputs/applications"),
-                                                                                profit = JPath.Select<float>(s, "inputs/profit"),
-                                                                                vcr=JPath.Select<float>(s, "inputs/vcr"),
-                                                                                ccr=JPath.Select<float>(s, "inputs/ccr"),
-                                                                                ppa=JPath.Select<float>(s, "inputs/ppa"),
+                                                                                profit = JPath.Select<float>(s, "inputs/profit")
                                                                             }, new {
                                                                                        excellence = JPath.Select<float>(s, "outputs/excellence")
                                                                                    })).ToArray();
 
         //Console.WriteLine(Json.WriteString(trainingSamples, JsonOptions.RestApi));
-            
-        EvolutionSetup<DynamicBOConfiguration> setup = new() {
-                                                                    Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>(trainingSamples),
-                                                                    Runs = 5000,
-                                                                    AfterRun = (index, fitness) => {
-                                                                                   if ((index & 511) == 0)
-                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
-                                                                               },
-                                                                    Threads = 2
-                                                                };
+
+        IScriptParser parser = CreateParser();
+        Dictionary<string, IScript> scripts = new();
+
+        Dictionary<string, IScript> ScriptBuilder(DynamicBOConfiguration config) {
+            Dictionary<string, IScript> scripts = new();
+            foreach (NeuronConfig neuronConfig in config.Neurons.Take(config.InputCount).Where(n => !string.IsNullOrEmpty(n.Generator))) scripts[neuronConfig.Name] = parser.Parse(neuronConfig.Generator);
+            return scripts;
+        }
+
+        EvolutionSetup<DynamicBOConfiguration> setup = new()
+        {
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>(trainingSamples) {
+                InputGenerator = (net, config) => {
+                    scripts ??= ScriptBuilder(config);
+                    foreach ((string neuron, IScript generator) in scripts)
+                        net[neuron] = generator.Execute<float>();
+                }
+            },
+            Runs = 5000,
+            AfterRun = (index, fitness) =>
+            {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
         if (!netStack.TryPop(out DynamicBONet net))
@@ -333,36 +347,36 @@ public class CalculatorTests {
     
     [Test, Parallelizable]
     public void SequenceDynamicBinOp() {
-        ConcurrentStack<DynamicBONet> netStack = new();
-        
-        Population<DynamicBOConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
-        EvolutionSetup<DynamicBOConfiguration> setup = new() {
-                                                                    Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
-                                                                                                                                                     new(new{x=1},new{y=2}),
-                                                                                                                                                     new(new{x=2},new{y=6}),
-                                                                                                                                                     new(new{x=3},new{y=12}),
-                                                                                                                                                     new(new{x=4},new{y=20}),
-                                                                                                                                                     new(new{x=5},new{y=30}),
-                                                                                                                                                     new(new{x=6},new{y=42}),
-                                                                                                                                                     new(new{x=7},new{y=56}),
-                                                                                                                                                     new(new{x=8},new{y=72}),
-                                                                                                                                                     new(new{x=9},new{y=90}),
-                                                                                                                                                     new(new{x=10},new{y=110}),
-                                                                                                                                                 ]),
-                                                                    Runs = 5000,
-                                                                    AfterRun = (index, fitness) => {
-                                                                                   if ((index & 511) == 0)
-                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
-                                                                               },
-                                                                    Threads = 2
-                                                                };
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new[]{"x"}, ["y"], rng));
+        EvolutionSetup<DynamicBOConfiguration> setup = new()
+        {
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new(new { x = 1 }, new { y = 2 }),
+                new(new { x = 2 }, new { y = 6 }),
+                new(new { x = 3 }, new { y = 12 }),
+                new(new { x = 4 }, new { y = 20 }),
+                new(new { x = 5 }, new { y = 30 }),
+                new(new { x = 6 }, new { y = 42 }),
+                new(new { x = 7 }, new { y = 56 }),
+                new(new { x = 8 }, new { y = 72 }),
+                new(new { x = 9 }, new { y = 90 }),
+                new(new { x = 10 }, new { y = 110 }),
+            ]),
+            Runs = 5000,
+            AfterRun = (index, fitness) =>
+            {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
-        if (!netStack.TryPop(out DynamicBONet net))
-            net = new(result.Chromosome);
-        else net.Update(result.Chromosome);
+        DynamicBONet net = new(result.Chromosome)
+        {
+            ["x"] = 20
+        };
 
-        net["x"] = 20;
         net.Compute();
         Console.WriteLine($"{net["y"]}");
 
@@ -374,7 +388,7 @@ public class CalculatorTests {
     public void PredictProfitBinOp() {
         ConcurrentStack<DynamicBONet> netStack = new();
         
-        Population<DynamicBOConfiguration> population = new(100, rng => new(["year","month","budget"], ["profit"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new []{"year","month","budget"}, ["profit"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
                                                                     Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
                                                                                                                                                      new(new{year=4,month=5,budget=57615.586360627},new{profit=23575.7377141578}),
@@ -445,7 +459,7 @@ public class CalculatorTests {
     public void SequenceDynamicBinOpTwice() {
         ConcurrentStack<DynamicBONet> netStack = new();
         
-        Population<DynamicBOConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new[]{"x"}, ["y"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
                                                                     Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
                                                                                                                                                      new(new{x=1},new{y=2}),

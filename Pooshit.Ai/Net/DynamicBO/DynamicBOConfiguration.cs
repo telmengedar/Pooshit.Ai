@@ -52,25 +52,35 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
     /// <param name="inputs">name of input nodes</param>
     /// <param name="outputs">name of output nodes</param>
     /// <param name="rng">randomizer</param>
-    public DynamicBOConfiguration(string[] inputs, string[] outputs, IRng rng=null) {
+    public DynamicBOConfiguration(string[] inputs, string[] outputs, IRng rng = null)
+        : this(inputs.Select(i => new NeuronSpec { Name = i }).ToArray(), outputs, rng) { }
+
+    /// <summary>
+    /// creates a new <see cref="DynamicBOConfiguration"/>
+    /// </summary>
+    /// <param name="inputs">specification of input nodes</param>
+    /// <param name="outputs">name of output nodes</param>
+    /// <param name="rng">randomizer</param>
+    public DynamicBOConfiguration(NeuronSpec[] inputs, string[] outputs, IRng rng=null) {
         rng ??= new Rng();
         int index = 0;
         Neurons = new NeuronConfig[inputs.Length + outputs.Length];
-        foreach (string input in inputs)
+        foreach (NeuronSpec input in inputs)
             Neurons[index] = new() {
-                                              Name = input,
-                                              Index = index++,
-                                              OrderNumber = 0.0f,
-                                          };
+                Name = input.Name,
+                Generator = input.Generator,
+                Index = index++,
+                OrderNumber = 0.0f,
+            };
         inputCount = inputs.Length;
         foreach (string output in outputs) {
             Neurons[index] = new() {
-                                              Name = output,
-                                              Index = index++,
-                                              OrderNumber = 1.0f,
-                                              Aggregate = aggregateTypes.SelectItem(rng),
-                                              Activation = activationFuncs.SelectItem(rng)
-                                          };
+                Name = output,
+                Index = index++,
+                OrderNumber = 1.0f,
+                Aggregate = aggregateTypes.SelectItem(rng),
+                Activation = activationFuncs.SelectItem(rng)
+            };
         }
 
         outputCount = outputs.Length;

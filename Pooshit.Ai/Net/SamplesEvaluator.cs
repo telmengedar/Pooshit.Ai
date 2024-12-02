@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Pooshit.Ai.Extensions;
 using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics;
+using Pooshit.Ai.Neurons;
 
 namespace Pooshit.Ai.Net;
 
@@ -31,6 +32,11 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
     /// </summary>
     public int SampleCount { get; init; }
 
+    /// <summary>
+    /// input generator to execute for input neurons with generation data
+    /// </summary>
+    public Action<TNet, TChromosome> InputGenerator { get; set; }
+    
     /// <inheritdoc />
     public float EvaluateFitness(TChromosome chromosome, IRng rng, bool fullSet) {
         if (!nets.TryPop(out TNet net)) {
@@ -49,6 +55,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
                                                      net[input.Key] = input.Value;
                                              }
 
+                                             InputGenerator?.Invoke(net, chromosome);
                                              net.Compute();
                                              return s.Outputs.Select(o => Math.Abs(net[o.Key] - o.Value)).Average();
                                          }).Fitness();
