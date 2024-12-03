@@ -49,12 +49,13 @@ public class NeuronConfig {
     /// <returns>cloned neuron config</returns>
     public NeuronConfig Clone() {
         return new() {
-                         Name = Name,
-                         OrderNumber = OrderNumber,
-                         Index = Index,
-                         Aggregate = Aggregate,
-                         Activation = Activation
-                     };
+            Name = Name,
+            OrderNumber = OrderNumber,
+            Index = Index,
+            Aggregate = Aggregate,
+            Activation = Activation,
+            Generator = Generator
+        };
     }
 
     public override string ToString() {
