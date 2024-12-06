@@ -110,7 +110,11 @@ where T : class, IChromosome<T> {
         int endGenerator = offset;
         
         float max = Entries.Max(e => e.Fitness);
-        float modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
+        float modifiedMax;
+        if (setup.Mutation.Runs > 40)
+            modifiedMax = Entries.Max(e => e.Fitness * e.Chromosome.FitnessModifier);
+        else modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
+        
         for (int i = startGenerator; i < endGenerator; ++i)
             next[i].Fitness = max;
         

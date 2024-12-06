@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Pooshit.Ai.Extensions;
 using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics;
+using Pooshit.Ai.Net.Evaluation;
 using Pooshit.Ai.Neurons;
 
 namespace Pooshit.Ai.Net;
@@ -33,6 +34,11 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
     public int SampleCount { get; init; }
 
     /// <summary>
+    /// function used to evaluate chromosome fitness
+    /// </summary>
+    public EvaluationFunc EvaluationFunc { get; set; } = EvaluationFunc.DistancePercent;
+    
+    /// <summary>
     /// input generator to execute for input neurons with generation data
     /// </summary>
     public Action<TNet, TChromosome> InputGenerator { get; set; }
@@ -48,17 +54,24 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
 
         TrainingSample[] sampleBase = SampleCount == 0 || fullSet ? samples : samples.Shuffle(rng).Take(SampleCount).ToArray();
         float result = sampleBase.Select(s => {
-                                             if (s.InputArray != null)
-                                                 net.SetInputValues(s.InputArray);
-                                             else {
-                                                 foreach (KeyValuePair<string, float> input in s.Inputs)
-                                                     net[input.Key] = input.Value;
-                                             }
+            if (s.InputArray != null)
+                net.SetInputValues(s.InputArray);
+            else {
+                foreach (KeyValuePair<string, float> input in s.Inputs)
+                    net[input.Key] = input.Value;
+            }
 
-                                             InputGenerator?.Invoke(net, chromosome);
-                                             net.Compute();
-                                             return s.Outputs.Select(o => Math.Abs(net[o.Key] - o.Value)).Average();
-                                         }).Fitness();
+            InputGenerator?.Invoke(net, chromosome);
+            net.Compute();
+
+            switch (EvaluationFunc) {
+                default:
+                case EvaluationFunc.DistancePercent:
+                    return s.Outputs.Select(o => MathF.Abs(net[o.Key] - o.Value) / MathF.Max(MathF.Abs(o.Value), 1.0f)).Average();
+                case EvaluationFunc.Distance:
+                    return s.Outputs.Select(o => MathF.Abs(net[o.Key] - o.Value)).Average();
+            }
+        }).Fitness();
         nets.Push(net);
         return result;
     }

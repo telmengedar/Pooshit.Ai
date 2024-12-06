@@ -235,36 +235,36 @@ public class CalculatorTests {
 
         Population<DynamicBOConfiguration> population = new(100, rng => new(new[]{"x", "y", "z"}, ["result"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
-                                                                    Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
-                                                                                                                                                     new(new{x=5,y=2,z=7},new{result=3}),
-                                                                                                                                                     new(new{x=3,y=3,z=3},new{result=6}),
-                                                                                                                                                     new(new{x=10,y=10,z=2},new{result=98}),
-                                                                                                                                                     new(new{x=5,y=5,z=1},new{result=24}),
-                                                                                                                                                     new(new{x=1,y=40,z=9},new{result=31}),
-                                                                                                                                                     new(new{x=6,y=10,z=10},new{result=50}),
-                                                                                                                                                     new(new{x=7,y=8,z=6},new{result=50}),
-                                                                                                                                                     new(new{x=11,y=8,z=6},new{result=82}),
-                                                                                                                                                     new(new{x=2,y=70,z=12},new{result=128}),
-                                                                                                                                                     new(new{x=12,y=12,z=4},new{result=140}),
-                                                                                                                                                     new(new{x=9,y=12,z=19},new{result=89}),
-                                                                                                                                                     new(new{x=1,y=2,z=3},new{result=-1}),
-                                                                                                                                                     new(new{x=8,y=3,z=8},new{result=16}),
-                                                                                                                                                     new(new{x=2,y=34,z=9},new{result=59}),
-                                                                                                                                                     new(new{x=8,y=66,z=3},new{result=525}),
-                                                                                                                                                     new(new{x=20,y=6,z=333},new{result=-213}),
-                                                                                                                                                     new(new{x=4,y=60,z=399},new{result=-159}),
-                                                                                                                                                     new(new{x=7,y=18,z=170},new{result=-49}),
-                                                                                                                                                     new(new{x=-3,y=7,z=20},new{result=-41}),
-                                                                                                                                                     new(new{x=-3,y=8,z=20},new{result=-44}),
-                                                                                                                                                     new(new{x=-3,y=-8,z=20},new{result=4}),
-                                                                                                                                                 ]),
-                                                                    Runs = 5000,
-                                                                    AfterRun = (index, fitness) => {
-                                                                                   if ((index & 511) == 0)
-                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
-                                                                               },
-                                                                    Threads = 2
-                                                                };
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new(new { x = 5, y = 2, z = 7 }, new { result = 3 }),
+                new(new { x = 3, y = 3, z = 3 }, new { result = 6 }),
+                new(new { x = 10, y = 10, z = 2 }, new { result = 98 }),
+                new(new { x = 5, y = 5, z = 1 }, new { result = 24 }),
+                new(new { x = 1, y = 40, z = 9 }, new { result = 31 }),
+                new(new { x = 6, y = 10, z = 10 }, new { result = 50 }),
+                new(new { x = 7, y = 8, z = 6 }, new { result = 50 }),
+                new(new { x = 11, y = 8, z = 6 }, new { result = 82 }),
+                new(new { x = 2, y = 70, z = 12 }, new { result = 128 }),
+                new(new { x = 12, y = 12, z = 4 }, new { result = 140 }),
+                new(new { x = 9, y = 12, z = 19 }, new { result = 89 }),
+                new(new { x = 1, y = 2, z = 3 }, new { result = -1 }),
+                new(new { x = 8, y = 3, z = 8 }, new { result = 16 }),
+                new(new { x = 2, y = 34, z = 9 }, new { result = 59 }),
+                new(new { x = 8, y = 66, z = 3 }, new { result = 525 }),
+                new(new { x = 20, y = 6, z = 333 }, new { result = -213 }),
+                new(new { x = 4, y = 60, z = 399 }, new { result = -159 }),
+                new(new { x = 7, y = 18, z = 170 }, new { result = -49 }),
+                new(new { x = -3, y = 7, z = 20 }, new { result = -41 }),
+                new(new { x = -3, y = 8, z = 20 }, new { result = -44 }),
+                new(new { x = -3, y = -8, z = 20 }, new { result = 4 }),
+            ]),
+            Runs = 5000,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
 
@@ -424,25 +424,25 @@ public class CalculatorTests {
     public void SequenceDynamicFF() {
         Population<DynamicFFConfiguration> population = new(100, rng => new(new[]{"x"}, ["y"], rng));
         EvolutionSetup<DynamicFFConfiguration> setup = new() {
-                                                                 Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
-                                                                                                                                            new(new{x=1},new{y=2}),
-                                                                                                                                            new(new{x=2},new{y=6}),
-                                                                                                                                            new(new{x=3},new{y=12}),
-                                                                                                                                            new(new{x=4},new{y=20}),
-                                                                                                                                            new(new{x=5},new{y=30}),
-                                                                                                                                            new(new{x=6},new{y=42}),
-                                                                                                                                            new(new{x=7},new{y=56}),
-                                                                                                                                            new(new{x=8},new{y=72}),
-                                                                                                                                            new(new{x=9},new{y=90}),
-                                                                                                                                            new(new{x=10},new{y=110}),
-                                                                                                                                        ]),
-                                                                 Runs = 5000,
-                                                                 AfterRun = (index, fitness) => {
-                                                                                if ((index & 511) == 0)
-                                                                                    Console.WriteLine("{0}: {1}", index, fitness);
-                                                                            },
-                                                                 Threads = 2
-                                                             };
+            Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
+                new(new { x = 1 }, new { y = 2 }),
+                new(new { x = 2 }, new { y = 6 }),
+                new(new { x = 3 }, new { y = 12 }),
+                new(new { x = 4 }, new { y = 20 }),
+                new(new { x = 5 }, new { y = 30 }),
+                new(new { x = 6 }, new { y = 42 }),
+                new(new { x = 7 }, new { y = 56 }),
+                new(new { x = 8 }, new { y = 72 }),
+                new(new { x = 9 }, new { y = 90 }),
+                new(new { x = 10 }, new { y = 110 }),
+            ]),
+            Runs = 5000,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicFFConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
 
