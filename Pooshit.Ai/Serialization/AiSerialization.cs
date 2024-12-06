@@ -123,15 +123,27 @@ public static class AiSerialization {
                                                                       Fitness = reader.ReadSingle()
                                                                   };
 
-            if(reader.ReadByte()!=(byte)SerializationChunk.InputNeurons)
-                throw new InvalidOperationException("Unexpected chunk type");
-
             List<NeuronConfig> neurons = [];
-            int neuronCount = reader.ReadInt32();
-            while (neuronCount-- > 0) {
-                NeuronConfig neuron = DeserializeInputNeuron(reader);
-                neuron.Index = neurons.Count;
-                neurons.Add(neuron);
+            int neuronCount;
+            switch ((SerializationChunk)reader.ReadByte()) {
+                case SerializationChunk.InputNeurons:
+                    neuronCount = reader.ReadInt32();
+                    while (neuronCount-- > 0) {
+                        NeuronConfig neuron = DeserializeInputNeuron(reader);
+                        neuron.Index = neurons.Count;
+                        neurons.Add(neuron);
+                    }
+                break;
+                case SerializationChunk.InputGenerators:
+                    neuronCount = reader.ReadInt32();
+                    while (neuronCount-- > 0) {
+                        NeuronConfig neuron = DeserializeGeneratorNeuron(reader);
+                        neuron.Index = neurons.Count;
+                        neurons.Add(neuron);
+                    }
+                break;
+                default:
+                    throw new InvalidOperationException("Unexpected chunk type");
             }
 
             if(reader.ReadByte()!=(byte)SerializationChunk.OutputNeurons)
