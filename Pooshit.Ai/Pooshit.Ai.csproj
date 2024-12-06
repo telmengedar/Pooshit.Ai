@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>0.6.5-preview</Version>
-        <AssemblyVersion>0.6.5</AssemblyVersion>
+        <Version>0.6.6-preview</Version>
+        <AssemblyVersion>0.6.6</AssemblyVersion>
         <LangVersion>default</LangVersion>
         <Copyright>Toni Gottschall</Copyright>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
