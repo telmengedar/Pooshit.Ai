@@ -123,7 +123,11 @@ where T : class, IChromosome<T> {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value = (modifiedMax - entry.Fitness / entry.Chromosome.FitnessModifier) / modifiedMax;
+            float value;
+            if (setup.Mutation.Runs > 40)
+                value = (modifiedMax - entry.Fitness * entry.Chromosome.FitnessModifier) / modifiedMax;
+            else value = (modifiedMax - entry.Fitness / entry.Chromosome.FitnessModifier) / modifiedMax;
+            
             value *= value;
             fitnessSum += value;
             entry.Fitness = fitnessSum;
