@@ -287,16 +287,16 @@ public class CalculatorTests {
         
         Dictionary<string, object> samples = Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
         
-        Population<DynamicBOConfiguration> population = new(100, rng => new(new NeuronSpec[]{"visits", "appclicks", "applications", "profit", new("vcr", "net[\"appclicks\"]/net[\"visits\"].max(1.0)") , new("ccr", "net[\"applications\"]/net[\"appclicks\"].max(1.0)"), new("ppa", "net[\"profit\"]/net[\"applications\"].max(1.0)")}, ["excellence"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new NeuronSpec[]{"visits", "appclicks", "applications", "profit", new("vcr", "net[\"appclicks\"]/net[\"visits\"].max(1.0).max(net[\"appclicks\"])") , new("ccr", "net[\"applications\"]/net[\"appclicks\"].max(1.0).max(net[\"applications\"])"), new("ppa", "net[\"profit\"]/net[\"applications\"].max(1.0)")}, ["excellence"], rng));
         TrainingSample[] trainingSamples = JPath.Select<object[]>(samples, "samples")
-                                        .Select(s => new TrainingSample(new {
-                                                                                visits = JPath.Select<float>(s, "inputs/visits"),
-                                                                                appclicks = JPath.Select<float>(s, "inputs/appclicks"),
-                                                                                applications = JPath.Select<float>(s, "inputs/applications"),
-                                                                                profit = JPath.Select<float>(s, "inputs/profit")
-                                                                            }, new {
-                                                                                       excellence = JPath.Select<float>(s, "outputs/excellence")
-                                                                                   })).ToArray();
+                                                .Select(s => new TrainingSample(new {
+                                                    visits = JPath.Select<float>(s, "inputs/visits"),
+                                                    appclicks = JPath.Select<float>(s, "inputs/appclicks"),
+                                                    applications = JPath.Select<float>(s, "inputs/applications"),
+                                                    profit = JPath.Select<float>(s, "inputs/profit")
+                                                }, new {
+                                                    excellence = JPath.Select<float>(s, "outputs/excellence")
+                                                })).ToArray();
 
         //Console.WriteLine(Json.WriteString(trainingSamples, JsonOptions.RestApi));
 
@@ -326,7 +326,8 @@ public class CalculatorTests {
             },
             Threads = 2
         };
-        PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
+
+        PopulationEntry<DynamicBOConfiguration> result = population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
         if (!netStack.TryPop(out DynamicBONet net))
             net = new(result.Chromosome);

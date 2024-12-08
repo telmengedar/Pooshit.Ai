@@ -78,55 +78,15 @@ where T : class, IChromosome<T> {
             if (offset >= elitismCount)
                 break;
         }
-
-        int startGenerator = offset;
-        if (Generator != null) {
-            if (typeof(IMutatingChromosome<T>).IsAssignableFrom(typeof(T))) {
-                while (offset < elitismCount << 1 && offset < next.Length) {
-                    T chromosome = Generator(rng);
-
-                    while (!structureHashes.Add(chromosome.StructureHash()))
-                        chromosome = Mutate(chromosome as IMutatingChromosome<T>, rng, setup.Mutation);
-
-                    next[offset++] = new() {
-                                               Chromosome = chromosome,
-                                           };
-                }
-            }
-            else {
-                while (offset < elitismCount << 1 && offset < next.Length) {
-                    T chromosome = Generator(rng);
-
-                    if (!structureHashes.Add(chromosome.StructureHash()))
-                        break;
-
-                    next[offset++] = new() {
-                                               Chromosome = chromosome,
-                                           };
-                }
-            }
-        }
-
-        int endGenerator = offset;
         
-        float max = Entries.Max(e => e.Fitness);
-        float modifiedMax;
-        if (setup.Mutation.Runs > 40)
-            modifiedMax = Entries.Max(e => e.Fitness * e.Chromosome.FitnessModifier);
-        else modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
-        
-        for (int i = startGenerator; i < endGenerator; ++i)
-            next[i].Fitness = max;
+        float modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
         
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value;
-            if (setup.Mutation.Runs > 40)
-                value = (modifiedMax - entry.Fitness * entry.Chromosome.FitnessModifier) / modifiedMax;
-            else value = (modifiedMax - entry.Fitness / entry.Chromosome.FitnessModifier) / modifiedMax;
+            float value = (modifiedMax - entry.Fitness / entry.Chromosome.FitnessModifier) / modifiedMax;
             
             value *= value;
             fitnessSum += value;
@@ -176,11 +136,21 @@ where T : class, IChromosome<T> {
                              new() {
                                        MaxDegreeOfParallelism = setup.Threads
                                    },
-                             i => { Mutate(next, rng, fitnessSum, setup.Mutation, i); });
+                             i => {
+                                 if (Generator != null && i > Entries.Length - elitismCount) {
+                                     T chromosome = Generator(rng);
+                                     Mutate(next, rng, chromosome, setup.Mutation, i);
+                                 }
+                                 else Mutate(next, rng, fitnessSum, setup.Mutation, i);
+                             });
             }
             else {
                 for (int i = offset; i < Entries.Length; ++i) {
-                    Mutate(next, rng, fitnessSum, setup.Mutation, i);
+                    if (Generator != null && i > Entries.Length - elitismCount) {
+                        T chromosome = Generator(rng);
+                        Mutate(next, rng, chromosome, setup.Mutation, i);
+                    }
+                    else Mutate(next, rng, fitnessSum, setup.Mutation, i);
                 }
             }
         }
@@ -188,34 +158,29 @@ where T : class, IChromosome<T> {
 
         Entries = next;
     }
-
-    T Mutate(IMutatingChromosome<T> chromosome, IRng rng, MutationSetup setup) {
-        float mutationRange = setup.Range;
-
-        float mutationScale = rng.NextFloat();
-        mutationRange *= mutationScale;
-
-        return chromosome.Mutate(rng, mutationRange);
-    }
     
     void Mutate(PopulationEntry<T>[] next, IRng rng, float fitnessSum, MutationSetup setup, int i) {
         float first = rng.NextFloat() * fitnessSum;
-
         PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[rng.NextInt(Entries.Length)];
-
+        T chromosome = firstChromosome.Chromosome;
+        Mutate(next, rng, chromosome, setup, i);
+    }
+    
+    void Mutate(PopulationEntry<T>[] next, IRng rng, T chromosome, MutationSetup setup, int i) {
         float mutationRange = setup.Range;
 
         float mutationScale = (float)i / Entries.Length;
         mutationRange *= mutationScale;
 
-        T chromosome = firstChromosome.Chromosome;
-        for (int k = 0; k < setup.Runs; ++k)
+        int runs = 1 + rng.NextInt(setup.Runs);
+        for (int k = 0; k < runs; ++k)
             chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
 
         next[i] = new() {
-                            Chromosome = chromosome
-                        };
+            Chromosome = chromosome
+        };
     }
+
     float GetOrderNumber(PopulationEntry<T> entry) {
         if (entry.Fitness < 0.0)
             return float.MaxValue;
