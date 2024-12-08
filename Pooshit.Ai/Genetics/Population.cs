@@ -79,14 +79,14 @@ where T : class, IChromosome<T> {
                 break;
         }
         
-        float modifiedMax = Entries.Max(e => e.Fitness / e.Chromosome.FitnessModifier);
+        float modifiedMax = Entries.Max(e => (e.Fitness+1.0f) / e.Chromosome.FitnessModifier);
         
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value = (modifiedMax - entry.Fitness / entry.Chromosome.FitnessModifier) / modifiedMax;
+            float value = (modifiedMax - (entry.Fitness+1.0f) / entry.Chromosome.FitnessModifier) / modifiedMax;
             
             value *= value;
             fitnessSum += value;
