@@ -3,6 +3,7 @@ using Pooshit.Ai.Genetics;
 using Pooshit.Ai.Net;
 using Pooshit.Ai.Net.DynamicBO;
 using Pooshit.Ai.Net.DynamicFF;
+using Pooshit.Ai.Net.Evaluation;
 using Pooshit.Ai.Neurons;
 using Pooshit.Ai.Serialization;
 using Pooshit.Json;

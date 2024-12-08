@@ -2,10 +2,9 @@ using System.Collections.Concurrent;
 using Pooshit.Ai.Extensions;
 using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics;
-using Pooshit.Ai.Net.Evaluation;
-using Pooshit.Ai.Neurons;
+using Pooshit.Ai.Net.Operations;
 
-namespace Pooshit.Ai.Net;
+namespace Pooshit.Ai.Net.Evaluation;
 
 /// <summary>
 /// evaluates a chromosome based on a training set
@@ -37,6 +36,11 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
     /// function used to evaluate chromosome fitness
     /// </summary>
     public EvaluationFunc EvaluationFunc { get; set; } = EvaluationFunc.DistancePercent;
+
+    /// <summary>
+    /// aggregate func used for fitness values
+    /// </summary>
+    public AggregateType FitnessAggregate { get; set; } = AggregateType.Sum;
     
     /// <summary>
     /// input generator to execute for input neurons with generation data
@@ -71,7 +75,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
                 case EvaluationFunc.Distance:
                     return s.Outputs.Select(o => MathF.Abs(net[o.Key] - o.Value)).Average();
             }
-        }).Fitness();
+        }).Aggregate(FitnessAggregate);
         nets.Push(net);
         return result;
     }

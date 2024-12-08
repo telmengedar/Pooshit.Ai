@@ -120,6 +120,8 @@ public static class NMath {
                 return input.Min();
             case AggregateType.Max:
                 return input.Max();
+            case AggregateType.AverageToMax:
+                return AverageToMax(input);
         }
     }
 
@@ -128,7 +130,7 @@ public static class NMath {
     /// </summary>
     /// <param name="values">deviation values</param>
     /// <returns>fitness value</returns>
-    public static float Fitness(this IEnumerable<float> values) {
+    public static float AverageToMax(this IEnumerable<float> values) {
         float max = 0.0f;
         float sum = 0.0f;
         int count = 0;

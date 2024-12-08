@@ -78,16 +78,16 @@ where T : class, IChromosome<T> {
             if (offset >= elitismCount)
                 break;
         }
-        
-        float modifiedMax = Entries.Max(e => (e.Fitness+1.0f) / e.Chromosome.FitnessModifier);
+
+        float modifiedMax = Entries.Max(e => (e.Fitness + 1.0f) / e.Chromosome.FitnessModifier);
         
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
-            float value = (modifiedMax - (entry.Fitness+1.0f) / entry.Chromosome.FitnessModifier) / modifiedMax;
-            
+            float value = (modifiedMax - (entry.Fitness + 1.0f) / entry.Chromosome.FitnessModifier) / modifiedMax;
+
             value *= value;
             fitnessSum += value;
             entry.Fitness = fitnessSum;
@@ -219,6 +219,9 @@ where T : class, IChromosome<T> {
             Evolve(rng, setup);
 
             evaluation(setup, rng, false);
+            if (Entries[0].Fitness <= setup.TargetFitness)
+                break;
+
             int structure = Entries[0].Chromosome.StructureHash();
             if (structure == bestStructure)
                 setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);

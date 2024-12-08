@@ -170,8 +170,8 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
     }
 
     void ChangeNeuron(List<NeuronConfig> neurons, IRng rng) {
-        NeuronConfig neuron = neurons[rng.NextInt(neurons.Count)];
-        neuron.Aggregate=aggregateTypes.SelectItem(rng);
+        NeuronConfig neuron = neurons[InputCount + rng.NextInt(neurons.Count - InputCount)];
+        neuron.Aggregate = aggregateTypes.SelectItem(rng);
         neuron.Activation = activationFuncs.SelectItem(rng);
     }
     

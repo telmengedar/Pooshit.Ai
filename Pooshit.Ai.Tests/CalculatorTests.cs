@@ -3,6 +3,7 @@ using Pooshit.Ai.Genetics;
 using Pooshit.Ai.Net;
 using Pooshit.Ai.Net.DynamicBO;
 using Pooshit.Ai.Net.DynamicFF;
+using Pooshit.Ai.Net.Evaluation;
 using Pooshit.Ai.Neurons;
 using Pooshit.Json;
 using Pooshit.Scripting;
@@ -337,9 +338,6 @@ public class CalculatorTests {
         net["appclicks"] = 4;
         net["applications"] = 1;
         net["profit"] = 5;
-        net["vcr"] = 0.02777777777777777777777777777778f;
-        net["ccr"] = 0.25f;
-        net["ppa"] = 5;
         net.Compute();
         Console.WriteLine($"Excellence {net["excellence"]}");
 

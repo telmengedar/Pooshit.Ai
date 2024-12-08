@@ -29,4 +29,9 @@ public enum AggregateType {
     /// generates the maximum of all values
     /// </summary>
     Max,
+    
+    /// <summary>
+    /// average of average and max
+    /// </summary>
+    AverageToMax
 }
