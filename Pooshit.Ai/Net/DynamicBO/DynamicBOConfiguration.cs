@@ -17,13 +17,13 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
                                                               new MutationEntry<OperationType>(OperationType.Div, 1.0),
                                                               new MutationEntry<OperationType>(OperationType.Sub, 1.0));
 
-    readonly AggregateTypeOptions aggregateTypes = new(new MutationEntry<AggregateType>(AggregateType.Sum, 1.0),
+    static readonly AggregateTypeOptions aggregateTypes = new(new MutationEntry<AggregateType>(AggregateType.Sum, 1.0),
                                                        new MutationEntry<AggregateType>(AggregateType.Average, 1.0),
                                                        new MutationEntry<AggregateType>(AggregateType.Median, 0.1),
                                                        new MutationEntry<AggregateType>(AggregateType.Min, 1.0),
                                                        new MutationEntry<AggregateType>(AggregateType.Max, 1.0));
 
-    readonly ActivationFuncOptions activationFuncs = new(new MutationEntry<ActivationFunc>(ActivationFunc.None, 1.0),
+    static readonly ActivationFuncOptions activationFuncs = new(new MutationEntry<ActivationFunc>(ActivationFunc.None, 1.0),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.BinaryStep, 0.4),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Sigmoid, 0.25),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Sin, 0.2),
@@ -32,8 +32,6 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Tanh, 0.2),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Reciprocal, 0.4),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Swish, 0.05),
-                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Floor, 0.3),
-                                                         new MutationEntry<ActivationFunc>(ActivationFunc.Ceiling, 0.3),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Sqrt, 0.05),
                                                          new MutationEntry<ActivationFunc>(ActivationFunc.Pow2, 0.05));
 
