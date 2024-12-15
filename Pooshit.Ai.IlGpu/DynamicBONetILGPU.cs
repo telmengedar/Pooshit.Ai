@@ -39,6 +39,11 @@ public class DynamicBONetILGPU : INeuronalNet<DynamicBOConfiguration>, IDisposab
         set => valueView[named[name]] = value;
     }
 
+    public float this[int index] {
+        get => throw new NotImplementedException();
+        set => throw new NotImplementedException();
+    }
+
     public void Compute() {
         throw new NotImplementedException();
     }

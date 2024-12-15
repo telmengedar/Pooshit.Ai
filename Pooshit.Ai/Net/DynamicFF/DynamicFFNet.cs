@@ -30,6 +30,12 @@ public class DynamicFFNet : INeuronalNet<DynamicFFConfiguration> {
     }
 
     /// <inheritdoc />
+    public float this[int index] {
+        get => neurons[index];
+        set => neurons[index] = value;
+    }
+
+    /// <inheritdoc />
     public void Compute() {
         foreach (IGrouping<int, FFConnection> group in configuration.GroupedConnections) {
             NeuronConfig targetConfig = configuration[group.Key];

@@ -7,7 +7,7 @@ namespace Pooshit.Ai.Genetics;
 /// </summary>
 /// <typeparam name="T">type of configuration</typeparam>
 public interface IMutatingChromosome<T> : IChromosome<T> {
-
+    
     /// <summary>
     /// mutates the chromosome
     /// </summary>

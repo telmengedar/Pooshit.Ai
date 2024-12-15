@@ -16,8 +16,8 @@
         <PackageReference Include="NUnit3TestAdapter" Version="4.4.2"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
         <PackageReference Include="coverlet.collector" Version="3.2.0"/>
-        <PackageReference Include="Pooshit.Json" Version="0.3.8-preview" />
-        <PackageReference Include="Pooshit.Scripting" Version="0.17.74-preview" />
+        <PackageReference Include="Pooshit.Json" Version="0.3.19-preview" />
+        <PackageReference Include="Pooshit.Scripting" Version="0.18.1-preview" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,5 @@
 using Pooshit.Ai.Net;
+using Pooshit.Ai.Neurons;
 
 namespace Pooshit.Ai.Genetics;
 
@@ -30,4 +31,9 @@ public interface IChromosome<T> {
     /// <param name="test">function used to test an optimized candidate</param>
     /// <returns>optimized chromosome</returns>
     T Optimize(Func<T, bool> test);
+    
+    /// <summary>
+    /// access to neurons
+    /// </summary>
+    NeuronConfig[] Neurons { get; }
 }

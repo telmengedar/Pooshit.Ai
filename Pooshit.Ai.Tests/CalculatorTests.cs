@@ -7,6 +7,7 @@ using Pooshit.Ai.Net.Evaluation;
 using Pooshit.Ai.Neurons;
 using Pooshit.Json;
 using Pooshit.Scripting;
+using Pooshit.Scripting.Expressions;
 using Pooshit.Scripting.Parser;
 
 namespace NightlyCode.Ai.Tests;
@@ -288,7 +289,7 @@ public class CalculatorTests {
         
         Dictionary<string, object> samples = Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
         
-        Population<DynamicBOConfiguration> population = new(100, rng => new(new NeuronSpec[]{"visits", "appclicks", "applications", "profit", new("vcr", "net[\"appclicks\"]/net[\"visits\"].max(1.0).max(net[\"appclicks\"])") , new("ccr", "net[\"applications\"]/net[\"appclicks\"].max(1.0).max(net[\"applications\"])"), new("ppa", "net[\"profit\"]/net[\"applications\"].max(1.0)")}, ["excellence"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(new NeuronSpec[]{"visits", "appclicks", "applications", "profit", new("vcr", "net[\"appclicks\"]/net[\"visits\"].max(1.0f).max(net[\"appclicks\"])") , new("ccr", "net[\"applications\"]/net[\"appclicks\"].max(1.0f).max(net[\"applications\"])"), new("ppa", "net[\"profit\"]/net[\"applications\"].max(1.0f)")}, ["excellence"], rng));
         TrainingSample[] trainingSamples = JPath.Select<object[]>(samples, "samples")
                                                 .Select(s => new TrainingSample(new {
                                                     visits = JPath.Select<float>(s, "inputs/visits"),
@@ -302,21 +303,20 @@ public class CalculatorTests {
         //Console.WriteLine(Json.WriteString(trainingSamples, JsonOptions.RestApi));
 
         IScriptParser parser = CreateParser();
-        Dictionary<string, IScript> scripts = new();
+        Tuple<int, Delegate>[] scripts = null;
 
-        Dictionary<string, IScript> ScriptBuilder(DynamicBOConfiguration config) {
-            Dictionary<string, IScript> scripts = new();
-            foreach (NeuronConfig neuronConfig in config.Neurons.Take(config.InputCount).Where(n => !string.IsNullOrEmpty(n.Generator))) scripts[neuronConfig.Name] = parser.Parse(neuronConfig.Generator);
-            return scripts;
+        IEnumerable<Tuple<int, Delegate>> ScriptBuilder(DynamicBOConfiguration config) {
+            foreach (NeuronConfig neuronConfig in config.Neurons.Take(config.InputCount).Where(n => !string.IsNullOrEmpty(n.Generator)))
+                yield return new(neuronConfig.Index, parser.ParseDelegate(neuronConfig.Generator, new LambdaParameter("net", typeof(DynamicBONet))));
         }
 
         EvolutionSetup<DynamicBOConfiguration> setup = new()
         {
             Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>(trainingSamples) {
                 InputGenerator = (net, config) => {
-                    scripts ??= ScriptBuilder(config);
-                    foreach ((string neuron, IScript generator) in scripts)
-                        net[neuron] = generator.Execute<float>();
+                    scripts ??= ScriptBuilder(config).ToArray();
+                    foreach ((int neuron, Delegate generator) in scripts)
+                        net[neuron] = (float)generator.DynamicInvoke(net);
                 }
             },
             Runs = 5000,

@@ -31,7 +31,8 @@ public class DynamicBONet : INeuronalNet<DynamicBOConfiguration> {
         set => neuronValues[named[name]] = value;
     }
 
-    float this[int index] {
+    /// <inheritdoc />
+    public float this[int index] {
         get => neuronValues[index];
         set => neuronValues[index] = value;
     }

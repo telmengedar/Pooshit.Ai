@@ -11,6 +11,12 @@ public interface INeuronalNet<T> {
     /// </summary>
     /// <param name="name">name of neuron</param>
     float this[string name] { get; set; }
+
+    /// <summary>
+    /// access to neurons
+    /// </summary>
+    /// <param name="index">index of neuron</param>
+    float this[int index] { get; set; }
     
     /// <summary>
     /// computes the state of the neuronal net

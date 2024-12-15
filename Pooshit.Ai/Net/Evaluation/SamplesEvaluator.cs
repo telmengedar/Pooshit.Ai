@@ -3,6 +3,7 @@ using Pooshit.Ai.Extensions;
 using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics;
 using Pooshit.Ai.Net.Operations;
+using Pooshit.Ai.Neurons;
 
 namespace Pooshit.Ai.Net.Evaluation;
 
@@ -19,6 +20,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
     where TChromosome : IChromosome<TChromosome> 
     where TNet : INeuronalNet<TChromosome> {
     readonly TrainingSample[] samples;
+    IndexedTrainingSample[] indexedSamples;
     readonly ConcurrentStack<TNet> nets = [];
 
     /// <summary>
@@ -46,6 +48,22 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
     /// input generator to execute for input neurons with generation data
     /// </summary>
     public Action<TNet, TChromosome> InputGenerator { get; set; }
+
+    IEnumerable<IndexedTrainingSample> TranslateSamples(TChromosome chromosome) {
+        foreach (TrainingSample sample in samples) {
+            yield return new() {
+                InputArray = sample.InputArray,
+                Inputs = sample.Inputs.Select(i => new NeuronValue {
+                    Index = chromosome.Neurons.FirstOrDefault(n => n.Name == i.Key)?.Index ?? -1,
+                    Value = i.Value
+                }).ToArray(),
+                Outputs = sample.Outputs.Select(i => new NeuronValue {
+                    Index = chromosome.Neurons.FirstOrDefault(n => n.Name == i.Key)?.Index ?? -1,
+                    Value = i.Value
+                }).ToArray()
+            };
+        }
+    }
     
     /// <inheritdoc />
     public float EvaluateFitness(TChromosome chromosome, IRng rng, bool fullSet) {
@@ -56,13 +74,15 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
         }
         else net.Update(chromosome);
 
-        TrainingSample[] sampleBase = SampleCount == 0 || fullSet ? samples : samples.Shuffle(rng).Take(SampleCount).ToArray();
+        indexedSamples ??= TranslateSamples(chromosome).ToArray();
+
+        IndexedTrainingSample[] sampleBase = SampleCount == 0 || fullSet ? indexedSamples : indexedSamples.Shuffle(rng).Take(SampleCount).ToArray();
         float result = sampleBase.Select(s => {
             if (s.InputArray != null)
                 net.SetInputValues(s.InputArray);
             else {
-                foreach (KeyValuePair<string, float> input in s.Inputs)
-                    net[input.Key] = input.Value;
+                foreach (NeuronValue input in s.Inputs)
+                    net[input.Index] = input.Value;
             }
 
             InputGenerator?.Invoke(net, chromosome);
@@ -71,9 +91,9 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
             switch (EvaluationFunc) {
                 default:
                 case EvaluationFunc.DistancePercent:
-                    return s.Outputs.Select(o => MathF.Abs(net[o.Key] - o.Value) / MathF.Max(MathF.Abs(o.Value), 1.0f)).Average();
+                    return s.Outputs.Select(o => MathF.Abs(net[o.Index] - o.Value) / MathF.Max(MathF.Abs(o.Value), 1.0f)).Average();
                 case EvaluationFunc.Distance:
-                    return s.Outputs.Select(o => MathF.Abs(net[o.Key] - o.Value)).Average();
+                    return s.Outputs.Select(o => MathF.Abs(net[o.Index] - o.Value)).Average();
             }
         }).Aggregate(FitnessAggregate);
         nets.Push(net);
