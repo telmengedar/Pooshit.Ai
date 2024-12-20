@@ -53,7 +53,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
         foreach (TrainingSample sample in samples) {
             yield return new() {
                 InputArray = sample.InputArray,
-                Inputs = sample.Inputs.Select(i => new NeuronValue {
+                Inputs = sample.Inputs?.Select(i => new NeuronValue {
                     Index = chromosome.Neurons.FirstOrDefault(n => n.Name == i.Key)?.Index ?? -1,
                     Value = i.Value
                 }).ToArray(),

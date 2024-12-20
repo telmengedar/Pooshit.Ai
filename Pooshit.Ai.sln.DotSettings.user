@@ -1,6 +1,7 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AAverage_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FUsers_003Fmax_005Fg_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Febe890e7988858a763d68256a6a98b79c617ccd9f87f2522db1f7ac03f341c99_003FAverage_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASelect_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FUsers_003Fmax_005Fg_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F20885d5d627d4da82a4a22d7c55abb3d50afdd1ab121738514d59792dc9993_003FSelect_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AThrowHelper_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003FUsers_003Fmax_005Fg_003FAppData_003FRoaming_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fc7da56581ee7b20208f09e80b735961e4d5d7b9e5562bfdec94a75c57b391_003FThrowHelper_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2cff1856_002De6ba_002D4001_002Daafc_002D799651fb03ec/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="MultiplyMinusDynamicBinOp" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.MultiplyMinusDynamicBinOp&lt;/TestId&gt;&#xD;
@@ -19,5 +20,6 @@
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AiSerializationTests.SerializeAndDeserializeBO&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AiSerializationTests.SerializeAndDeserializeFF&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.AiSerializationTests.SerializeAndDeserializeGenerators&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::7C531777-5FD9-447D-B3AB-3179D597B3A8::net8.0::NightlyCode.Ai.Tests.CalculatorTests.PredictExcellenceMonth&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
