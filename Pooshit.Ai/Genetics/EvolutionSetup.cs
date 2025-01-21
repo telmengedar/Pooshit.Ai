@@ -29,10 +29,15 @@ where T : IChromosome<T>
     public int Runs { get; set; } = 10000;
     
     /// <summary>
-    /// rate of chromosomes which is copied to next evolution
+    /// number of chromosomes which are copied to next evolution
     /// </summary>
-    public double Elitism { get; set; } = 0.1;
+    public int Elitism { get; set; } = 10;
 
+    /// <summary>
+    /// number of rivals which compete for next generation
+    /// </summary>
+    public int Rivalism { get; set; } = 1;
+    
     /// <summary>
     /// rates for mutation
     /// </summary>

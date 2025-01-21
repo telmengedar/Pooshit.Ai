@@ -4,7 +4,7 @@ namespace Pooshit.Ai.Extern;
 /// rng using xor-shift implementation
 /// </summary>
 public class LockedRng : IRng {
-    readonly object valueLock = new();
+    readonly Lock valueLock = new();
     long value;
 
     /// <summary>

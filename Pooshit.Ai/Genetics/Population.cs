@@ -1,5 +1,4 @@
 using Pooshit.Ai.Extern;
-using Pooshit.Ai.Genetics.Mutation;
 using Pooshit.Ai.Net;
 
 namespace Pooshit.Ai.Genetics;
@@ -10,7 +9,9 @@ namespace Pooshit.Ai.Genetics;
 /// <typeparam name="T">type of chromosome</typeparam>
 public class Population<T> 
 where T : class, IChromosome<T> {
-
+    PopulationEntry<T>[] trainingBuffer;
+    readonly Action<EvolutionSetup<T>, IRng, float, int> mutator;
+    
     /// <summary>
     /// creates a new <see cref="Population{T}"/>
     /// </summary>
@@ -24,6 +25,7 @@ where T : class, IChromosome<T> {
         rng ??= new();
         
         Entries = new PopulationEntry<T>[size];
+        trainingBuffer = new PopulationEntry<T>[size];
         CrossSetup crossSetup = new() {
                                           MutateRange = 1.0f,
                                           Rng = rng
@@ -34,6 +36,14 @@ where T : class, IChromosome<T> {
                                };
             Entries[i].Chromosome.Randomize(crossSetup);
         }
+        
+        if (typeof(ICrossChromosome<T>).IsAssignableFrom(typeof(T))) {
+            mutator = Cross;
+        }
+        else if (typeof(IMutatingChromosome<T>).IsAssignableFrom(typeof(T))) {
+            mutator = Mutate;
+        }
+        else throw new NotImplementedException();
     }
 
     /// <summary>
@@ -46,6 +56,7 @@ where T : class, IChromosome<T> {
             throw new ArgumentException("Invalid population size");
         Generator = generator;
         Entries = population;
+        trainingBuffer = new PopulationEntry<T>[Entries.Length];
     }
 
     /// <summary>
@@ -57,12 +68,8 @@ where T : class, IChromosome<T> {
     /// entries in population
     /// </summary>
     public PopulationEntry<T>[] Entries { get; private set; }
-    
-    void Evolve(IRng rng, EvolutionSetup<T> setup) {
-        PopulationEntry<T>[] next = new PopulationEntry<T>[Entries.Length];
 
-        int elitismCount = (int)(Entries.Length * setup.Elitism);
-        
+    void Evolve(IRng rng, EvolutionSetup<T> setup) {
         HashSet<int> structureHashes = [];
 
         int offset = 0;
@@ -74,13 +81,14 @@ where T : class, IChromosome<T> {
             if (!structureHashes.Add(structureHash))
                 continue;
 
-            next[offset++] = entry;
-            if (offset >= elitismCount)
+            trainingBuffer[offset++] = entry;
+            
+            if (offset >= setup.Elitism)
                 break;
         }
 
         float modifiedMax = Entries.Max(e => (e.Fitness + 1.0f) / e.Chromosome.FitnessModifier);
-        
+
         float fitnessSum = 0.0f;
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
@@ -93,114 +101,120 @@ where T : class, IChromosome<T> {
             entry.Fitness = fitnessSum;
         }
 
-        if (typeof(ICrossChromosome<T>).IsAssignableFrom(typeof(T))) {
-            for (int i = offset; i < Entries.Length; ++i) {
-                double first = rng.NextDouble() * fitnessSum;
-                double second = rng.NextDouble() * fitnessSum;
+        mutator(setup, rng, fitnessSum, offset);
+        Parallel.ForEach(trainingBuffer,
+                         new() { MaxDegreeOfParallelism = setup.Threads },
+                         entry => entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, false));
+        Array.Sort(trainingBuffer, (lhs, rhs) => GetOrderNumber(lhs).CompareTo(GetOrderNumber(rhs)));
+        (Entries, trainingBuffer) = (trainingBuffer, Entries);
+    }
 
-                PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[0];
-                PopulationEntry<T> secondChromosome = Entries.FirstOrDefault(e => e.Fitness >= second) ?? Entries[0];
+    void Cross(EvolutionSetup<T> setup, IRng rng, float fitnessSum, int offset) {
+        for (int i = offset; i < trainingBuffer.Length; ++i) {
+            double first = rng.NextDouble() * fitnessSum;
+            double second = rng.NextDouble() * fitnessSum;
 
-                float mutationChance = setup.Mutation.Chance;
-                float mutationRate = setup.Mutation.Rate;
-                float mutationRange = setup.Mutation.Range;
+            PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[0];
+            PopulationEntry<T> secondChromosome = Entries.FirstOrDefault(e => e.Fitness >= second) ?? Entries[0];
 
-                //if (firstChromosome.Chromosome.GenerateHash() == secondChromosome.Chromosome.GenerateHash())
-                if (Math.Abs(firstChromosome.Fitness - secondChromosome.Fitness) <= double.Epsilon * 2.0) {
-                    // scale mutation up when crossing a chromosome with itself
-                    mutationChance = 1.0f;
-                    mutationRate *= setup.Mutation.IncestFactor;
-                    mutationRange *= setup.Mutation.IncestFactor;
-                }
-                else if (i >= Entries.Length - elitismCount * 2)
-                    mutationChance = 0.15f + (float)(Entries.Length - i) / (elitismCount * 2);
+            float mutationChance = setup.Mutation.Chance;
+            float mutationRate = setup.Mutation.Rate;
+            float mutationRange = setup.Mutation.Range;
 
-                float mutationScale = (float)i / Entries.Length;
-                mutationRate *= mutationScale;
-                mutationRange *= mutationScale;
-
-                next[i] = new() {
-                                    Chromosome = ((ICrossChromosome<T>)firstChromosome.Chromosome).Cross(secondChromosome.Chromosome, new() {
-                                                                                                                                                MutateChance = mutationChance,
-                                                                                                                                                MutateRate = mutationRate,
-                                                                                                                                                MutateRange = mutationRange,
-                                                                                                                                                Rng = rng
-                                                                                                                                            })
-                                };
+            //if (firstChromosome.Chromosome.GenerateHash() == secondChromosome.Chromosome.GenerateHash())
+            if (Math.Abs(firstChromosome.Fitness - secondChromosome.Fitness) <= double.Epsilon * 2.0) {
+                // scale mutation up when crossing a chromosome with itself
+                mutationChance = 1.0f;
+                mutationRate *= setup.Mutation.IncestFactor;
+                mutationRange *= setup.Mutation.IncestFactor;
             }
+            else if (i >= Entries.Length - setup.Elitism * 2)
+                mutationChance = 0.15f + (float)(Entries.Length - i) / (setup.Elitism * 2);
+
+            float mutationScale = (float)i / Entries.Length;
+            mutationRate *= mutationScale;
+            mutationRange *= mutationScale;
+
+            T chromosome = ((ICrossChromosome<T>)firstChromosome.Chromosome).Cross(secondChromosome.Chromosome, new() {
+                MutateChance = mutationChance,
+                MutateRate = mutationRate,
+                MutateRange = mutationRange,
+                Rng = rng
+            });
+
+            trainingBuffer[i] = new() {
+                Chromosome = chromosome,
+                Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false)
+            };
         }
-        else if (typeof(IMutatingChromosome<T>).IsAssignableFrom(typeof(T))) {
-            if (setup.Threads > 1) {
-                Parallel.For(offset,
-                             Entries.Length,
-                             new() {
-                                       MaxDegreeOfParallelism = setup.Threads
-                                   },
-                             i => {
-                                 if (Generator != null && i > Entries.Length - elitismCount) {
-                                     T chromosome = Generator(rng);
-                                     Mutate(next, rng, chromosome, setup.Mutation, i);
-                                 }
-                                 else Mutate(next, rng, fitnessSum, setup.Mutation, i);
-                             });
-            }
-            else {
-                for (int i = offset; i < Entries.Length; ++i) {
-                    if (Generator != null && i > Entries.Length - elitismCount) {
-                        T chromosome = Generator(rng);
-                        Mutate(next, rng, chromosome, setup.Mutation, i);
-                    }
-                    else Mutate(next, rng, fitnessSum, setup.Mutation, i);
-                }
-            }
-        }
-        else throw new NotImplementedException();
+    }
 
-        Entries = next;
+    void Mutate(EvolutionSetup<T> setup, IRng rng, float fitnessSum, int offset) {
+        void Mutator(int i) {
+            if (Generator != null && i > trainingBuffer.Length - setup.Elitism) {
+                T chromosome = Generator(rng);
+                Mutate(trainingBuffer, rng, chromosome, setup, i);
+            }
+            else
+                Mutate(trainingBuffer, rng, fitnessSum, setup, i);
+        }
+
+        if (setup.Threads > 1) {
+            Parallel.For(offset, Entries.Length, new() {
+                MaxDegreeOfParallelism = setup.Threads
+            }, Mutator);
+        }
+        else {
+            for (int i = offset; i < trainingBuffer.Length; ++i)
+                Mutator(i);
+        }
     }
     
-    void Mutate(PopulationEntry<T>[] next, IRng rng, float fitnessSum, MutationSetup setup, int i) {
-        float first = rng.NextFloat() * fitnessSum;
-        PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[rng.NextInt(Entries.Length)];
-        T chromosome = firstChromosome.Chromosome;
-        Mutate(next, rng, chromosome, setup, i);
+    void Mutate(PopulationEntry<T>[] next, IRng rng, float fitnessSum, EvolutionSetup<T> setup, int i) {
+        float sourceIndex = rng.NextFloat() * fitnessSum;
+        PopulationEntry<T> source = Entries.FirstOrDefault(e => e.Fitness >= sourceIndex) ?? Entries[rng.NextInt(Entries.Length)];
+        Mutate(next, rng, source.Chromosome, setup, i);
     }
     
-    void Mutate(PopulationEntry<T>[] next, IRng rng, T chromosome, MutationSetup setup, int i) {
-        float mutationRange = setup.Range;
+    void Mutate(PopulationEntry<T>[] next, IRng rng, T chromosome, EvolutionSetup<T> setup, int i) {
+        float mutationRange = setup.Mutation.Range;
 
         float mutationScale = (float)i / Entries.Length;
         mutationRange *= mutationScale;
 
-        int runs = 1 + rng.NextInt(setup.Runs);
-        for (int k = 0; k < runs; ++k)
-            chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
+        if (setup.Rivalism > 1) {
+            List<PopulationEntry<T>> candidates = [];
 
-        next[i] = new() {
-            Chromosome = chromosome
-        };
+            for (int l = 0; l < setup.Rivalism; ++l) {
+                int runs = 1 + rng.NextInt(setup.Mutation.Runs);
+                for (int k = 0; k < runs; ++k)
+                    chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
+                candidates.Add(new() {
+                    Chromosome = chromosome,
+                    Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false)
+                });
+            }
+            
+            candidates.Sort((lhs, rhs) => GetOrderNumber(lhs).CompareTo(GetOrderNumber(rhs)));
+            next[i] = candidates.First();
+        }
+        else {
+            int runs = 1 + rng.NextInt(setup.Mutation.Runs);
+            for (int k = 0; k < runs; ++k)
+                chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
+
+            next[i] = new() {
+                Chromosome = chromosome,
+
+                //Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false)
+            };
+        }
     }
 
     float GetOrderNumber(PopulationEntry<T> entry) {
         if (entry.Fitness < 0.0)
             return float.MaxValue;
         return entry.Fitness;
-    }
-
-    void EvaluateFitness(EvolutionSetup<T> setup, IRng rng, bool fullSet) {
-        foreach (PopulationEntry<T> entry in Entries)
-            entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, fullSet);
-        Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
-    }
-
-    void EvaluateParallel(EvolutionSetup<T> setup, IRng rng, bool fullSet) {
-        Parallel.ForEach(Entries, new() {
-                                            MaxDegreeOfParallelism = setup.Threads
-                                        },
-                         entry => {
-                             entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, fullSet);
-                         });
-        Array.Sort(Entries, (x, y) => -GetOrderNumber(y).CompareTo(GetOrderNumber(x)));
     }
     
     /// <summary>
@@ -210,15 +224,19 @@ where T : class, IChromosome<T> {
     /// <returns>best training result</returns>
     public PopulationEntry<T> Train(EvolutionSetup<T> setup) {
         IRng rng = setup.Threads > 1 ? new LockedRng() : new Rng();
-        Action<EvolutionSetup<T>, IRng, bool> evaluation = setup.Threads > 1 ? EvaluateParallel : EvaluateFitness;
-        evaluation(setup, rng, true);
+        
+        // compute fitness for all population entries
+        if (setup.Threads > 1)
+            Parallel.ForEach(Entries, new() { MaxDegreeOfParallelism = setup.Threads }, entry => entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, true));
+        else 
+            foreach (PopulationEntry<T> entry in Entries)
+                entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, true);
+        
         int bestStructure = Entries[0].Chromosome.StructureHash();
         int bestRun = 0;
 
         for (int i = 0; i < setup.Runs; i++) {
             Evolve(rng, setup);
-
-            evaluation(setup, rng, false);
             if (Entries[0].Fitness <= setup.TargetFitness)
                 break;
 
@@ -234,8 +252,7 @@ where T : class, IChromosome<T> {
             setup.AfterRun?.Invoke(i, Entries[0].Fitness);
         }
 
-        evaluation(setup, rng, true);
-
+        Entries[0].Fitness = setup.Evaluator.EvaluateFitness(Entries[0].Chromosome, rng, true);
         return Entries[0];
     }
 }

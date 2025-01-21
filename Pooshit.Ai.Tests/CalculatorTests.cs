@@ -233,9 +233,7 @@ public class CalculatorTests {
     
     [Test, Parallelizable]
     public void MultiplyMinusDynamicBinOp() {
-        ConcurrentStack<DynamicBONet> netStack = new();
-
-        Population<DynamicBOConfiguration> population = new(100, rng => new(new[]{"x", "y", "z"}, ["result"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
             Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
                 new(new { x = 5, y = 2, z = 7 }, new { result = 3 }),
@@ -260,7 +258,8 @@ public class CalculatorTests {
                 new(new { x = -3, y = 8, z = 20 }, new { result = -44 }),
                 new(new { x = -3, y = -8, z = 20 }, new { result = 4 }),
             ]),
-            Runs = 5000,
+            Runs = 500,
+            Rivalism = 5,
             AfterRun = (index, fitness) => {
                 if ((index & 511) == 0)
                     Console.WriteLine("{0}: {1}", index, fitness);
@@ -268,15 +267,14 @@ public class CalculatorTests {
             Threads = 2
         };
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        Console.WriteLine($"Fitness with {setup.Threads} threads: {result.Fitness:F2}");
 
-        if (!netStack.TryPop(out DynamicBONet net))
-            net = new(result.Chromosome);
-        else net.Update(result.Chromosome);
-        
-        net["x"] = 5;
-        net["y"] = 13;
-        net["z"] = 44;
+        DynamicBONet net = new(result.Chromosome) {
+            ["x"] = 5,
+            ["y"] = 13,
+            ["z"] = 44
+        };
+
         net.Compute();
         Console.WriteLine($"f(5,13,44)={net["result"]}");
 
@@ -285,8 +283,6 @@ public class CalculatorTests {
     
     [Test, Parallelizable]
     public void ExcellenceDynamicBinOp() {
-        ConcurrentStack<DynamicBONet> netStack = new();
-        
         Dictionary<string, object> samples = Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
         
         Population<DynamicBOConfiguration> population = new(100, rng => new(new NeuronSpec[]{"visits", "appclicks", "applications", "profit", new("vcr", "net[\"appclicks\"]/net[\"visits\"].max(1.0f).max(net[\"appclicks\"])") , new("ccr", "net[\"applications\"]/net[\"appclicks\"].max(1.0f).max(net[\"applications\"])"), new("ppa", "net[\"profit\"]/net[\"applications\"].max(1.0f)")}, ["excellence"], rng));
@@ -303,11 +299,11 @@ public class CalculatorTests {
         //Console.WriteLine(Json.WriteString(trainingSamples, JsonOptions.RestApi));
 
         IScriptParser parser = CreateParser();
-        Tuple<int, Delegate>[] scripts = null;
+        Tuple<int, Func<DynamicBONet, float>>[] scripts = null;
 
-        IEnumerable<Tuple<int, Delegate>> ScriptBuilder(DynamicBOConfiguration config) {
+        IEnumerable<Tuple<int, Func<DynamicBONet, float>>> ScriptBuilder(DynamicBOConfiguration config) {
             foreach (NeuronConfig neuronConfig in config.Neurons.Take(config.InputCount).Where(n => !string.IsNullOrEmpty(n.Generator)))
-                yield return new(neuronConfig.Index, parser.ParseDelegate(neuronConfig.Generator, new LambdaParameter("net", typeof(DynamicBONet))));
+                yield return new(neuronConfig.Index, parser.ParseDelegate<Func<DynamicBONet, float>>(neuronConfig.Generator, new LambdaParameter("net", typeof(DynamicBONet))));
         }
 
         EvolutionSetup<DynamicBOConfiguration> setup = new()
@@ -315,29 +311,29 @@ public class CalculatorTests {
             Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>(trainingSamples) {
                 InputGenerator = (net, config) => {
                     scripts ??= ScriptBuilder(config).ToArray();
-                    foreach ((int neuron, Delegate generator) in scripts)
-                        net[neuron] = (float)generator.DynamicInvoke(net);
+                    foreach ((int neuron, Func<DynamicBONet, float> generator) in scripts)
+                        net[neuron] = generator(net);
                 }
             },
-            Runs = 5000,
+            Runs = 500,
+            Rivalism = 5,
             AfterRun = (index, fitness) =>
             {
                 if ((index & 511) == 0)
                     Console.WriteLine("{0}: {1}", index, fitness);
             },
-            Threads = 2
+            Threads = Environment.ProcessorCount
         };
 
         PopulationEntry<DynamicBOConfiguration> result = population.Train(setup);
-        Console.WriteLine($"Fitness: {result.Fitness:F2}");
-        if (!netStack.TryPop(out DynamicBONet net))
-            net = new(result.Chromosome);
-        else net.Update(result.Chromosome);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}"); 
+        DynamicBONet net = new(result.Chromosome) {
+            ["visits"] = 144,
+            ["appclicks"] = 4,
+            ["applications"] = 1,
+            ["profit"] = 5
+        };
 
-        net["visits"] = 144;
-        net["appclicks"] = 4;
-        net["applications"] = 1;
-        net["profit"] = 5;
         net.Compute();
         Console.WriteLine($"Excellence {net["excellence"]}");
 
@@ -361,7 +357,8 @@ public class CalculatorTests {
                 new(new { x = 9 }, new { y = 90 }),
                 new(new { x = 10 }, new { y = 110 }),
             ]),
-            Runs = 5000,
+            Runs = 500,
+            Rivalism = 5,
             AfterRun = (index, fitness) =>
             {
                 if ((index & 511) == 0)
@@ -446,6 +443,67 @@ public class CalculatorTests {
     }
 
     [Test, Parallelizable]
+    public void PredictTagExcellenceMonth() {
+        Population<DynamicBOConfiguration> population = new(100, rng => new(13, ["excellence"], rng));
+        EvolutionSetup<DynamicBOConfiguration> setup = new()
+        {
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new([-2.550804f, -2.947061f, -3.1435318f, -4.0194483f, -4.286634f, -4.995035f, -4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f], new { excellence = 0.544427f }),
+                new([-2.947061f, -3.1435318f, -4.0194483f, -4.286634f, -4.995035f, -4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f], new { excellence = 10.636712f }),
+                new([-3.1435318f, -4.0194483f, -4.286634f, -4.995035f, -4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f], new { excellence = 2.1540642f }),
+                new([-4.0194483f, -4.286634f, -4.995035f, -4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f], new { excellence = 2.5721974f }),
+                new([-4.286634f, -4.995035f, -4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f], new { excellence = 1.8246433f }),
+                new([-4.995035f, -4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f], new { excellence = 1.0785362f }),
+                new([-4.995035f, -1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f], new { excellence = 1.3644333f }),
+                new([-1.3816023f, -0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f], new { excellence = 2.3525946f }),
+                new([-0.30745876f, -2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f], new { excellence = 1.3881122f }),
+                new([-2.5069754f, -2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f], new { excellence = 1.1955884f }),
+                new([-2.7969193f, 2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f], new { excellence = 2.2566073f }),
+                new([2.5990822f, -0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f], new { excellence = 1.8456446f }),
+                new([-0.8763627f, 0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f], new { excellence = 1.3207263f }),
+                new([0.544427f, 10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f], new { excellence = 1.353026f }),
+                new([10.636712f, 2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f], new { excellence = 1.3906026f }),
+                new([2.1540642f, 2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f], new { excellence = 1.0099341f }),
+                new([2.5721974f, 1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f], new { excellence = 1.719673f }),
+                new([1.8246433f, 1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f], new { excellence = 2.0159636f }),
+                new([1.0785362f, 1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f], new { excellence = 1.5613949f }),
+                new([1.3644333f, 2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f], new { excellence = 1.6830198f }),
+                new([2.3525946f, 1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f], new { excellence = 1.3998297f }),
+                new([1.3881122f, 1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f], new { excellence = 0.8084549f }),
+                new([1.1955884f, 2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f], new { excellence = 0.8410222f }),
+                new([2.2566073f, 1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f], new { excellence = 1.0605899f }),
+                new([1.8456446f, 1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f], new { excellence = 1.5191834f }),
+                new([1.3207263f, 1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f], new { excellence = 2.448923f }),
+                new([1.353026f, 1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f], new { excellence = 1.8765916f }),
+                new([1.3906026f, 1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f], new { excellence = 2.7118263f }),
+                new([1.0099341f, 1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f], new { excellence = 1.7764813f }),
+                new([1.719673f, 2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f], new { excellence = 0.94527507f }),
+                new([2.0159636f, 1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f, 0.94527507f], new { excellence = 0.888548f }),
+                new([1.5613949f, 1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f, 0.94527507f, 0.888548f], new { excellence = 2.6978912f }),
+                new([1.6830198f, 1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f, 0.94527507f, 0.888548f, 2.6978912f], new { excellence = 1.8902876f }),
+                new([1.3998297f, 0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f, 0.94527507f, 0.888548f, 2.6978912f, 1.8902876f], new { excellence = 2.5727115f }),
+                new([0.8084549f, 0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f, 0.94527507f, 0.888548f, 2.6978912f, 1.8902876f, 2.5727115f], new { excellence = 2.2042959f })
+            ]),
+            Runs = 5000,
+            AfterRun = (index, fitness) =>
+            {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
+        PopulationEntry<DynamicBOConfiguration> result = population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        DynamicBONet net = new(result.Chromosome);
+        net.SetInputValues([0.8410222f, 1.0605899f, 1.5191834f, 2.448923f, 1.8765916f, 2.7118263f, 1.7764813f, 0.94527507f, 0.888548f, 2.6978912f, 1.8902876f, 2.5727115f, 2.2042959f]);
+        net.Compute();
+        Console.WriteLine($"{net["excellence"]}");
+
+        Console.WriteLine(result.Chromosome);
+        Console.WriteLine(Json.WriteString(result.Chromosome));
+    }
+
+    [Test, Parallelizable]
     public void PredictProfitBinOp() {
         ConcurrentStack<DynamicBONet> netStack = new();
         
@@ -518,9 +576,7 @@ public class CalculatorTests {
 
     [Test, Parallelizable]
     public void SequenceDynamicBinOpTwice() {
-        ConcurrentStack<DynamicBONet> netStack = new();
-        
-        Population<DynamicBOConfiguration> population = new(100, rng => new(new[]{"x"}, ["y"], rng));
+        Population<DynamicBOConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
             Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
                 new(new { x = 1 }, new { y = 2 }),
@@ -545,11 +601,10 @@ public class CalculatorTests {
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
 
-        if (!netStack.TryPop(out DynamicBONet resultNet))
-            resultNet = new(result.Chromosome);
-        else resultNet.Update(result.Chromosome);
+        DynamicBONet resultNet = new(result.Chromosome) {
+            ["x"] = 20
+        };
 
-        resultNet["x"] = 20;
         resultNet.Compute();
         Console.WriteLine($"{resultNet["y"]}");
 
@@ -557,11 +612,9 @@ public class CalculatorTests {
         
         result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
-        if (!netStack.TryPop(out resultNet))
-            resultNet = new(result.Chromosome);
-        else resultNet.Update(result.Chromosome);
-
-        resultNet["x"] = 20;
+        resultNet = new(result.Chromosome) {
+            ["x"] = 20
+        };
 
         resultNet.Compute();
         Console.WriteLine($"{resultNet["y"]}");
@@ -582,49 +635,50 @@ public class CalculatorTests {
         
         Population<DynamicBOConfiguration> population = new(100, rng => new(20, ["y"], rng));
         EvolutionSetup<DynamicBOConfiguration> setup = new() {
-                                                                    Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
-                                                                                                                                                     new(NameArray("Spitzenplatz"),new{y=3}),
-                                                                                                                                                     new(NameArray("Kräuterbeet"),new{y=5}),
-                                                                                                                                                     new(NameArray("Muschelstrand"),new{y=3}),
-                                                                                                                                                     new(NameArray("Oldenburg"),new{y=3}),
-                                                                                                                                                     new(NameArray("Fernsehgarten"),new{y=4}),
-                                                                                                                                                     new(NameArray("Ananasrhabarbersalat"),new{y=8}),
-                                                                                                                                                     new(NameArray("Interkontinental"),new{y=6}),
-                                                                                                                                                     new(NameArray("Sonnenallee"),new{y=5}),
-                                                                                                                                                     new(NameArray("Gemüsebrühe"),new{y=5}),
-                                                                                                                                                     new(NameArray("Ölplattform"),new{y=3}),
-                                                                                                                                                     new(NameArray("Mandelbrot"), new{y=3}),
-                                                                                                                                                     new(NameArray("Sonderrecht"), new{y=3}),
-                                                                                                                                                     new(NameArray("Molekularbiologe"), new{y=8}),
-                                                                                                                                                     new(NameArray("Wetteransage"), new{y=5}),
-                                                                                                                                                     new(NameArray("Ananas"), new{y=3}),
-                                                                                                                                                     new(NameArray("Schonungslos"), new{y=3}),
-                                                                                                                                                     new(NameArray("Sauerkraut"), new{y=5}),
-                                                                                                                                                     new(NameArray("Loeffelbiscuit"), new{y=6}),
-                                                                                                                                                     new(NameArray("Pfeiffenblaeser"), new{y=6}),
-                                                                                                                                                     new(NameArray("Affenbrotbaum"), new{y=5}),
-                                                                                                                                                     new(NameArray("Illustrationsbuch"), new{y=6}),
-                                                                                                                                                     new(NameArray("Offenbarung"), new{y=4}),
-                                                                                                                                                     new(NameArray("Hausverkauf"), new{y=5}),
-                                                                                                                                                     new(NameArray("Lampenkranz"), new{y=3}),
-                                                                                                                                                     new(NameArray("Kostenstelle"), new{y=4}),
-                                                                                                                                                     new(NameArray("Oberfachverkaeufer"), new{y=8})
-                                                                                                                                                 ]),
-                                                                    Runs = 5000,
-                                                                    TargetFitness = 0.01f,
-                                                                    AfterRun = (index, fitness) => {
-                                                                                   if ((index & 511) == 0)
-                                                                                       Console.WriteLine("{0}: {1}", index, fitness);
-                                                                               },
-                                                                    Threads = 2
-                                                                };
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new(NameArray("Spitzenplatz"), new { y = 3 }),
+                new(NameArray("Kräuterbeet"), new { y = 5 }),
+                new(NameArray("Muschelstrand"), new { y = 3 }),
+                new(NameArray("Oldenburg"), new { y = 3 }),
+                new(NameArray("Fernsehgarten"), new { y = 4 }),
+                new(NameArray("Ananasrhabarbersalat"), new { y = 8 }),
+                new(NameArray("Interkontinental"), new { y = 6 }),
+                new(NameArray("Sonnenallee"), new { y = 5 }),
+                new(NameArray("Gemüsebrühe"), new { y = 5 }),
+                new(NameArray("Ölplattform"), new { y = 3 }),
+                new(NameArray("Mandelbrot"), new { y = 3 }),
+                new(NameArray("Sonderrecht"), new { y = 3 }),
+                new(NameArray("Molekularbiologe"), new { y = 8 }),
+                new(NameArray("Wetteransage"), new { y = 5 }),
+                new(NameArray("Ananas"), new { y = 3 }),
+                new(NameArray("Schonungslos"), new { y = 3 }),
+                new(NameArray("Sauerkraut"), new { y = 5 }),
+                new(NameArray("Loeffelbiscuit"), new { y = 6 }),
+                new(NameArray("Pfeiffenblaeser"), new { y = 6 }),
+                new(NameArray("Affenbrotbaum"), new { y = 5 }),
+                new(NameArray("Illustrationsbuch"), new { y = 6 }),
+                new(NameArray("Offenbarung"), new { y = 4 }),
+                new(NameArray("Hausverkauf"), new { y = 5 }),
+                new(NameArray("Lampenkranz"), new { y = 3 }),
+                new(NameArray("Kostenstelle"), new { y = 4 }),
+                new(NameArray("Oberfachverkaeufer"), new { y = 8 }),
+                new(NameArray("Semmelbroesel"), new { y = 5 })
+            ]),
+            Runs = 5000,
+            TargetFitness = 0.01f,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
         
         DynamicBONet resultNet = new(result.Chromosome);
 
         
-        resultNet.SetInputValues(NameArray("Semmelbroesel"));
+        resultNet.SetInputValues(NameArray("Konfettikanone"));
         resultNet.Compute();
         Console.WriteLine($"{resultNet["y"]}");
 
@@ -645,42 +699,42 @@ public class CalculatorTests {
         
         Population<DynamicFFConfiguration> population = new(100, rng => new(20, ["y"], rng));
         EvolutionSetup<DynamicFFConfiguration> setup = new() {
-                                                                 Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
-                                                                                                                                               new(NameArray("Spitzenplatz"),new{y=3}),
-                                                                                                                                               new(NameArray("Kräuterbeet"),new{y=5}),
-                                                                                                                                               new(NameArray("Muschelstrand"),new{y=3}),
-                                                                                                                                               new(NameArray("Oldenburg"),new{y=3}),
-                                                                                                                                               new(NameArray("Fernsehgarten"),new{y=4}),
-                                                                                                                                               new(NameArray("Ananasrhabarbersalat"),new{y=8}),
-                                                                                                                                               new(NameArray("Interkontinental"),new{y=6}),
-                                                                                                                                               new(NameArray("Sonnenallee"),new{y=5}),
-                                                                                                                                               new(NameArray("Gemüsebrühe"),new{y=5}),
-                                                                                                                                               new(NameArray("Ölplattform"),new{y=3}),
-                                                                                                                                               new(NameArray("Mandelbrot"), new{y=3}),
-                                                                                                                                               new(NameArray("Sonderrecht"), new{y=3}),
-                                                                                                                                               new(NameArray("Molekularbiologe"), new{y=8}),
-                                                                                                                                               new(NameArray("Wetteransage"), new{y=5}),
-                                                                                                                                               new(NameArray("Ananas"), new{y=3}),
-                                                                                                                                               new(NameArray("Schonungslos"), new{y=3}),
-                                                                                                                                               new(NameArray("Sauerkraut"), new{y=5}),
-                                                                                                                                               new(NameArray("Loeffelbiscuit"), new{y=6}),
-                                                                                                                                               new(NameArray("Pfeiffenblaeser"), new{y=6}),
-                                                                                                                                               new(NameArray("Affenbrotbaum"), new{y=5}),
-                                                                                                                                               new(NameArray("Illustrationsbuch"), new{y=6}),
-                                                                                                                                               new(NameArray("Offenbarung"), new{y=4}),
-                                                                                                                                               new(NameArray("Hausverkauf"), new{y=5}),
-                                                                                                                                               new(NameArray("Lampenkranz"), new{y=3}),
-                                                                                                                                               new(NameArray("Kostenstelle"), new{y=4}),
-                                                                                                                                               new(NameArray("Oberfachverkaeufer"), new{y=8})
-                                                                                                                                           ]),
-                                                                 Runs = 5000,
-                                                                 TargetFitness = 0.01f,
-                                                                 AfterRun = (index, fitness) => {
-                                                                                if ((index & 511) == 0)
-                                                                                    Console.WriteLine("{0}: {1}", index, fitness);
-                                                                            },
-                                                                 Threads = 2
-                                                             };
+            Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
+                new(NameArray("Spitzenplatz"), new { y = 3 }),
+                new(NameArray("Kräuterbeet"), new { y = 5 }),
+                new(NameArray("Muschelstrand"), new { y = 3 }),
+                new(NameArray("Oldenburg"), new { y = 3 }),
+                new(NameArray("Fernsehgarten"), new { y = 4 }),
+                new(NameArray("Ananasrhabarbersalat"), new { y = 8 }),
+                new(NameArray("Interkontinental"), new { y = 6 }),
+                new(NameArray("Sonnenallee"), new { y = 5 }),
+                new(NameArray("Gemüsebrühe"), new { y = 5 }),
+                new(NameArray("Ölplattform"), new { y = 3 }),
+                new(NameArray("Mandelbrot"), new { y = 3 }),
+                new(NameArray("Sonderrecht"), new { y = 3 }),
+                new(NameArray("Molekularbiologe"), new { y = 8 }),
+                new(NameArray("Wetteransage"), new { y = 5 }),
+                new(NameArray("Ananas"), new { y = 3 }),
+                new(NameArray("Schonungslos"), new { y = 3 }),
+                new(NameArray("Sauerkraut"), new { y = 5 }),
+                new(NameArray("Loeffelbiscuit"), new { y = 6 }),
+                new(NameArray("Pfeiffenblaeser"), new { y = 6 }),
+                new(NameArray("Affenbrotbaum"), new { y = 5 }),
+                new(NameArray("Illustrationsbuch"), new { y = 6 }),
+                new(NameArray("Offenbarung"), new { y = 4 }),
+                new(NameArray("Hausverkauf"), new { y = 5 }),
+                new(NameArray("Lampenkranz"), new { y = 3 }),
+                new(NameArray("Kostenstelle"), new { y = 4 }),
+                new(NameArray("Oberfachverkaeufer"), new { y = 8 })
+            ]),
+            Runs = 5000,
+            TargetFitness = 0.01f,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
         PopulationEntry<DynamicFFConfiguration> result=population.Train(setup);
         Console.WriteLine($"Fitness: {result.Fitness:F2}");
         
@@ -693,4 +747,116 @@ public class CalculatorTests {
 
         Console.WriteLine(result.Chromosome);
     }
+    
+    [Test, Parallelizable]
+    public void DetermineGender() {
+
+        float[] NameArray(string name) {
+            name = name.ToLower();
+            float[] values = new float[20];
+            for(int i=0;i<values.Length;++i)
+                values[i] = i < name.Length ? (byte)name[i] : 0.0f;
+
+            return values;
+        }
+        
+        Population<DynamicFFConfiguration> population = new(100, rng => new(20, ["male", "female", "object"], rng));
+        EvolutionSetup<DynamicFFConfiguration> setup = new() {
+            Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
+                new(NameArray("Matthias"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Ina"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Monika"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Heinz"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Ali"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Mohammed"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Jesus"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Theresa"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Sandra"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Brunhilde"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Siegfried"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Gangolf"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Rolf"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Sieglinde"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Tina"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Matthilda"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Hilda"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Friedrich"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Gisela"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Tom"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Lisa"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Cheryl"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Leo"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Martin"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Selene"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Nathan"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Christopher"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Christian"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Kristin"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Lucy"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Cloud"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Kina"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Timon"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Monika"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Peter"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Oliver"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Idriss"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Katharina"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Olga"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Susanne"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Susi"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Horst"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Karl"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Mandy"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Jörg"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Irene"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Marco"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Theodor"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Paul"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Julia"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Felix"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Charlotte"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Brad"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Konstanze"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Sebastian"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Angela"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Eberhart"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Jeanne"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Anja"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Dennis"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Ronald"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Sindy"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Juliane"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Lilith"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Marcel"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Klaus"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Ben"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Bill"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Wesley"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Beverly"), new { male = 0, female=1, @object=0 }),
+                new(NameArray("Maurice"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Ryan"), new { male = 1, female=0, @object=0 }),
+                new(NameArray("Daniel"), new { male = 1, female=0, @object=0 }),
+            ]),
+            Runs = 500,
+            Rivalism = 5,
+            TargetFitness = 0.01f,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2
+        };
+        PopulationEntry<DynamicFFConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness: {result.Fitness:F2}");
+        
+        DynamicFFNet resultNet = new(result.Chromosome);
+
+        
+        resultNet.SetInputValues(NameArray("Jack"));
+        resultNet.Compute();
+        Console.WriteLine($"m: {resultNet["male"]}, f: {resultNet["female"]}, o: {resultNet["object"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+
 }

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Pooshit.Ai.Genetics;
 
 /// <summary>
@@ -17,4 +19,6 @@ where T : IChromosome<T>
     /// fitness of chromosome
     /// </summary>
     public float Fitness { get; set; }
+
+    public override string ToString() => Fitness.ToString(CultureInfo.InvariantCulture);
 }
