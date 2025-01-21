@@ -11,6 +11,17 @@ public class Population<T>
 where T : class, IChromosome<T> {
     PopulationEntry<T>[] trainingBuffer;
     readonly Action<EvolutionSetup<T>, IRng, float, int> mutator;
+
+    Population(int size) {
+        trainingBuffer = new PopulationEntry<T>[size];
+        if (typeof(ICrossChromosome<T>).IsAssignableFrom(typeof(T))) {
+            mutator = Cross;
+        }
+        else if (typeof(IMutatingChromosome<T>).IsAssignableFrom(typeof(T))) {
+            mutator = Mutate;
+        }
+        else throw new NotImplementedException();
+    }
     
     /// <summary>
     /// creates a new <see cref="Population{T}"/>
@@ -18,14 +29,16 @@ where T : class, IChromosome<T> {
     /// <param name="size">size of population</param>
     /// <param name="generator">used to generate new chromosomes</param>
     /// <param name="rng">rng to use to initialize population</param>
-    public Population(int size, Func<IRng, T> generator, Rng rng=null) {
+    public Population(int size, Func<IRng, T> generator, Rng rng=null)
+    : this(size)
+    {
         if (size <= 0) 
             throw new ArgumentException("Size of population has to be a positive integer");
         Generator = generator;
         rng ??= new();
         
         Entries = new PopulationEntry<T>[size];
-        trainingBuffer = new PopulationEntry<T>[size];
+        
         CrossSetup crossSetup = new() {
                                           MutateRange = 1.0f,
                                           Rng = rng
@@ -36,14 +49,6 @@ where T : class, IChromosome<T> {
                                };
             Entries[i].Chromosome.Randomize(crossSetup);
         }
-        
-        if (typeof(ICrossChromosome<T>).IsAssignableFrom(typeof(T))) {
-            mutator = Cross;
-        }
-        else if (typeof(IMutatingChromosome<T>).IsAssignableFrom(typeof(T))) {
-            mutator = Mutate;
-        }
-        else throw new NotImplementedException();
     }
 
     /// <summary>
@@ -51,12 +56,13 @@ where T : class, IChromosome<T> {
     /// </summary>
     /// <param name="population">entries of population</param>
     /// <param name="generator">generator for new chromosome instances</param>
-    public Population(PopulationEntry<T>[] population, Func<IRng, T> generator) {
+    public Population(PopulationEntry<T>[] population, Func<IRng, T> generator)
+    : this(population.Length)
+    {
         if (population.Length <= 0)
             throw new ArgumentException("Invalid population size");
         Generator = generator;
         Entries = population;
-        trainingBuffer = new PopulationEntry<T>[Entries.Length];
     }
 
     /// <summary>
