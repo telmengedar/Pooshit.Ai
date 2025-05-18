@@ -123,9 +123,15 @@ public static class AiSerialization {
                                                                       Fitness = reader.ReadSingle()
                                                                   };
 
+            SerializationChunk chunk = (SerializationChunk)reader.ReadByte();
+            if (chunk == SerializationChunk.Ancestry) {
+                entry.AncestryId = new(reader.ReadBytes(16));
+                chunk = (SerializationChunk)reader.ReadByte();
+            }
+
             List<NeuronConfig> neurons = [];
             int neuronCount;
-            switch ((SerializationChunk)reader.ReadByte()) {
+            switch (chunk) {
                 case SerializationChunk.InputNeurons:
                     neuronCount = reader.ReadInt32();
                     while (neuronCount-- > 0) {
@@ -192,9 +198,15 @@ public static class AiSerialization {
                                                                       Fitness = reader.ReadSingle()
                                                                   };
 
+            SerializationChunk chunk = (SerializationChunk)reader.ReadByte();
+            if (chunk == SerializationChunk.Ancestry) {
+                entry.AncestryId = new(reader.ReadBytes(16));
+                chunk = (SerializationChunk)reader.ReadByte();
+            }
+
             List<NeuronConfig> neurons = [];
             int neuronCount;
-            switch ((SerializationChunk)reader.ReadByte()) {
+            switch (chunk) {
                 case SerializationChunk.InputNeurons:
                     neuronCount = reader.ReadInt32();
                     while (neuronCount-- > 0) {
@@ -294,7 +306,8 @@ public static class AiSerialization {
         writer.Write(dboPopulation.Entries.Length);
         foreach (PopulationEntry<DynamicBOConfiguration> entry in dboPopulation.Entries) {
             writer.Write(entry.Fitness);
-
+            writer.Write((byte)SerializationChunk.Ancestry);
+            writer.Write(entry.AncestryId.ToByteArray());
             if (entry.Chromosome.Neurons.Take(entry.Chromosome.InputCount).Any(n => !string.IsNullOrEmpty(n.Generator))) {
                 writer.Write((byte)SerializationChunk.InputGenerators);
                 writer.Write(entry.Chromosome.InputCount);
@@ -329,6 +342,8 @@ public static class AiSerialization {
         writer.Write(dffPopulation.Entries.Length);
         foreach (PopulationEntry<DynamicFFConfiguration> entry in dffPopulation.Entries) {
             writer.Write(entry.Fitness);
+            writer.Write((byte)SerializationChunk.Ancestry);
+            writer.Write(entry.AncestryId.ToByteArray());
             writer.Write((byte)SerializationChunk.InputNeurons);
             writer.Write(entry.Chromosome.InputCount);
             foreach (NeuronConfig neuron in entry.Chromosome.Neurons.Take(entry.Chromosome.InputCount))

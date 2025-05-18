@@ -38,5 +38,10 @@ public enum SerializationChunk : short {
     /// <summary>
     /// input neurons with generators
     /// </summary>
-    InputGenerators=6
+    InputGenerators=6,
+    
+    /// <summary>
+    /// identifier for origin structure
+    /// </summary>
+    Ancestry=7,
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.Serialization;
 
 namespace Pooshit.Ai.Genetics;
 
@@ -16,9 +17,20 @@ where T : IChromosome<T>
     public T Chromosome { get; set; }
 
     /// <summary>
+    /// id of origin structure
+    /// </summary>
+    public Guid AncestryId { get; set; }
+    
+    /// <summary>
     /// fitness of chromosome
     /// </summary>
     public float Fitness { get; set; }
 
+    /// <summary>
+    /// value used for fitness selection
+    /// </summary>
+    [IgnoreDataMember]
+    public float FitnessSelector { get; set; }
+    
     public override string ToString() => Fitness.ToString(CultureInfo.InvariantCulture);
 }

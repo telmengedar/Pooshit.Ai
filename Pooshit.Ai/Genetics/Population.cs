@@ -10,7 +10,7 @@ namespace Pooshit.Ai.Genetics;
 public class Population<T> 
 where T : class, IChromosome<T> {
     PopulationEntry<T>[] trainingBuffer;
-    readonly Action<EvolutionSetup<T>, IRng, float, int> mutator;
+    readonly Action<EvolutionSetup<T>, IRng, GenePool<T>, int> mutator;
 
     Population(int size) {
         trainingBuffer = new PopulationEntry<T>[size];
@@ -45,7 +45,8 @@ where T : class, IChromosome<T> {
                                       };
         for (int i = 0; i < size; ++i) {
             Entries[i] = new() {
-                                   Chromosome = generator(rng)
+                                   Chromosome = generator(rng),
+                                   AncestryId = Guid.NewGuid()
                                };
             Entries[i].Chromosome.Randomize(crossSetup);
         }
@@ -82,7 +83,7 @@ where T : class, IChromosome<T> {
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0f)
                 continue;
-
+            
             int structureHash = entry.Chromosome.StructureHash();
             if (!structureHashes.Add(structureHash))
                 continue;
@@ -95,19 +96,17 @@ where T : class, IChromosome<T> {
 
         float modifiedMax = Entries.Max(e => (e.Fitness + 1.0f) / e.Chromosome.FitnessModifier);
 
-        float fitnessSum = 0.0f;
+        GenePool<T> genePool = new(Generator);
         foreach (PopulationEntry<T> entry in Entries) {
             if (entry.Fitness < 0.0)
                 continue;
 
             float value = (modifiedMax - (entry.Fitness + 1.0f) / entry.Chromosome.FitnessModifier) / modifiedMax;
-
-            value *= value;
-            fitnessSum += value;
-            entry.Fitness = fitnessSum;
+            entry.Fitness = value * value;
+            genePool.Add(entry);
         }
 
-        mutator(setup, rng, fitnessSum, offset);
+        mutator(setup, rng, genePool, offset);
         Parallel.ForEach(trainingBuffer,
                          new() { MaxDegreeOfParallelism = setup.Threads },
                          entry => entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, false));
@@ -115,13 +114,10 @@ where T : class, IChromosome<T> {
         (Entries, trainingBuffer) = (trainingBuffer, Entries);
     }
 
-    void Cross(EvolutionSetup<T> setup, IRng rng, float fitnessSum, int offset) {
+    void Cross(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset) {
         for (int i = offset; i < trainingBuffer.Length; ++i) {
-            double first = rng.NextDouble() * fitnessSum;
-            double second = rng.NextDouble() * fitnessSum;
-
-            PopulationEntry<T> firstChromosome = Entries.FirstOrDefault(e => e.Fitness >= first) ?? Entries[0];
-            PopulationEntry<T> secondChromosome = Entries.FirstOrDefault(e => e.Fitness >= second) ?? Entries[0];
+            PopulationEntry<T> firstChromosome = genePool.Next(rng);
+            PopulationEntry<T> secondChromosome = genePool.Next(rng);
 
             float mutationChance = setup.Mutation.Chance;
             float mutationRate = setup.Mutation.Rate;
@@ -150,19 +146,22 @@ where T : class, IChromosome<T> {
 
             trainingBuffer[i] = new() {
                 Chromosome = chromosome,
-                Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false)
+                Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false),
+                AncestryId = firstChromosome.AncestryId
             };
         }
     }
 
-    void Mutate(EvolutionSetup<T> setup, IRng rng, float fitnessSum, int offset) {
+    void Mutate(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset) {
         void Mutator(int i) {
             if (Generator != null && i > trainingBuffer.Length - setup.Elitism) {
-                T chromosome = Generator(rng);
-                Mutate(trainingBuffer, rng, chromosome, setup, i);
+                Mutate(trainingBuffer, rng, new() {
+                    Chromosome = Generator(rng),
+                    AncestryId = Guid.NewGuid() 
+                }, setup, i);
             }
             else
-                Mutate(trainingBuffer, rng, fitnessSum, setup, i);
+                Mutate(trainingBuffer, rng, genePool.Next(rng), setup, i);
         }
 
         if (setup.Threads > 1) {
@@ -176,28 +175,24 @@ where T : class, IChromosome<T> {
         }
     }
     
-    void Mutate(PopulationEntry<T>[] next, IRng rng, float fitnessSum, EvolutionSetup<T> setup, int i) {
-        float sourceIndex = rng.NextFloat() * fitnessSum;
-        PopulationEntry<T> source = Entries.FirstOrDefault(e => e.Fitness >= sourceIndex) ?? Entries[rng.NextInt(Entries.Length)];
-        Mutate(next, rng, source.Chromosome, setup, i);
-    }
-    
-    void Mutate(PopulationEntry<T>[] next, IRng rng, T chromosome, EvolutionSetup<T> setup, int i) {
+    void Mutate(PopulationEntry<T>[] next, IRng rng, PopulationEntry<T> current, EvolutionSetup<T> setup, int i) {
         float mutationRange = setup.Mutation.Range;
 
         float mutationScale = (float)i / Entries.Length;
         mutationRange *= mutationScale;
 
+        T chromosome = current.Chromosome;
         if (setup.Rivalism > 1) {
             List<PopulationEntry<T>> candidates = [];
-
+            
             for (int l = 0; l < setup.Rivalism; ++l) {
                 int runs = 1 + rng.NextInt(setup.Mutation.Runs);
                 for (int k = 0; k < runs; ++k)
                     chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
                 candidates.Add(new() {
                     Chromosome = chromosome,
-                    Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false)
+                    Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false),
+                    AncestryId = current.AncestryId
                 });
             }
             
@@ -211,7 +206,7 @@ where T : class, IChromosome<T> {
 
             next[i] = new() {
                 Chromosome = chromosome,
-
+                AncestryId = current.AncestryId
                 //Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false)
             };
         }
