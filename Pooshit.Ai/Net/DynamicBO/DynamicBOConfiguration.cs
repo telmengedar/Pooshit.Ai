@@ -15,7 +15,9 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
     static readonly OperationTypeOptions operationTypes = new(new MutationEntry<OperationType>(OperationType.Multiply, 1.0),
                                                               new MutationEntry<OperationType>(OperationType.Add, 1.0),
                                                               new MutationEntry<OperationType>(OperationType.Div, 1.0),
-                                                              new MutationEntry<OperationType>(OperationType.Sub, 1.0));
+                                                              new MutationEntry<OperationType>(OperationType.Sub, 1.0),
+                                                              new MutationEntry<OperationType>(OperationType.Min, 1.0),
+                                                              new MutationEntry<OperationType>(OperationType.Max, 1.0));
 
     static readonly AggregateTypeOptions aggregateTypes = new(new MutationEntry<AggregateType>(AggregateType.Sum, 1.0),
                                                        new MutationEntry<AggregateType>(AggregateType.Average, 1.0),

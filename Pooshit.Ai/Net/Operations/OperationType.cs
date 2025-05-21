@@ -9,5 +9,7 @@ public enum OperationType {
     Div,
     Sub,
     Pow,
-    InvPow
+    InvPow,
+    Min,
+    Max
 }

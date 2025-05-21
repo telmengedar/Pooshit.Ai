@@ -4,6 +4,11 @@ namespace Pooshit.Ai.Extensions;
 
 public static class OperationTypeExtensions {
 
+    /// <summary>
+    /// converts an operation to a display string
+    /// </summary>
+    /// <param name="type">operation type to convert</param>
+    /// <returns>display string</returns>
     public static string ToDisplay(this OperationType type) {
         switch (type) {
             case OperationType.Add:
@@ -18,6 +23,10 @@ public static class OperationTypeExtensions {
                 return "^";
             case OperationType.InvPow:
                 return "-^";
+            case OperationType.Max:
+                return"MAX";
+            case OperationType.Min:
+                return "MIN";
             default:
                 return "?";
         }

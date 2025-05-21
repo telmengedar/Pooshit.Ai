@@ -38,6 +38,12 @@ public static class NMath {
             case OperationType.Sub:
                 result = lhs - rhs;
                 break;
+            case OperationType.Max:
+                result=Math.Max(lhs, rhs);
+            break;
+            case OperationType.Min:
+                result = Math.Min(lhs, rhs);
+            break;
         }
 
         return result;

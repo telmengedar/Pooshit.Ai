@@ -17,6 +17,8 @@ public class OperationTypeOptions : MutationOptions<OperationType> {
         SetEntries(new MutationEntry<OperationType>(OperationType.Multiply, 1.0),
                    new MutationEntry<OperationType>(OperationType.Add, 1.0),
                    new MutationEntry<OperationType>(OperationType.Div, 0.8),
-                   new MutationEntry<OperationType>(OperationType.Sub, 0.8));
+                   new MutationEntry<OperationType>(OperationType.Sub, 0.8),
+                   new MutationEntry<OperationType>(OperationType.Max, 0.2),
+                   new MutationEntry<OperationType>(OperationType.Min, 0.2));
     }
 }
