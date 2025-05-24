@@ -55,15 +55,14 @@ public class GenePool<T> where T : IChromosome<T> {
 	/// <param name="rng">rng to use for selection</param>
 	/// <returns>selected entry</returns>
 	public PopulationEntry<T> Next(IRng rng) {
-		if (population.Count == 0)
-			return new() {
-				Chromosome = generator(rng),
-				AncestryId = Guid.NewGuid()
-			};
-
 		PopulationEntry<T> next;
 		lock (poolLock) {
-
+			if (population.Count == 0)
+				return new() {
+					Chromosome = generator(rng),
+					AncestryId = Guid.NewGuid()
+				};
+			
 			if (population.Count == 1)
 				next = population[0];
 			else {
