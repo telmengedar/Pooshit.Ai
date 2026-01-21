@@ -21,7 +21,6 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
 
     static readonly AggregateTypeOptions aggregateTypes = new(new MutationEntry<AggregateType>(AggregateType.Sum, 1.0),
                                                        new MutationEntry<AggregateType>(AggregateType.Average, 1.0),
-                                                       new MutationEntry<AggregateType>(AggregateType.Median, 0.1),
                                                        new MutationEntry<AggregateType>(AggregateType.Min, 1.0),
                                                        new MutationEntry<AggregateType>(AggregateType.Max, 1.0));
 

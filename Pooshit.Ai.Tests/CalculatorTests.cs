@@ -4,6 +4,7 @@ using Pooshit.Ai.Net;
 using Pooshit.Ai.Net.DynamicBO;
 using Pooshit.Ai.Net.DynamicFF;
 using Pooshit.Ai.Net.Evaluation;
+using Pooshit.Ai.Net.Operations;
 using Pooshit.Ai.Neurons;
 using Pooshit.Json;
 using Pooshit.Scripting;
@@ -280,7 +281,111 @@ public class CalculatorTests {
 
         Console.WriteLine(result.Chromosome);
     }
-    
+
+    [Test, Parallelizable]
+    public void MultiplyMinusDynamicBinOpAverageToMax() {
+        Population<DynamicBOConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
+        EvolutionSetup<DynamicBOConfiguration> setup = new() {
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new(new { x = 5, y = 2, z = 7 }, new { result = 3 }),
+                new(new { x = 3, y = 3, z = 3 }, new { result = 6 }),
+                new(new { x = 10, y = 10, z = 2 }, new { result = 98 }),
+                new(new { x = 5, y = 5, z = 1 }, new { result = 24 }),
+                new(new { x = 1, y = 40, z = 9 }, new { result = 31 }),
+                new(new { x = 6, y = 10, z = 10 }, new { result = 50 }),
+                new(new { x = 7, y = 8, z = 6 }, new { result = 50 }),
+                new(new { x = 11, y = 8, z = 6 }, new { result = 82 }),
+                new(new { x = 2, y = 70, z = 12 }, new { result = 128 }),
+                new(new { x = 12, y = 12, z = 4 }, new { result = 140 }),
+                new(new { x = 9, y = 12, z = 19 }, new { result = 89 }),
+                new(new { x = 1, y = 2, z = 3 }, new { result = -1 }),
+                new(new { x = 8, y = 3, z = 8 }, new { result = 16 }),
+                new(new { x = 2, y = 34, z = 9 }, new { result = 59 }),
+                new(new { x = 8, y = 66, z = 3 }, new { result = 525 }),
+                new(new { x = 20, y = 6, z = 333 }, new { result = -213 }),
+                new(new { x = 4, y = 60, z = 399 }, new { result = -159 }),
+                new(new { x = 7, y = 18, z = 170 }, new { result = -49 }),
+                new(new { x = -3, y = 7, z = 20 }, new { result = -41 }),
+                new(new { x = -3, y = 8, z = 20 }, new { result = -44 }),
+                new(new { x = -3, y = -8, z = 20 }, new { result = 4 }),
+            ]) {
+                FitnessAggregate = AggregateType.AverageToMax
+            },
+            Runs = 500,
+            Rivalism = 5,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2,
+        };
+        PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness with {setup.Threads} threads: {result.Fitness:F2}");
+
+        DynamicBONet net = new(result.Chromosome) {
+            ["x"] = 5,
+            ["y"] = 13,
+            ["z"] = 44
+        };
+
+        net.Compute();
+        Console.WriteLine($"f(5,13,44)={net["result"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+
+        [Test, Parallelizable]
+    public void MultiplyMinusDynamicBinOpAverage() {
+        Population<DynamicBOConfiguration> population = new(100, rng => new(["x", "y", "z"], ["result"], rng));
+        EvolutionSetup<DynamicBOConfiguration> setup = new() {
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>([
+                new(new { x = 5, y = 2, z = 7 }, new { result = 3 }),
+                new(new { x = 3, y = 3, z = 3 }, new { result = 6 }),
+                new(new { x = 10, y = 10, z = 2 }, new { result = 98 }),
+                new(new { x = 5, y = 5, z = 1 }, new { result = 24 }),
+                new(new { x = 1, y = 40, z = 9 }, new { result = 31 }),
+                new(new { x = 6, y = 10, z = 10 }, new { result = 50 }),
+                new(new { x = 7, y = 8, z = 6 }, new { result = 50 }),
+                new(new { x = 11, y = 8, z = 6 }, new { result = 82 }),
+                new(new { x = 2, y = 70, z = 12 }, new { result = 128 }),
+                new(new { x = 12, y = 12, z = 4 }, new { result = 140 }),
+                new(new { x = 9, y = 12, z = 19 }, new { result = 89 }),
+                new(new { x = 1, y = 2, z = 3 }, new { result = -1 }),
+                new(new { x = 8, y = 3, z = 8 }, new { result = 16 }),
+                new(new { x = 2, y = 34, z = 9 }, new { result = 59 }),
+                new(new { x = 8, y = 66, z = 3 }, new { result = 525 }),
+                new(new { x = 20, y = 6, z = 333 }, new { result = -213 }),
+                new(new { x = 4, y = 60, z = 399 }, new { result = -159 }),
+                new(new { x = 7, y = 18, z = 170 }, new { result = -49 }),
+                new(new { x = -3, y = 7, z = 20 }, new { result = -41 }),
+                new(new { x = -3, y = 8, z = 20 }, new { result = -44 }),
+                new(new { x = -3, y = -8, z = 20 }, new { result = 4 }),
+            ]) {
+                FitnessAggregate = AggregateType.Average
+            },
+            Runs = 500,
+            Rivalism = 5,
+            AfterRun = (index, fitness) => {
+                if ((index & 511) == 0)
+                    Console.WriteLine("{0}: {1}", index, fitness);
+            },
+            Threads = 2,
+        };
+        PopulationEntry<DynamicBOConfiguration> result=population.Train(setup);
+        Console.WriteLine($"Fitness with {setup.Threads} threads: {result.Fitness:F2}");
+
+        DynamicBONet net = new(result.Chromosome) {
+            ["x"] = 5,
+            ["y"] = 13,
+            ["z"] = 44
+        };
+
+        net.Compute();
+        Console.WriteLine($"f(5,13,44)={net["result"]}");
+
+        Console.WriteLine(result.Chromosome);
+    }
+
     [Test, Parallelizable]
     public void ExcellenceDynamicBinOp() {
         Dictionary<string, object> samples = Json.Read<Dictionary<string, object>>(File.ReadAllText("Data/excellence_samples.json"));
@@ -541,7 +646,7 @@ public class CalculatorTests {
 
     [Test, Parallelizable]
     public void SequenceDynamicFF() {
-        Population<DynamicFFConfiguration> population = new(100, rng => new(new[]{"x"}, ["y"], rng));
+        Population<DynamicFFConfiguration> population = new(100, rng => new(["x"], ["y"], rng));
         EvolutionSetup<DynamicFFConfiguration> setup = new() {
             Evaluator = new SamplesEvaluator<DynamicFFConfiguration, DynamicFFNet>([
                 new(new { x = 1 }, new { y = 2 }),

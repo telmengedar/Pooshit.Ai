@@ -149,6 +149,7 @@ public static class NMath {
         if (count == 0)
             return 0.0f;
 
-        return (sum / count + max) * 0.5f;
+        return sum / count * 0.9f + max * 0.1f;
+        //return (sum / count + max) * 0.5f;
     }
 }

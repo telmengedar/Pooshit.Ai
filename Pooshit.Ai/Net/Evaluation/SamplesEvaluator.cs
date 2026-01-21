@@ -91,7 +91,9 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
             switch (EvaluationFunc) {
                 default:
                 case EvaluationFunc.DistancePercent:
-                    return s.Outputs.Select(o => MathF.Abs(net[o.Index] - o.Value) / MathF.Max(MathF.Abs(o.Value), 1.0f)).Average();
+                    return s.Outputs.Select(o => {
+                        return MathF.Abs(net[o.Index] - o.Value) / MathF.Max(MathF.Abs(o.Value), 1.0f);
+                    }).Average();
                 case EvaluationFunc.Distance:
                     return s.Outputs.Select(o => MathF.Abs(net[o.Index] - o.Value)).Average();
             }
