@@ -26,8 +26,4 @@
         <None Include="LICENSE" Pack="true" PackagePath="" />
         <None Include="readme.md" Pack="true" PackagePath="" />
     </ItemGroup>
-
-    <ItemGroup>
-        <InternalsVisibleTo Include="Pooshit.Ai.Tests" />
-    </ItemGroup>
 </Project>
