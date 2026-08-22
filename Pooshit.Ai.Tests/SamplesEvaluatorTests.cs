@@ -1,3 +1,4 @@
+using System.Numerics;
 using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics;
 using Pooshit.Ai.Net.Evaluation;
@@ -7,9 +8,14 @@ namespace NightlyCode.Ai.Tests;
 
 [TestFixture, Parallelizable]
 public class SamplesEvaluatorTests {
+    const int LargeSetSize = 20;
+    const float LargeSetSum = 1048575.0f;
 
-    static TrainingSample[] BuildSamples(params float[] values) {
-        return values.Select(v => new TrainingSample(new float[] { v }, new Dictionary<string, float> { ["result"] = v })).ToArray();
+    static TrainingSample[] BuildPowersOfTwo(int count) {
+        return Enumerable.Range(0, count)
+                          .Select(i => (float)(1L << i))
+                          .Select(v => new TrainingSample(new float[] { v }, new Dictionary<string, float> { ["result"] = v }))
+                          .ToArray();
     }
 
 
@@ -27,68 +33,95 @@ public class SamplesEvaluatorTests {
 
 
     [Test, Parallelizable]
-    public void EvaluateFitness_KnownRngSequenceRevisitingDisplacedIndex_SumsExpectedSamples() {
-        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildSamples(10, 20, 30, 40, 50), 3);
+    public void EvaluateFitness_KnownRngSequenceRevisitingDisplacedIndex_SumsExpectedSamplesWithExpectedBounds() {
+        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildPowersOfTwo(5), 3);
         FakeChromosome chromosome = CreateChromosome();
         SequenceRng rng = new(3, 0, 0);
 
         float fitness = evaluator.EvaluateFitness(chromosome, rng, false);
 
-        Assert.That(fitness, Is.EqualTo(100.0f));
+        Assert.That(fitness, Is.EqualTo(25.0f));
+        Assert.That(rng.Bounds, Is.EqualTo(new[] { 5, 4, 3 }));
     }
 
 
     [Test, Parallelizable]
     public void EvaluateFitness_SampleCountExceedsSetSize_ClampsToFullSetSum() {
-        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildSamples(10, 20, 30), 10);
+        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildPowersOfTwo(5), 10);
         FakeChromosome chromosome = CreateChromosome();
         Rng rng = new(1);
 
         float fitness = evaluator.EvaluateFitness(chromosome, rng, false);
 
-        Assert.That(fitness, Is.EqualTo(60.0f));
+        Assert.That(fitness, Is.EqualTo(31.0f));
     }
 
 
     [Test, Parallelizable]
     public void EvaluateFitness_FullSetIgnoresSampleCount_SumsEverySample() {
-        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildSamples(10, 20, 30, 40, 50), 1);
+        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildPowersOfTwo(5), 1);
         FakeChromosome chromosome = CreateChromosome();
         Rng rng = new(1);
 
         float fitness = evaluator.EvaluateFitness(chromosome, rng, true);
 
-        Assert.That(fitness, Is.EqualTo(150.0f));
+        Assert.That(fitness, Is.EqualTo(31.0f));
+    }
+
+
+    [Test, Parallelizable]
+    public void EvaluateFitness_NegativeSampleCount_ReturnsZeroFitness() {
+        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(BuildPowersOfTwo(5), -1);
+        FakeChromosome chromosome = CreateChromosome();
+        Rng rng = new(1);
+
+        float fitness = evaluator.EvaluateFitness(chromosome, rng, false);
+
+        Assert.That(fitness, Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
+    public void EvaluateFitness_PartialEvaluations_DrawDistinctSamples() {
+        TrainingSample[] samples = BuildPowersOfTwo(LargeSetSize);
+        SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(samples, 5);
+        FakeChromosome chromosome = CreateChromosome();
+
+        for (int seed = 1; seed <= 20; seed++) {
+            Rng rng = new(seed);
+            float fitness = evaluator.EvaluateFitness(chromosome, rng, false);
+            Assert.That(BitOperations.PopCount((uint)fitness), Is.EqualTo(5));
+        }
     }
 
 
     [Test, Parallelizable]
     public void EvaluateFitness_RepeatedPartialEvaluations_PreservesSampleCache() {
-        TrainingSample[] samples = BuildSamples(Enumerable.Range(1, 30).Select(v => (float)v).ToArray());
+        TrainingSample[] samples = BuildPowersOfTwo(LargeSetSize);
         SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(samples, 5);
         FakeChromosome chromosome = CreateChromosome();
         Rng rng = new(1);
 
-        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(465.0f));
+        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(LargeSetSum));
 
         for (int i = 0; i < 500; i++)
             evaluator.EvaluateFitness(chromosome, rng, false);
 
-        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(465.0f));
+        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(LargeSetSum));
     }
 
 
     [Test, Parallelizable]
     public void EvaluateFitness_ConcurrentPartialEvaluations_PreservesSampleCache() {
-        TrainingSample[] samples = BuildSamples(Enumerable.Range(1, 30).Select(v => (float)v).ToArray());
+        TrainingSample[] samples = BuildPowersOfTwo(LargeSetSize);
         SamplesEvaluator<FakeChromosome, FakeNet> evaluator = CreateEvaluator(samples, 5);
         FakeChromosome chromosome = CreateChromosome();
         LockedRng rng = new(1);
 
-        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(465.0f));
+        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(LargeSetSum));
 
         Parallel.For(0, 2000, _ => evaluator.EvaluateFitness(chromosome, rng, false));
 
-        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(465.0f));
+        Assert.That(evaluator.EvaluateFitness(chromosome, rng, true), Is.EqualTo(LargeSetSum));
     }
 }
