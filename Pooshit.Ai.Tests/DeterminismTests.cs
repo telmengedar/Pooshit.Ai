@@ -43,6 +43,7 @@ public class DeterminismTests {
         (float[] Trajectory, float[] FinalFitness, string Winner) runA = Run(Seed);
         (float[] Trajectory, float[] FinalFitness, string Winner) runB = Run(Seed);
 
+        Assert.That(runA.Trajectory, Has.Length.EqualTo(30));
         Assert.That(runB.Trajectory, Is.EqualTo(runA.Trajectory));
         Assert.That(runB.FinalFitness, Is.EqualTo(runA.FinalFitness));
         Assert.That(runB.Winner, Is.EqualTo(runA.Winner));
@@ -54,5 +55,22 @@ public class DeterminismTests {
         (float[] Trajectory, float[] FinalFitness, string Winner) runC = Run(OtherSeed);
 
         Assert.That(runC.Trajectory, Is.Not.EqualTo(runA.Trajectory));
+    }
+
+    [Test, Parallelizable]
+    public void Train_RngSupplied_DrawsFromTheSuppliedInstance() {
+        RecordingRng rng = new(new Rng(Seed));
+        Population<DynamicBOConfiguration> population = new(20, r => new(["x", "y", "z"], ["result"], r));
+        EvolutionSetup<DynamicBOConfiguration> setup = new() {
+            Evaluator = new SamplesEvaluator<DynamicBOConfiguration, DynamicBONet>(Samples()),
+            Rng = rng,
+            Threads = 1,
+            Runs = 5,
+            TargetFitness = -1.0f
+        };
+
+        population.Train(setup);
+
+        Assert.That(rng.CallCount, Is.GreaterThan(0));
     }
 }

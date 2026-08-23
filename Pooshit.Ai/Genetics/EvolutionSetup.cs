@@ -55,7 +55,7 @@ where T : IChromosome<T>
     public int Threads { get; set; } = 1;
 
     /// <summary>
-    /// random number generator to draw the run from. Reproducible only when <see cref="Population{T}"/> was also constructed from a seeded generator, and only at <see cref="Threads"/> == 1. Null constructs an internal generator, today's behavior.
+    /// random number generator to draw the run from. Reproducible only when <see cref="Population{T}"/> was also constructed from a seeded generator, and only at <see cref="Threads"/> == 1. Null constructs an internal generator.
     /// </summary>
     public IRng Rng { get; set; }
 }
