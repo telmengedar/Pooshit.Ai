@@ -5,12 +5,12 @@ namespace NightlyCode.Ai.Tests;
 
 [TestFixture, Parallelizable]
 public class NMathActivationTests {
-    static readonly float[] Probes = [-10.0f, -0.3f, 0.3f, 10.0f];
+    static float[] Probes() => [-10.0f, -0.3f, 0.3f, 10.0f];
 
     [Test, Parallelizable]
     public void Activation_EveryFunc_ProducesPairwiseDistinctResponseVectors() {
         List<float[]> vectors = Enum.GetValues<ActivationFunc>()
-                                     .Select(func => Probes.Select(p => p.Activation(func)).ToArray())
+                                     .Select(func => Probes().Select(p => p.Activation(func)).ToArray())
                                      .ToList();
 
         for (int lhs = 0; lhs < vectors.Count; ++lhs)
@@ -22,7 +22,7 @@ public class NMathActivationTests {
     [Test, Parallelizable]
     public void Activation_EveryFunc_NeverProducesNonFiniteResult() {
         foreach (ActivationFunc func in Enum.GetValues<ActivationFunc>())
-        foreach (float probe in Probes)
+        foreach (float probe in Probes())
             Assert.That(float.IsFinite(probe.Activation(func)), Is.True);
     }
 
@@ -45,20 +45,26 @@ public class NMathActivationTests {
 
 
     [Test, Parallelizable]
-    public void Activation_Sigmoid_AtZero_ReturnsOneHalf() {
-        Assert.That(0.0f.Activation(ActivationFunc.Sigmoid), Is.EqualTo(0.5f));
+    [TestCase(0.0f, 0.5)]
+    [TestCase(-10.0f, 0.045454545454545456)]
+    public void Activation_Sigmoid_ApproximatesClosedFormWithinTolerance(float value, double expected) {
+        Assert.That(value.Activation(ActivationFunc.Sigmoid), Is.EqualTo(expected).Within(0.0001));
     }
 
 
     [Test, Parallelizable]
-    public void Activation_Sin_ApproximatesTrueSineWithinTolerance() {
-        Assert.That(2.0f.Activation(ActivationFunc.Sin), Is.EqualTo(Math.Sin(2.0)).Within(0.0001));
+    [TestCase(2.0f)]
+    [TestCase(-1.0f)]
+    public void Activation_Sin_ApproximatesTrueSineWithinTolerance(float value) {
+        Assert.That(value.Activation(ActivationFunc.Sin), Is.EqualTo(Math.Sin(value)).Within(0.0001));
     }
 
 
     [Test, Parallelizable]
-    public void Activation_Tanh_ApproximatesTrueTanhWithinTolerance() {
-        Assert.That(2.0f.Activation(ActivationFunc.Tanh), Is.EqualTo(Math.Tanh(2.0)).Within(0.0001));
+    [TestCase(2.0f)]
+    [TestCase(-1.0f)]
+    public void Activation_Tanh_ApproximatesTrueTanhWithinTolerance(float value) {
+        Assert.That(value.Activation(ActivationFunc.Tanh), Is.EqualTo(Math.Tanh(value)).Within(0.0001));
     }
 
 
@@ -93,14 +99,18 @@ public class NMathActivationTests {
 
 
     [Test, Parallelizable]
-    public void Activation_Swish_AtZero_ReturnsZero() {
-        Assert.That(0.0f.Activation(ActivationFunc.Swish), Is.EqualTo(0.0f));
+    [TestCase(0.0f, 0.0)]
+    [TestCase(2.0f, 1.6666666666666667)]
+    public void Activation_Swish_ApproximatesValueTimesClosedFormSigmoidWithinTolerance(float value, double expected) {
+        Assert.That(value.Activation(ActivationFunc.Swish), Is.EqualTo(expected).Within(0.0001));
     }
 
 
     [Test, Parallelizable]
-    public void Activation_Sqrt_ApproximatesTrueSquareRootWithinTolerance() {
-        Assert.That(4.0f.Activation(ActivationFunc.Sqrt), Is.EqualTo(Math.Sqrt(4.0)).Within(1).Percent);
+    [TestCase(4.0f, 2.0)]
+    [TestCase(9.0f, 3.0)]
+    public void Activation_Sqrt_ApproximatesTrueSquareRootWithinTolerance(float value, double expected) {
+        Assert.That(value.Activation(ActivationFunc.Sqrt), Is.EqualTo(expected).Within(1).Percent);
     }
 
 

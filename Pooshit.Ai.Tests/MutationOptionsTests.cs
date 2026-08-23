@@ -18,6 +18,7 @@ public class MutationOptionsTests {
         new(OperationType.Div, 4.0)
     ];
 
+
     [Test, Parallelizable]
     [TestCase(0.24, OperationType.Multiply)]
     [TestCase(0.25, OperationType.Multiply)]
@@ -35,6 +36,7 @@ public class MutationOptionsTests {
         new(AggregateType.Average, 2.0),
         new(AggregateType.Min, 4.0)
     ];
+
 
     [Test, Parallelizable]
     [TestCase(0.24, AggregateType.Sum)]
@@ -54,6 +56,7 @@ public class MutationOptionsTests {
         new(ActivationFunc.Tanh, 4.0)
     ];
 
+
     [Test, Parallelizable]
     [TestCase(0.24, ActivationFunc.None)]
     [TestCase(0.25, ActivationFunc.None)]
@@ -72,5 +75,14 @@ public class MutationOptionsTests {
         SequenceRng rng = new();
 
         Assert.That(ladder.SelectItem(rng), Is.EqualTo(OperationType.Sub));
+    }
+
+
+    [Test, Parallelizable]
+    public void SelectItem_EmptyLadder_ReturnsDefaultWithoutConsultingRng() {
+        EmptyDefaultsMutationOptions<OperationType> ladder = new();
+        SequenceRng rng = new();
+
+        Assert.That(ladder.SelectItem(rng), Is.EqualTo(default(OperationType)));
     }
 }

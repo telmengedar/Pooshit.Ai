@@ -15,14 +15,15 @@ namespace NightlyCode.Ai.Tests;
 public class AiSerializationTests {
 
     [Test, Parallelizable]
-    public void RoundTripDeserializedChromosome_ComputesSameOutputsAsOriginal() {
+    public void Deserialize_RoundTrippedChromosome_ComputesSameOutputsAsOriginal() {
         NeuronConfig[] neurons = [
             new() { Index = 0, Name = "x", OrderNumber = 0.0f },
             new() { Index = 1, Name = "y", OrderNumber = 0.0f },
             new() { Index = 2, Name = "z", OrderNumber = 1.0f, Aggregate = AggregateType.Sum, Activation = ActivationFunc.None }
         ];
         BOConnection[] connections = [
-            new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 2.0f }
+            new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 2.0f },
+            new() { Lhs = 1, Rhs = 0, Target = 2, Operation = OperationType.Add, Weight = 3.0f }
         ];
         DynamicBOConfiguration original = new(neurons, connections);
 
@@ -50,6 +51,7 @@ public class AiSerializationTests {
             Assert.That(deserializedNet["z"], Is.EqualTo(originalNet["z"]));
         }
     }
+
 
     float[] NameArray(string name) {
         float[] values = new float[20];

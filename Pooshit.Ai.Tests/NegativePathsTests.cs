@@ -17,7 +17,7 @@ public class NegativePathsTests {
 
 
     [Test, Parallelizable]
-    public void Population_Constructor_NegativeSize_ThrowsOverflowException() {
+    public void Population_Constructor_NegativeSize_ThrowsOverflowBeforeGuardCanRun() {
         Assert.That(() => new Population<DynamicBOConfiguration>(-1, rng => new(["x"], ["y"], rng)),
                     Throws.InstanceOf<OverflowException>());
     }

@@ -5,12 +5,12 @@ namespace NightlyCode.Ai.Tests;
 
 [TestFixture, Parallelizable]
 public class NMathAggregateTests {
-    static readonly float[] Fixture = [1.0f, 2.0f, 3.0f, 4.0f, 10.0f];
 
     [Test, Parallelizable]
     public void Aggregate_EveryAggregateType_ProducesPairwiseDistinctResults() {
+        float[] fixture = [1.0f, 2.0f, 3.0f, 4.0f, 10.0f];
         float[] results = Enum.GetValues<AggregateType>()
-                               .Select(aggregate => Fixture.Aggregate(aggregate))
+                               .Select(aggregate => fixture.Aggregate(aggregate))
                                .ToArray();
 
         Assert.That(results, Is.Unique);

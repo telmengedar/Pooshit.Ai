@@ -49,6 +49,12 @@ public class AMathTests {
 
 
     [Test, Parallelizable]
+    public void Power_LargeExponent_BlowsUpBeyondTheAccurateBandButStaysFinite() {
+        Assert.That(AMath.Power(2.0, 6.0), Is.EqualTo(Math.Pow(2.0, 6.0)).Within(35).Percent);
+    }
+
+
+    [Test, Parallelizable]
     public void Power_NegativeBase_ReturnsFiniteResult() {
         Assert.That(double.IsFinite(AMath.Power(-2.0, 2.0)), Is.True);
     }
