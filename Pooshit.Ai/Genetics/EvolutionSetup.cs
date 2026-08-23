@@ -1,3 +1,4 @@
+using Pooshit.Ai.Extern;
 using Pooshit.Ai.Genetics.Mutation;
 
 namespace Pooshit.Ai.Genetics;
@@ -52,4 +53,9 @@ where T : IChromosome<T>
     /// threads to use
     /// </summary>
     public int Threads { get; set; } = 1;
+
+    /// <summary>
+    /// random number generator to draw the run from. Reproducible only when <see cref="Population{T}"/> was also constructed from a seeded generator, and only at <see cref="Threads"/> == 1. Null constructs an internal generator, today's behavior.
+    /// </summary>
+    public IRng Rng { get; set; }
 }

@@ -107,9 +107,15 @@ where T : class, IChromosome<T> {
         }
 
         mutator(setup, rng, genePool, offset);
-        Parallel.ForEach(trainingBuffer,
-                         new() { MaxDegreeOfParallelism = setup.Threads },
-                         entry => entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, false));
+        if (setup.Threads > 1) {
+            Parallel.ForEach(trainingBuffer,
+                             new() { MaxDegreeOfParallelism = setup.Threads },
+                             entry => entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, false));
+        }
+        else {
+            foreach (PopulationEntry<T> entry in trainingBuffer)
+                entry.Fitness = setup.Evaluator.EvaluateFitness(entry.Chromosome, rng, false);
+        }
         Array.Sort(trainingBuffer, (lhs, rhs) => GetOrderNumber(lhs).CompareTo(GetOrderNumber(rhs)));
         (Entries, trainingBuffer) = (trainingBuffer, Entries);
     }
@@ -224,7 +230,10 @@ where T : class, IChromosome<T> {
     /// <param name="setup">configuration values used for evolution</param>
     /// <returns>best training result</returns>
     public PopulationEntry<T> Train(EvolutionSetup<T> setup) {
-        IRng rng = setup.Threads > 1 ? new LockedRng() : new Rng();
+        if (setup.Rng != null && setup.Threads > 1)
+            throw new ArgumentException("reproducible runs require Threads = 1; leave Rng unset to run threaded", nameof(setup));
+
+        IRng rng = setup.Rng ?? (setup.Threads > 1 ? new LockedRng() : new Rng());
         
         // compute fitness for all population entries
         if (setup.Threads > 1)
