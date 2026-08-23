@@ -49,7 +49,7 @@ public class AMathTests {
 
 
     [Test, Parallelizable]
-    public void Power_LargeExponent_BlowsUpBeyondTheAccurateBandButStaysFinite() {
+    public void Power_LargeExponent_ApproximatesTruePowerWithinWiderTolerance() {
         Assert.That(AMath.Power(2.0, 6.0), Is.EqualTo(Math.Pow(2.0, 6.0)).Within(35).Percent);
     }
 

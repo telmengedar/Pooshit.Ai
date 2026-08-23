@@ -7,6 +7,7 @@ namespace NightlyCode.Ai.Tests;
 public class NMathActivationTests {
     static float[] Probes() => [-10.0f, -0.3f, 0.3f, 10.0f];
 
+
     [Test, Parallelizable]
     public void Activation_EveryFunc_ProducesPairwiseDistinctResponseVectors() {
         List<float[]> vectors = Enum.GetValues<ActivationFunc>()
