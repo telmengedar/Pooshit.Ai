@@ -71,6 +71,6 @@ public class DeterminismTests {
 
         population.Train(setup);
 
-        Assert.That(rng.CallCount, Is.GreaterThan(0));
+        Assert.That(rng.CallCount, Is.GreaterThan(100));
     }
 }
