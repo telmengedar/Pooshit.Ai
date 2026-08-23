@@ -76,7 +76,7 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
 
         indexedSamples ??= TranslateSamples(chromosome).ToArray();
 
-        IndexedTrainingSample[] sampleBase = SampleCount == 0 || fullSet ? indexedSamples : indexedSamples.Shuffle(rng).Take(SampleCount).ToArray();
+        IndexedTrainingSample[] sampleBase = SampleCount == 0 || fullSet ? indexedSamples : indexedSamples.RandomSample(rng, SampleCount);
         float result = sampleBase.Select(s => {
             if (s.InputArray != null)
                 net.SetInputValues(s.InputArray);
