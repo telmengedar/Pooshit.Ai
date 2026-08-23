@@ -13,7 +13,7 @@ using Pooshit.Scripting.Parser;
 
 namespace NightlyCode.Ai.Tests;
 
-[TestFixture, Parallelizable]
+[TestFixture, Parallelizable, Explicit, Category("Demo")]
 public class CalculatorTests {
 
     public IScriptParser CreateParser() {

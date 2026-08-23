@@ -4,6 +4,7 @@ using Pooshit.Ai.Net;
 using Pooshit.Ai.Net.DynamicBO;
 using Pooshit.Ai.Net.DynamicFF;
 using Pooshit.Ai.Net.Evaluation;
+using Pooshit.Ai.Net.Operations;
 using Pooshit.Ai.Neurons;
 using Pooshit.Ai.Serialization;
 using Pooshit.Json;
@@ -12,6 +13,43 @@ namespace NightlyCode.Ai.Tests;
 
 [TestFixture, Parallelizable]
 public class AiSerializationTests {
+
+    [Test, Parallelizable]
+    public void RoundTripDeserializedChromosome_ComputesSameOutputsAsOriginal() {
+        NeuronConfig[] neurons = [
+            new() { Index = 0, Name = "x", OrderNumber = 0.0f },
+            new() { Index = 1, Name = "y", OrderNumber = 0.0f },
+            new() { Index = 2, Name = "z", OrderNumber = 1.0f, Aggregate = AggregateType.Sum, Activation = ActivationFunc.None }
+        ];
+        BOConnection[] connections = [
+            new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 2.0f }
+        ];
+        DynamicBOConfiguration original = new(neurons, connections);
+
+        Population<DynamicBOConfiguration> population = new([
+            new() { Chromosome = original, AncestryId = Guid.NewGuid() }
+        ], null);
+
+        MemoryStream stream = new();
+        AiSerialization.Serialize(population, stream);
+        DynamicBOConfiguration deserialized = AiSerialization.Deserialize<DynamicBOConfiguration>(new MemoryStream(stream.ToArray())).Single().Chromosome;
+
+        DynamicBONet originalNet = new(original);
+        DynamicBONet deserializedNet = new(deserialized);
+
+        (float x, float y)[] inputBattery = [(3.0f, 4.0f), (-1.0f, 5.0f), (0.0f, 0.0f)];
+        foreach ((float x, float y) in inputBattery) {
+            originalNet["x"] = x;
+            originalNet["y"] = y;
+            originalNet.Compute();
+
+            deserializedNet["x"] = x;
+            deserializedNet["y"] = y;
+            deserializedNet.Compute();
+
+            Assert.That(deserializedNet["z"], Is.EqualTo(originalNet["z"]));
+        }
+    }
 
     float[] NameArray(string name) {
         float[] values = new float[20];
