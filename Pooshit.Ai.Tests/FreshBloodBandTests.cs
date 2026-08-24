@@ -1,0 +1,67 @@
+using Pooshit.Ai.Genetics;
+
+namespace NightlyCode.Ai.Tests;
+
+[TestFixture, Parallelizable]
+public class FreshBloodBandTests {
+
+    static PopulationEntry<MutatingFakeChromosome> Entry(string label, List<MutateCall> log, float fitness, int structureHash) => new() {
+        Chromosome = new(label, log, structureHash, 1.0f),
+        Fitness = fitness,
+        AncestryId = Guid.NewGuid()
+    };
+
+
+    /// <summary>
+    /// intended contract: the number of fresh-blood slots (chromosomes drawn from
+    /// <see cref="EvolutionSetup{T}.Generator"/> instead of the gene pool) equals
+    /// <see cref="EvolutionSetup{T}.Elitism"/>, so the self-correction floor Toni relies on
+    /// ("every generation is fed some completely fresh seeded chromosomes") is exactly
+    /// <c>Elitism</c> slots wide.
+    ///
+    /// Currently violated: <c>Population.Mutate</c> gates fresh blood with
+    /// <c>i > trainingBuffer.Length - setup.Elitism</c>, which spans only <c>Elitism - 1</c>
+    /// slots. DiVoid #9054.
+    /// </summary>
+    [Test, Parallelizable]
+    [Ignore("DiVoid #9054 - the fresh-blood band is i > trainingBuffer.Length - setup.Elitism, spanning Elitism-1 slots instead of Elitism")]
+    public void Evolve_FreshBloodBand_MarksExactlyElitismSlots() {
+        List<MutateCall> log = [];
+        PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
+        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 1);
+        PopulationEntry<MutatingFakeChromosome> e2 = Entry("e2", log, 2.0f, 2);
+        PopulationEntry<MutatingFakeChromosome> e3 = Entry("e3", log, 3.0f, 3);
+        PopulationEntry<MutatingFakeChromosome> e4 = Entry("e4", log, 4.0f, 4);
+        PopulationEntry<MutatingFakeChromosome> e5 = Entry("e5", log, 5.0f, 5);
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2, e3, e4, e5];
+
+        int freshCounter = 0;
+        Population<MutatingFakeChromosome> population = new(entries, r => new($"FRESH{freshCounter++}", log, fitnessModifier: 1.0f));
+
+        Dictionary<string, float> fitnessByLabel = new() {
+            ["e0"] = 0.0f,
+            ["e1"] = 1.0f,
+            ["e2"] = 2.0f,
+            ["e3"] = 3.0f,
+            ["e4"] = 4.0f,
+            ["e5"] = 5.0f,
+            ["e0'1"] = 10.0f,
+            ["FRESH0'2"] = 11.0f,
+            ["FRESH1'3"] = 12.0f
+        };
+        StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
+        EvolutionSetup<MutatingFakeChromosome> setup = new() {
+            Evaluator = evaluator,
+            Rng = new SequenceRng(0, 0, 0) { FloatValues = [0.0f] },
+            Threads = 1,
+            Runs = 1,
+            Elitism = 3,
+            TargetFitness = -1.0f
+        };
+
+        population.Train(setup);
+
+        int freshBloodSlots = population.Entries.Count(entry => entry.Chromosome.Label.Contains("FRESH"));
+        Assert.That(freshBloodSlots, Is.EqualTo(setup.Elitism));
+    }
+}

@@ -5,8 +5,6 @@ namespace NightlyCode.Ai.Tests;
 class SequenceRng : IRng {
     readonly int[] values;
     int index;
-    int longIndex;
-    int intIndex;
     int floatIndex;
     int doubleIndex;
 
@@ -14,26 +12,24 @@ class SequenceRng : IRng {
 
     public List<int> Bounds { get; } = new();
 
-    public long[] LongValues { get; init; } = [];
-
-    public int[] IntValues { get; init; } = [];
-
     public float[] FloatValues { get; init; } = [];
 
     public double[] DoubleValues { get; init; } = [];
 
-    public long NextLong() {
-        if (longIndex >= LongValues.Length)
-            throw new NotSupportedException($"{nameof(SequenceRng)}.{nameof(NextLong)} was called more times than scripted ({LongValues.Length} value(s) provided)");
-        return LongValues[longIndex++];
-    }
+    /// <summary>
+    /// never called by any production code path - <c>Pooshit.Ai</c> draws exclusively through
+    /// <see cref="NextInt(int)"/>, <see cref="NextFloat"/> and <see cref="NextDouble"/> (verified
+    /// by inventory across the production project). Not scriptable; throwing documents that no
+    /// test should ever need to script it (R3, test README) - the unconsumed-double condition
+    /// (design #9072 §16 addendum) removed the scripting surface this used to carry.
+    /// </summary>
+    public long NextLong() => throw new NotSupportedException($"{nameof(SequenceRng)}.{nameof(NextLong)} is never called by any Pooshit.Ai production code path and is not scriptable");
 
 
-    public int NextInt() {
-        if (intIndex >= IntValues.Length)
-            throw new NotSupportedException($"{nameof(SequenceRng)}.{nameof(NextInt)} was called more times than scripted ({IntValues.Length} value(s) provided)");
-        return IntValues[intIndex++];
-    }
+    /// <summary>
+    /// never called by any production code path - see <see cref="NextLong"/>.
+    /// </summary>
+    public int NextInt() => throw new NotSupportedException($"{nameof(SequenceRng)}.{nameof(NextInt)}() is never called by any Pooshit.Ai production code path and is not scriptable");
 
 
     public int NextInt(int max) {
