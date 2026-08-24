@@ -35,6 +35,7 @@ public class BenchmarkComparisonTests {
         if (!File.Exists(path))
             return new Baseline { Note = "(no baseline recorded yet)" };
 
-        return JsonSerializer.Deserialize<Baseline>(File.ReadAllText(path));
+        return JsonSerializer.Deserialize<Baseline>(File.ReadAllText(path))
+               ?? throw new InvalidOperationException($"'{path}' deserialized to null - the committed baseline is empty or corrupt.");
     }
 }

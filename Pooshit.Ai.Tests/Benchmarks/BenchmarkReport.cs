@@ -73,7 +73,12 @@ public static class BenchmarkReport {
         Console.WriteLine();
     }
 
-    static float Median(float[] sortedValues) {
+    /// <summary>
+    /// median of an already-sorted array, or <see cref="float.NaN"/> for an empty array. Internal
+    /// and directly tested (QA #9388 W4) - it is the only pure logic standing between a report
+    /// print and a silently wrong distribution number
+    /// </summary>
+    internal static float Median(float[] sortedValues) {
         if (sortedValues.Length == 0)
             return float.NaN;
         int mid = sortedValues.Length / 2;

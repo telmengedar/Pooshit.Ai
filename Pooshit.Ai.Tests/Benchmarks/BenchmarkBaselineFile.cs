@@ -6,18 +6,27 @@ namespace NightlyCode.Ai.Tests.Benchmarks;
 /// same file the repository tracks rather than a build-output copy (design #9072 §16 step 19)
 /// </summary>
 public static class BenchmarkBaselineFile {
+    const string ProjectFileName = "Pooshit.Ai.Tests.csproj";
 
     /// <summary>
     /// full path to the committed baseline file, found by walking up from the running test
-    /// binary's directory until a <c>.csproj</c> is found
+    /// binary's directory
     /// </summary>
-    public static string Locate() {
-        DirectoryInfo directory = new(AppContext.BaseDirectory);
-        while (directory != null && directory.GetFiles("*.csproj").Length == 0)
+    public static string Locate() => Locate(AppContext.BaseDirectory);
+
+    /// <summary>
+    /// full path to the committed baseline file, found by walking up from <paramref name="searchStart"/>
+    /// until a directory containing <c>Pooshit.Ai.Tests.csproj</c> by that exact name is found - not
+    /// merely the first <c>.csproj</c> encountered, which could belong to an unrelated project sitting
+    /// in an intermediate directory (QA #9388 W3)
+    /// </summary>
+    internal static string Locate(string searchStart) {
+        DirectoryInfo directory = new(searchStart);
+        while (directory != null && !File.Exists(Path.Combine(directory.FullName, ProjectFileName)))
             directory = directory.Parent;
 
         if (directory == null)
-            throw new InvalidOperationException($"Unable to locate the test project directory by walking up from '{AppContext.BaseDirectory}'");
+            throw new InvalidOperationException($"Unable to locate '{ProjectFileName}' by walking up from '{searchStart}'");
 
         return Path.Combine(directory.FullName, "Benchmarks", "baseline.json");
     }
