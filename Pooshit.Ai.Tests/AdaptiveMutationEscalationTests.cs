@@ -26,7 +26,7 @@ public class AdaptiveMutationEscalationTests {
 
         List<int> mutationRunsAfterEachGeneration = [];
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
-            Evaluator = new ConstantFitnessEvaluator<MutatingFakeChromosome>(1.0f),
+            Evaluator = new PhaseAwareFitnessEvaluator<MutatingFakeChromosome>((_, _) => 1.0f),
             Rng = new Rng(20260824),
             Threads = 1,
             Runs = 70,

@@ -1,12 +1,14 @@
 # Test rules
 
-Five rules against assertions that cannot fail. Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
+Six rules against assertions that cannot fail. Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
 
 ## R1 — The sibling-variation rule
 
 Every test that pins an output must have a sibling that varies the input the output is supposed to depend on, and asserts the output moved. An assertion that produces the same verdict for two materially different inputs is provably not measuring that input.
 
-Reviewer check: for each pinning assertion, point at its sibling.
+**R4 does not imply R1.** An enum-exhaustive pairwise-distinctness test proves its members differ from each other; it proves nothing about any one of them being a function of its input. A constant response vector can still be unique among its enum siblings. Each enum member still needs its own second probe asserting movement.
+
+Reviewer check: for each pinning assertion, point at its sibling. An enum-exhaustive test is not a substitute sibling for its own members.
 
 ## R2 — The injective-fixture rule
 
@@ -38,4 +40,16 @@ Never encode known-defective behaviour as an expectation. Where the intended con
 
 **The trigger is "is this behaviour filed?", not "does this look wrong to me".** Before writing any expectation — including one your test is not directly about — search DiVoid for the mechanic under test. If a `bug`/`task` node describes it, R5 binds, regardless of whether the test's subject *is* that defect. A test about the tournament can still encode a filed defect in its fixture data.
 
-Reviewer check: does any assertion's expected value trace to a filed defect? For every `[Ignore]`d pin, apply the referenced fix and confirm green. For every test whose fixture encodes a mechanic with an open defect node, apply that fix and confirm the test survives.
+**An `[Ignore]`d intent pin and a tripwire test are complements, not alternatives.** The intent pin asserts the contract wanted — red-if-un-ignored today, green on the fix, never optional. A tripwire documents current defective behaviour — green today, red on the fix — and is acceptable only when: (1) an intent pin exists alongside it; (2) its `[Description]` says explicitly it is expected to go red on the fix, and names the sibling; (3) the defect task's acceptance criteria name both tests and both actions; (4) both directions are verified (pin goes green under the fix, tripwire goes red). **What is still forbidden: a test that depends on a defect without declaring it.** The harm is never the dependency — it is the dependency being undeclared.
+
+Reviewer check: does any assertion's expected value trace to a filed defect? For every `[Ignore]`d pin, apply the referenced fix and confirm green. For every test whose fixture encodes a mechanic with an open defect node, apply that fix and confirm the test survives. For every tripwire, confirm an intent pin exists beside it and both directions are verified.
+
+## R6 — The independent-oracle rule
+
+Prefer an oracle the production path cannot influence. Where a literal is unavoidable, derive it symbolically — never capture it from a test run.
+
+An expected value obtained by running the code and pasting the output is still derived from the code — it wears the costume of an independent expectation while pinning whatever the implementation does, including any error in it. Good oracles, in preference order: a BCL function the code under test does not call, a hand-computed exact rational, a value derived from the specification rather than the implementation.
+
+For a `double` literal pinning `float` arithmetic, the check is mechanical: a `float` widened to `double` leaves 29 low zero bits; a symbolically-derived rational does not. Where the mantissa technique does not apply, ask the implementer how the number was obtained and require the derivation in the return.
+
+Reviewer check: was this expected value derived, or captured? For a `float`-precision literal, check the trailing mantissa bits.

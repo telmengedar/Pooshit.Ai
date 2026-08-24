@@ -8,8 +8,8 @@ namespace NightlyCode.Ai.Tests;
 /// <see cref="Phase"/> mutable from outside the evaluation loop (e.g. from
 /// <see cref="EvolutionSetup{T}.AfterRun"/>). Used where a test needs the population's leader
 /// to change identity at a chosen generation without predicting the unbounded set of labels a
-/// multi-generation run produces - a concern neither <see cref="StubFitnessEvaluator{T}"/>
-/// (label-keyed) nor <see cref="ConstantFitnessEvaluator{T}"/> (phase-blind) can serve.
+/// multi-generation run produces - a concern <see cref="StubFitnessEvaluator{T}"/> (label-keyed)
+/// cannot serve.
 /// </summary>
 /// <typeparam name="T">type of chromosome</typeparam>
 class PhaseAwareFitnessEvaluator<T> : IFitnessEvaluator<T>
@@ -20,5 +20,13 @@ where T : IChromosome<T> {
 
     public int Phase { get; set; }
 
-    public float EvaluateFitness(T chromosome, IRng rng, bool fullSet) => scorer(chromosome.StructureHash(), Phase);
+    /// <summary>
+    /// ordered log of (StructureHash, Phase, fullSet) for every call
+    /// </summary>
+    public List<(int StructureHash, int Phase, bool FullSet)> Calls { get; } = new();
+
+    public float EvaluateFitness(T chromosome, IRng rng, bool fullSet) {
+        Calls.Add((chromosome.StructureHash(), Phase, fullSet));
+        return scorer(chromosome.StructureHash(), Phase);
+    }
 }
