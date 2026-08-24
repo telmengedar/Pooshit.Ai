@@ -44,36 +44,43 @@ public class AdaptiveMutationEscalationTests {
 
 
     [Test, Parallelizable]
-    [Description("The fresh-blood slot's generator (StructureHash 99) is scored best by the evaluator and becomes the new leader, forcing a structure change so Mutation.Runs must reset from a deliberately pre-set 7 to 1.")]
-    public void Train_LeaderStructureHashChanges_MutationRunsResetsToOne() {
+    [Description("Escalates on StructureHash 1 for 69 generations (reaching Runs = 6), then flips scoring via AfterRun so a fresh-blood entry (StructureHash 99) becomes the new leader at generation 70, forcing a reset to 1 and proving escalation resumes counting from the new bestRun (generation 134, not the original 64) rather than a stale one.")]
+    public void Train_LeaderStructureHashChangesAfterEscalating_MutationRunsResetsThenReescalatesFromTheNewBestRun() {
         List<MutateCall> log = [];
-        PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 1);
-        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 2);
-        PopulationEntry<MutatingFakeChromosome> e2 = Entry("e2", log, 2.0f, 3);
-        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2];
+        const int baselineStructureHash = 1;
+        const int freshBloodStructureHash = 99;
+        PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, baselineStructureHash);
+        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 0.0f, baselineStructureHash);
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1];
 
-        Population<MutatingFakeChromosome> population = new(entries, r => new("FRESH", log, 99, 1.0f));
+        Population<MutatingFakeChromosome> population = new(entries, r => new("FRESH", log, freshBloodStructureHash, 1.0f));
 
-        Dictionary<string, float> fitnessByLabel = new() {
-            ["e0"] = 5.0f,
-            ["e1"] = 6.0f,
-            ["e2"] = 2.0f,
-            ["FRESH'1"] = 0.0f
-        };
+        PhaseAwareFitnessEvaluator<MutatingFakeChromosome> evaluator = new((structureHash, phase) => structureHash switch {
+            baselineStructureHash => phase == 0 ? 1.0f : 100.0f,
+            freshBloodStructureHash => phase == 0 ? 100.0f : 0.0f,
+            _ => throw new InvalidOperationException($"unexpected StructureHash {structureHash} in this fixture")
+        });
 
+        List<int> mutationRunsAfterEachGeneration = [];
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
-            Evaluator = new StubFitnessEvaluator<MutatingFakeChromosome>(fitnessByLabel),
-            Rng = new SequenceRng(0),
+            Evaluator = evaluator,
+            Rng = new Rng(20260824),
             Threads = 1,
-            Runs = 1,
+            Runs = 140,
             Elitism = 2,
             TargetFitness = -1.0f
         };
-        setup.Mutation.Runs = 7;
+        setup.AfterRun = (generation, fitness) => {
+            mutationRunsAfterEachGeneration.Add(setup.Mutation.Runs);
+            if (generation == 69)
+                evaluator.Phase = 1;
+        };
 
         population.Train(setup);
 
-        Assert.That(population.Entries[0].Chromosome.Label, Does.StartWith("FRESH"), "the fresh-blood-derived entry must have won this generation");
-        Assert.That(setup.Mutation.Runs, Is.EqualTo(1));
+        Assert.That(mutationRunsAfterEachGeneration[69], Is.EqualTo(6), "phase 0 must have escalated before the structure change, or the reset that follows proves nothing");
+        Assert.That(mutationRunsAfterEachGeneration[70], Is.EqualTo(1), "the fresh-blood entry outscoring the elite changes the leader's StructureHash, which must reset Mutation.Runs");
+        Assert.That(mutationRunsAfterEachGeneration[133], Is.EqualTo(1), "generation 133 (i - bestRun = 63) is still below the re-anchored escalation threshold");
+        Assert.That(mutationRunsAfterEachGeneration[134], Is.EqualTo(6), "generation 134 (i - bestRun = 64) crosses the threshold measured from the NEW bestRun (70), not the original (0)");
     }
 }

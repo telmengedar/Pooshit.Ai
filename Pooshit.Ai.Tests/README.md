@@ -32,4 +32,10 @@ Reviewer check: does any test over an enum-driven surface enumerate a hand-writt
 
 Never encode known-defective behaviour as an expectation. Where the intended contract is known and currently violated, write the assertion to the intended contract and `[Ignore("DiVoid #NNNN")]` it. Removing the `[Ignore]` becomes the acceptance criterion of the fix.
 
-Reviewer check: does any assertion's expected value trace to a filed defect?
+**The pin must pass under the fix, not merely fail without it.** Before adding the `[Ignore]`, apply the fix locally, run the test, confirm it goes **green**, then revert. A pin verified only red-on-arrival is half-verified — state the two-sided verification in the PR body.
+
+**Fixtures must be fix-tolerant too**, not only the assertion. Where a label map, scripted RNG or slot index encodes the defective path, widen it to cover both paths (a superset map, or a double that does not key on the value the fix moves) so the fix changes the verdict and nothing else. A fixture built only for the defective shape turns "remove the `[Ignore]`" into a `KeyNotFoundException` instead of a pass.
+
+**The trigger is "is this behaviour filed?", not "does this look wrong to me".** Before writing any expectation — including one your test is not directly about — search DiVoid for the mechanic under test. If a `bug`/`task` node describes it, R5 binds, regardless of whether the test's subject *is* that defect. A test about the tournament can still encode a filed defect in its fixture data.
+
+Reviewer check: does any assertion's expected value trace to a filed defect? For every `[Ignore]`d pin, apply the referenced fix and confirm green. For every test whose fixture encodes a mechanic with an open defect node, apply that fix and confirm the test survives.

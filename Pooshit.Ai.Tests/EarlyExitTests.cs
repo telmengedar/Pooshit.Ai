@@ -30,6 +30,7 @@ public class EarlyExitTests {
         population.Train(setup);
 
         Assert.That(afterRunInvocations, Is.EqualTo(2));
-        Assert.That(evaluator.CallCount, Is.EqualTo(5), "training must stop instead of consuming the remaining 7 of the 10 configured generations");
+        Assert.That(evaluator.Calls, Is.EqualTo(new[] { true, false, false, false, true }),
+                    "the initial full-set score, three per-generation re-scores, and the final full-set re-score - training must stop instead of consuming the remaining 7 of the 10 configured generations");
     }
 }

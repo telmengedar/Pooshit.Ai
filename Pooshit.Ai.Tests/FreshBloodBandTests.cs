@@ -14,7 +14,7 @@ public class FreshBloodBandTests {
 
     [Test, Parallelizable]
     [Ignore("DiVoid #9054 - the fresh-blood band is i > trainingBuffer.Length - setup.Elitism, spanning Elitism-1 slots instead of Elitism")]
-    [Description("Intended contract: fresh-blood slots (drawn from Generator instead of the gene pool) should number exactly Elitism, the width of the self-correction floor fresh chromosomes provide; DiVoid #9054.")]
+    [Description("Intended contract: fresh-blood slots (drawn from Generator instead of the gene pool) should number exactly Elitism, the width of the self-correction floor fresh chromosomes provide; DiVoid #9054. The fitness map is a superset covering both the current defective two-slot band and the intended three-slot band, so the fix turns this pin green instead of throwing.")]
     public void Evolve_FreshBloodBand_MarksExactlyElitismSlots() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
@@ -37,7 +37,10 @@ public class FreshBloodBandTests {
             ["e5"] = 5.0f,
             ["e0'1"] = 10.0f,
             ["FRESH0'2"] = 11.0f,
-            ["FRESH1'3"] = 12.0f
+            ["FRESH1'3"] = 12.0f,
+            ["FRESH0'1"] = 13.0f,
+            ["FRESH1'2"] = 14.0f,
+            ["FRESH2'3"] = 15.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {

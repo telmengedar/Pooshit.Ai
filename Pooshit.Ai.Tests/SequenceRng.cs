@@ -20,8 +20,7 @@ class SequenceRng : IRng {
     /// never called by any production code path - <c>Pooshit.Ai</c> draws exclusively through
     /// <see cref="NextInt(int)"/>, <see cref="NextFloat"/> and <see cref="NextDouble"/> (verified
     /// by inventory across the production project). Not scriptable; throwing documents that no
-    /// test should ever need to script it (R3, test README) - the unconsumed-double condition
-    /// (design #9072 §16 addendum) removed the scripting surface this used to carry.
+    /// test should ever need to script it (R3, test README).
     /// </summary>
     public long NextLong() => throw new NotSupportedException($"{nameof(SequenceRng)}.{nameof(NextLong)} is never called by any Pooshit.Ai production code path and is not scriptable");
 

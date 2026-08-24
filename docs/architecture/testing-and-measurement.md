@@ -415,7 +415,18 @@ Reviewer check: *does any test over an enum-driven surface enumerate a hand-writ
 
 Without this rule the fresh-blood band test would assert `Elitism − 1` slots — permanently cementing #9054 and, worse, guaranteeing a red build the day someone fixes it. With it, the suite stays green, the defect backlog becomes executable, and *removing an `[Ignore]` is the acceptance criterion of the fix*. It is also the cheapest possible S4 mechanism: a fix that lands turns a skipped test green instead of turning a passing test red.
 
-Reviewer check: *does any assertion's expected value trace to a filed defect?*
+**Sharpened after PR #4's QA round (DiVoid #9352), which found the rule as originally stated constrains only the assertion.** Two escapes surfaced in the same review:
+
+- `Evolve_FreshBloodBand_MarksExactlyElitismSlots` correctly pinned the intended contract and was correctly `[Ignore]`d against #9054 — but its fitness-label fixture was built only for the *defective* two-slot band. Applying the fix and removing the `[Ignore]` produced a `KeyNotFoundException`, not a pass: the acceptance criterion R5 promises was not actually usable.
+- `RivalismTests` encoded filed defect #9047 (cumulative rival mutation) directly into its fixture data, with no `[Ignore]` at all, because the test's *subject* was rivalism in general, not #9047 specifically. Simulating the fix turned it red — the exact S4 outcome R5 exists to prevent, arriving through the fixture instead of the assertion.
+
+Three added clauses close both gaps:
+
+1. **The pin must pass under the fix, not merely fail without it.** Before adding the `[Ignore]`, apply the fix locally, run the test, confirm green, then revert. A pin verified only red-on-arrival is half-verified; state the two-sided verification in the PR body.
+2. **Fixtures must be fix-tolerant.** Where a label map, scripted RNG or slot index encodes the defective path, widen it to cover both paths (a superset map, or a double that does not key on the value the fix moves) so the fix changes the verdict and nothing else.
+3. **The trigger is "is this behaviour filed?", not "does this look wrong to me".** Before writing any expectation, search DiVoid for the mechanic under test. If a `bug`/`task` node describes it, R5 binds — regardless of whether the test's subject *is* that defect.
+
+Reviewer check: *does any assertion's expected value trace to a filed defect?* For every `[Ignore]`d pin, apply the referenced fix and confirm green. For every test whose fixture encodes a mechanic with an open defect node, apply that fix and confirm the test survives.
 
 ---
 

@@ -21,14 +21,14 @@ where T : IChromosome<T> {
     public SequencedFitnessEvaluator(params float[] script) => this.script = script;
 
     /// <summary>
-    /// number of calls made to <see cref="EvaluateFitness"/>
+    /// ordered log of the <c>fullSet</c> flag for every call
     /// </summary>
-    public int CallCount { get; private set; }
+    public List<bool> Calls { get; } = new();
 
     public float EvaluateFitness(T chromosome, IRng rng, bool fullSet) {
-        CallCount++;
+        Calls.Add(fullSet);
         if (index >= script.Length)
-            throw new NotSupportedException($"{nameof(SequencedFitnessEvaluator<T>)} was called more times ({CallCount}) than scripted ({script.Length} value(s) provided)");
+            throw new NotSupportedException($"{nameof(SequencedFitnessEvaluator<T>)} was called more times ({Calls.Count}) than scripted ({script.Length} value(s) provided)");
         return script[index++];
     }
 }
