@@ -364,7 +364,7 @@ It is also the lane's **only** end-to-end exercise of the real net families. Tha
 
 ## 10. Cross-Cutting Concerns
 
-### 10.1 The five rules against assertions that cannot fail
+### 10.1 The six rules against assertions that cannot fail
 
 This is the most valuable part of this document, measured by what has actually cost time on this repo. Three QA rounds on PR #1 were spent on tests that *looked* like guards and could not fail: a `Sum` assertion satisfiable by several different multisets, and a fake that silently discarded the parameter it was meant to constrain. The problem is not test count. It is that **an assertion's inability to fail is invisible at review time.** Reviewer vigilance has already been tried; it caught these three times at a cost of three rounds.
 
@@ -377,7 +377,9 @@ Each rule below converts an invisible property into a visible artefact — somet
 
 An assertion that produces the same verdict for two materially different inputs is provably not measuring that input. The canonical instance is the determinism pair: `same Rng ⇒ same trajectory` alone would pass against a `Train` that ignored `setup.Rng` and used a fixed internal constant. `different Rng ⇒ different trajectory` closes it. The two together are unfakeable.
 
-Reviewer check: *for each pinning assertion, point at its sibling.* A missing sibling is visible.
+**Sharpened 2026-08-23 (QA #9080), by the very PR that introduced this rule: R4 does not imply R1.** Five activation tests — `Sigmoid`, `Sin`, `Tanh`, `Swish`, `Sqrt` — pinned one output at one probe. Replacing any of those production bodies with an input-independent constant left the entire 122-test lane green. The non-obvious part: R4's enum-exhaustive pairwise-distinctness check cannot rescue them, because a constant response vector such as `[0.5, 0.5, 0.5, 0.5]` is still *unique* among the thirteen activations — R4 proves the members differ from **each other**, not that any one of them is a function of its **input**. The two rules cover orthogonal properties. **Amendment: an enum-exhaustive distinctness test does not satisfy the sibling-variation requirement for its members — each member still needs its own second probe asserting movement.** The control that makes this concrete: `ReLU` carried two `[TestCase]`s and its constant-mutant died; the five single-probe members survived.
+
+Reviewer check: *for each pinning assertion, point at its sibling.* A missing sibling is visible. An enum-exhaustive test is not a substitute sibling for its own members.
 
 ---
 
@@ -415,11 +417,59 @@ Reviewer check: *does any test over an enum-driven surface enumerate a hand-writ
 
 Without this rule the fresh-blood band test would assert `Elitism − 1` slots — permanently cementing #9054 and, worse, guaranteeing a red build the day someone fixes it. With it, the suite stays green, the defect backlog becomes executable, and *removing an `[Ignore]` is the acceptance criterion of the fix*. It is also the cheapest possible S4 mechanism: a fix that lands turns a skipped test green instead of turning a passing test red.
 
-Reviewer check: *does any assertion's expected value trace to a filed defect?*
+**Sharpened after PR #4's QA round (DiVoid #9352), which found the rule as originally stated constrains only the assertion.** Two escapes surfaced in the same review:
+
+- `Evolve_FreshBloodBand_MarksExactlyElitismSlots` correctly pinned the intended contract and was correctly `[Ignore]`d against #9054 — but its fitness-label fixture was built only for the *defective* two-slot band. Applying the fix and removing the `[Ignore]` produced a `KeyNotFoundException`, not a pass: the acceptance criterion R5 promises was not actually usable.
+- `RivalismTests` encoded filed defect #9047 (cumulative rival mutation) directly into its fixture data, with no `[Ignore]` at all, because the test's *subject* was rivalism in general, not #9047 specifically. Simulating the fix turned it red — the exact S4 outcome R5 exists to prevent, arriving through the fixture instead of the assertion.
+
+Three added clauses close both gaps:
+
+1. **The pin must pass under the fix, not merely fail without it.** Before adding the `[Ignore]`, apply the fix locally, run the test, confirm green, then revert. A pin verified only red-on-arrival is half-verified; state the two-sided verification in the PR body.
+2. **Fixtures must be fix-tolerant.** Where a label map, scripted RNG or slot index encodes the defective path, widen it to cover both paths (a superset map, or a double that does not key on the value the fix moves) so the fix changes the verdict and nothing else.
+3. **The trigger is "is this behaviour filed?", not "does this look wrong to me".** Before writing any expectation, search DiVoid for the mechanic under test. If a `bug`/`task` node describes it, R5 binds — regardless of whether the test's subject *is* that defect.
+
+**RESOLVED 2026-08-24 — the `[Ignore]` pin and a tripwire test are complements, not alternatives.** Two PRs in this chain made apparently opposite calls on the same question. PR #2 rejected a tripwire in favour of an `[Ignore]`d intent pin for #9043, reasoning that a tripwire goes red on a *good* change (counter-goal S4) and cannot express intent — a pinned collapsed hash reads identically to a belief that the collapse is correct. PR #4 shipped **both** for #9047, and QA required the split. The contradiction is only apparent: PR #2's reasoning was never against tripwires as such, it was against a tripwire used *instead of* an intent pin.
+
+- The **`[Ignore]`d intent pin** asserts the contract we want. It is the primary artefact: red-if-un-ignored today, **green on the fix**. Never optional.
+- The **tripwire** documents current defective behaviour. It is green today, **red on the fix**, and exists so the change cannot land unnoticed.
+
+A tripwire alone is what PR #2 rightly rejected. A tripwire *alongside* an intent pin has neither problem — the intent is stated next door, and the tripwire's own `[Description]` declares what it is.
+
+A tripwire is acceptable only under four conditions: (1) an `[Ignore]`d intent pin exists alongside it, asserting the contract actually wanted; (2) its `[Description]` says explicitly that it is expected to go red on the fix, and points at the sibling — PR #4's wording is the reference: *"Documents CURRENT (defective) behaviour, not the contract… This test is expected to go red the day #9047 is fixed — see the sibling intended-contract pin above."*; (3) the defect task's acceptance criteria name both tests and both actions (remove the `[Ignore]` from one, delete the other) — see #9047 and #9043; (4) both directions are verified — simulate the fix and confirm the pin goes green *and* the tripwire goes red (this is CF2 above, generalised).
+
+**What is still forbidden: a test that depends on a defect without declaring it.** That was PR #4's CF1 — the original rivalism test's name promised "evaluates exactly `Rivalism` candidates and keeps the best," both invariant under the fix, while its assertions silently depended on the cumulative chaining. It would have gone red on a good change with nothing anywhere saying why. **The harm was never the dependency. It was the dependency being undeclared.**
+
+Reviewer check: *does any assertion's expected value trace to a filed defect?* For every `[Ignore]`d pin, apply the referenced fix and confirm green. For every test whose fixture encodes a mechanic with an open defect node, apply that fix and confirm the test survives. For every tripwire, confirm an intent pin exists beside it, its `[Description]` names the sibling and the expected direction, and the defect task's acceptance criteria name both.
 
 ---
 
-**These five rules go in the test project as a short `README.md`.** Not in agent memory, not in a DiVoid node only — in the directory where someone about to write a test will trip over them.
+**R6 — The independent-oracle rule** (added 2026-08-23, from QA #9084).
+*Prefer an oracle the production path cannot influence. Where a literal is unavoidable, derive it symbolically — never capture it from a test run.*
+
+R2 asks what pre-image the *fixture* pins. R6 asks the prior question: is the expected value independent of the code at all? An expected value obtained by running the code and pasting the output is still derived from the code — it wears the costume of an independent expectation while pinning whatever the implementation does, including any error in it. That is the unfalsifiable-expectation failure in its least visible form, because the artefact looks like a hand-written constant.
+
+Good oracles, in preference order: a BCL function the code under test does not call (`Math.Sin`, `Math.Tanh`, true square roots); a hand-computed exact rational; a value derived from the *specification* rather than the implementation.
+
+**The reviewer check is unusually mechanical for a `double` literal pinning `float` arithmetic: it is decidable from the trailing mantissa bits.** A `float` widened to `double` leaves 29 low zero bits; a symbolically-derived rational does not. Worked example from the PR that earned the rule — the `Sigmoid` test at input −10:
+
+| | decimal | bits |
+|---|---|---|
+| test literal | `0.045454545454545456` | `0x3FA745D1745D1746` |
+| exact `1.0/22.0` | `0.045454545454545456` | `0x3FA745D1745D1746` ✅ |
+| shipped impl, widened from `float` | `0.04545453190803528` | `0x3FA745D1`**`00000000`** ❌ |
+| closed form evaluated in `double` | `0.04545454545454547` | `…1748` ❌ |
+
+The literal matches the exact rational bit-for-bit and matches **nothing else** — not the implementation, and not even the double-precision *evaluation* of the closed form, which lands 1–2 ULP off through accumulated rounding. The only path to that bit pattern is symbolic reduction to `1/22`.
+
+Where the mantissa technique does not apply (non-float types, values with no clean rational form), fall back to asking the implementer how the number was obtained and requiring the derivation in the return.
+
+**Interaction with the speed-over-accuracy philosophy (#9083):** R6 governs *where the expected value comes from*; #9083 governs *what property is worth asserting at all* on a deliberately-approximate routine — finite, correct sign, monotonic, order-preserving, plus a wide catastrophic bound, rather than a tight accuracy band. Both apply: when a band is genuinely warranted, its centre still has to be an independent oracle rather than a captured value.
+
+Reviewer check: *was this expected value derived, or captured?* For a `float`-precision literal, check the trailing mantissa bits.
+
+---
+
+**These six rules go in the test project as a short `README.md`.** Not in agent memory, not in a DiVoid node only — in the directory where someone about to write a test will trip over them.
 
 ### 10.2 Determinism hazard inventory
 
@@ -562,7 +612,7 @@ Training must not end worse than it started. At `SampleCount = 0` — the defaul
 | R-3 | The behavioural serialization round-trip fails because the round trip is lossy on input-neuron `Activation`/`Aggregate` (which the existing tests blank before comparing). | Medium | Low | File as a defect; `[Ignore]` per R5; keep the structural test meanwhile. |
 | R-4 | Benchmarks are too slow and stop being run. | Low | High | 3 problems × 8 seeds, `Runs` capped per problem, parallel across pairs. If it exceeds a few minutes, reduce `Runs` before reducing seeds — seed count is what makes the distribution meaningful. |
 | R-5 | The baseline drifts stale because nobody re-records after a behaviour-changing merge. | Medium | Medium | The report header prints the baseline's `recordedAt`, `commit` and `note` alongside the current numbers, so staleness is visible every time the lane is run. |
-| R-6 | The five rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
+| R-6 | The six rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
 | R-7 | The `Threads > 1` guard breaks an existing caller. | Very low | Low | The guard fires only when `setup.Rng` is set, and that property does not exist yet. Every current caller passes `null` by omission. |
 | R-8 | Mechanics tests over-fit to private implementation detail and become churn on every refactor. | Medium | Medium | Assert only on observables: `Entries` ordering and reference identity, and double call logs. Never reach into internals via reflection or `InternalsVisibleTo`. |
 
@@ -651,8 +701,8 @@ Exit: S2 is met — one command produces a per-problem distribution and a compar
 
 **For the orchestrator — none blocking.** The design is complete enough to implement as written. Nothing in the brief forced a KISS/DRY/YAGNI violation, and the determinism problem is solvable within the declared scope (three edits, §8.1), so neither architect-side bounce condition (Design Contracts §7) applies.
 
-**Q1 — For Toni, and this one is genuinely his to decide: is the benchmark problem set the right set?**
-The design picks three problems, all lifted from existing `CalculatorTests` so that **no new training data is authored**:
+**Q1 — ANSWERED by Toni, 2026-08-23: the design's three problems stand as specified, no design change required.**
+`BinOp.MultiplyMinus`, `FeedForward.MultiplyMinus`, `FeedForward.Gender`, all lifted from existing `CalculatorTests` so that **no new training data is authored**:
 
 | Problem | Family | Shape | Why it is in the set |
 |---|---|---|---|
@@ -660,10 +710,11 @@ The design picks three problems, all lifted from existing `CalculatorTests` so t
 | `FeedForward.MultiplyMinus` | `DynamicFFConfiguration` / `DynamicFFNet` | the same 21 samples | the same problem in the other family — isolates "which family is better at this" from "which problem is harder" |
 | `FeedForward.Gender` | `DynamicFFConfiguration` / `DynamicFFNet` | 20 inputs → 3 outputs, 75 samples, no exact solution, `TargetFitness = 0.01` | measures convergence quality on a realistic noisy classification |
 
-This is the one place where a domain judgement outranks an architectural one. **What Toni actually wants to be able to say "we got better at" should decide this set**, and if these three are not it, swapping them costs one entry each plus a re-record. Everything else in the design is independent of which problems are chosen.
+Toni chose these over adding a known-bad problem and over naming a different set. The paired `MultiplyMinus` entries — the same problem in both net families — are the part worth protecting in any future revision, since they are what separates *"which family is better at this"* from *"which problem is harder."* **PR 4 implements this exactly as written.**
 
-**Q2 — For Toni: how many seeds?**
-Eight is the design's choice: enough to see a distribution, small enough to keep the lane in minutes. If Toni wants tighter distributions and can afford to wait, this is a single constant. Not blocking — 8 ships unless he says otherwise.
+Worth noting for whoever revisits this: the *rejected* alternative (a hard/known-bad problem that would let the benchmark show a defect fix *working* rather than only show nothing regressed) remains a reasonable later addition. Once #9037 / #9040 / #9043 land, a problem known to stall today would turn the benchmark from a regression detector into a demonstration that the fixes helped — and adding one costs a single entry plus a re-record, exactly as this section always said.
+
+**Q2 — ANSWERED by Toni, 2026-08-23: eight seeds, as designed.** Offered against 16–20 for tighter distributions; not taken. **PR 4 implements this exactly as written.**
 
 **Q3 — Deferred to #9045, not decided here: the dead data fixtures.**
 `testmodel.json` and `xyzmodel.json` use a `layers`/`layerSize` format **no type in the current library reads**; `excellence_broker_samples.json` is a prepared benchmark never wired up. All three are still `CopyToOutputDirectory`. They belong to #9045's inventory and touching them here would widen this PR chain for no benefit. Flagged so it is not lost.
@@ -680,7 +731,7 @@ Ordered work breakdown at the architectural-unit level. The numbered groups are 
 
 1. Harden `FakeNet` per R3: record `SetInputValues`, indexer writes and `Update` arguments; throw from the string indexer. Keep its deliberate constant-zero oracle behaviour — the existing `SamplesEvaluatorTests` depend on it and are correct.
 2. Extend `SequenceRng` to script `NextFloat`, `NextDouble`, `NextLong` and `NextInt()` with the same record-validate-throw discipline the existing `NextInt(max)` already has. That method is the template; copy its shape.
-3. Add `Pooshit.Ai.Tests/README.md` carrying R1-R5 from §10.1 with their rationale.
+3. Add `Pooshit.Ai.Tests/README.md` carrying R1-R6 from §10.1 with their rationale.
 4. Mark `CalculatorTests` `[Explicit, Category("Demo")]` at fixture level.
 5. Write the Lane 1a inventory (§9.1). Drive every enum-driven surface from `Enum.GetValues` (R4). Use the probe **vector** for activations, not a single probe.
 6. Verify the default lane runs in seconds.
@@ -700,6 +751,19 @@ Ordered work breakdown at the architectural-unit level. The numbered groups are 
 14. Write the Lane 1b inventory (§9.2), driving through `Train` with `Runs = 1` and observing `Entries` ordering, reference identity, and the doubles' call logs. Never reflect into privates; never add `InternalsVisibleTo`.
 15. Apply R5 wherever the intended contract is currently violated — at minimum the fresh-blood band (#9054). `[Ignore]` with the DiVoid node id in the message.
 
+### Test-double surface lifecycle — the unconsumed-double condition
+
+PR 1's hardened `SequenceRng` (`NextFloat`/`NextDouble`/`NextLong`/`NextInt()`) and `FakeNet`'s recording surface were kept over a YAGNI objection, on the grounds that their consumers — PR 2's determinism pair, PR 3's mechanics tests — were named, designed and immediately next. **If PR 2 and PR 3 land and any of that surface is still unconsumed, it gets deleted then**, so "we will wire it next phase" cannot run indefinitely (the Uberkarl precedent, #8237).
+
+**Corrected 2026-08-24, after applying the condition literally caused an R3 regression in PR 3.** The implementer deleted `FakeNet`'s `InputValues`/`IndexWrites`/`Updates` recording lists, correctly observing that no assertion read them — which reverted `SetInputValues` and `Update` to silent discards, the exact shape R3 names as its counter-example. Both members sit on `SamplesEvaluator`'s live call path and **cannot throw**, so recording was the only R3-compliant option available; deleting it selected the one behaviour R3 forbids. The rule was written to prevent speculative surface accumulating (and PR 3's deletion of `SequenceRng.NextLong()`/parameterless `NextInt()` under it was correct and stands — neither is called by any production path, ever) — but applied to something that was never speculative.
+
+**The corrected condition:** surface kept for a *named future consumer* gets deleted when that consumer does not materialise. Surface that exists to *satisfy a contract* is **not** "unconsumed" merely because no assertion reads it yet. Before deleting any part of a test double, ask why it is there:
+
+- **It anticipates a consumer** (a scripting method for a test not yet written) → the condition applies. Delete it.
+- **It is what makes the double contract-compliant** (a recorder standing in for a throw the live path forbids; a validator; anything R3 requires) → the condition does **not** apply. Its consumer is the contract, not a test.
+
+**The tell: if removing it changes the double's *behaviour* rather than only its *surface*, it was never unconsumed.** A recorder that nothing reads still converts a silent discard into an observable one — that observability is the deliverable; a future test needing it is a bonus, not the justification.
+
 ### PR 4 — The measurement lane *(test project + one data file)*
 
 16. Build the three `BenchmarkProblem`s from §15 Q1, each constructing a **fresh** `EvolutionSetup`, `SamplesEvaluator` and `Population` per run (§10.2 H7, H8 — not optional, and there is no compiler support for it).
@@ -712,5 +776,5 @@ Ordered work breakdown at the architectural-unit level. The numbered groups are 
 ### Standing constraints for every PR
 
 - `[TestFixture, Parallelizable]` / `[Test, Parallelizable]`; `Assert.That(x, Is.EqualTo(...))`, never `Assert.AreEqual`; explicit types, never `var`; test names `MethodName_Condition_ExpectedResult` (Code Contracts §13).
-- Every new test satisfies R1-R5 (§10.1), and the PR description states which rule each non-obvious assertion relies on. That sentence is what makes the rules reviewable rather than aspirational.
+- Every new test satisfies R1-R6 (§10.1), and the PR description states which rule each non-obvious assertion relies on. That sentence is what makes the rules reviewable rather than aspirational.
 - No production change outside the three edits in §8.1. If implementing reveals that a fourth is genuinely required, **bounce to the orchestrator** rather than widening — the boundary between this design and the defect backlog is deliberately narrow, and widening it is how a test PR turns into a training-behaviour PR nobody can review.

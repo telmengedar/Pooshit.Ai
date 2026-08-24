@@ -4,16 +4,25 @@ using Pooshit.Ai.Neurons;
 
 namespace NightlyCode.Ai.Tests;
 
-class FakeChromosome : IChromosome<FakeChromosome> {
-    public FakeChromosome(NeuronConfig[] neurons) => Neurons = neurons;
+class FakeChromosome : IChromosome<FakeChromosome>, ILabelledChromosome {
+    readonly int structureHash;
+
+    public FakeChromosome(NeuronConfig[] neurons, string label = "", int structureHash = 0, float fitnessModifier = 1.0f) {
+        Neurons = neurons;
+        Label = label;
+        this.structureHash = structureHash;
+        FitnessModifier = fitnessModifier;
+    }
+
+    public string Label { get; }
 
     public void Randomize(CrossSetup setup = null) { }
 
 
-    public int StructureHash() => 0;
+    public int StructureHash() => structureHash;
 
 
-    public float FitnessModifier => 0.0f;
+    public float FitnessModifier { get; }
 
 
     public FakeChromosome Optimize(Func<FakeChromosome, bool> test) => this;
