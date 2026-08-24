@@ -6,17 +6,15 @@ namespace NightlyCode.Ai.Tests;
 public class EarlyExitTests {
 
     [Test, Parallelizable]
+    [Description("A single-entry population costs exactly one evaluator call per generation and zero rng draws; the scripted fitness sequence reaches TargetFitness on the 3rd Evolve() call, so AfterRun (which fires only for generations that did not reach target) must fire exactly twice before Train stops early.")]
     public void Train_FitnessReachesTargetBeforeRunsExhausted_StopsAtThatGeneration() {
         List<MutateCall> log = [];
-        // a single-entry population never has a mutate slot to fill (elitism always claims
-        // the only entry), so every generation costs exactly one evaluator call and zero rng draws
         PopulationEntry<MutatingFakeChromosome> entry = new() {
             Chromosome = new("e0", log, structureHash: 0, fitnessModifier: 1.0f),
             AncestryId = Guid.NewGuid()
         };
         Population<MutatingFakeChromosome> population = new([entry], r => new("fresh", log, fitnessModifier: 1.0f));
 
-        // [initial fullSet score, gen0, gen1, gen2 (<= target, triggers the stop), final fullSet re-score]
         SequencedFitnessEvaluator<MutatingFakeChromosome> evaluator = new(100.0f, 50.0f, 30.0f, 0.1f, 0.05f);
         int afterRunInvocations = 0;
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
@@ -31,8 +29,6 @@ public class EarlyExitTests {
 
         population.Train(setup);
 
-        // reached target on the 3rd Evolve() call (generation index 2); AfterRun is only invoked
-        // for generations that did NOT reach target, so it must fire exactly twice (i = 0, 1)
         Assert.That(afterRunInvocations, Is.EqualTo(2));
         Assert.That(evaluator.CallCount, Is.EqualTo(5), "training must stop instead of consuming the remaining 7 of the 10 configured generations");
     }

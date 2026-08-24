@@ -12,19 +12,9 @@ public class FreshBloodBandTests {
     };
 
 
-    /// <summary>
-    /// intended contract: the number of fresh-blood slots (chromosomes drawn from
-    /// <see cref="EvolutionSetup{T}.Generator"/> instead of the gene pool) equals
-    /// <see cref="EvolutionSetup{T}.Elitism"/>, so the self-correction floor Toni relies on
-    /// ("every generation is fed some completely fresh seeded chromosomes") is exactly
-    /// <c>Elitism</c> slots wide.
-    ///
-    /// Currently violated: <c>Population.Mutate</c> gates fresh blood with
-    /// <c>i > trainingBuffer.Length - setup.Elitism</c>, which spans only <c>Elitism - 1</c>
-    /// slots. DiVoid #9054.
-    /// </summary>
     [Test, Parallelizable]
     [Ignore("DiVoid #9054 - the fresh-blood band is i > trainingBuffer.Length - setup.Elitism, spanning Elitism-1 slots instead of Elitism")]
+    [Description("Intended contract: fresh-blood slots (drawn from Generator instead of the gene pool) should number exactly Elitism, the width of the self-correction floor fresh chromosomes provide; DiVoid #9054.")]
     public void Evolve_FreshBloodBand_MarksExactlyElitismSlots() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);

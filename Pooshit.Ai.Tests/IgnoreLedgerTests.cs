@@ -3,19 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace NightlyCode.Ai.Tests;
 
-/// <summary>
-/// closes R5's one weakness (design #9072 §10.1 / §16): a skipped test is easy to forget about.
-/// Every <see cref="IgnoreAttribute"/> in this project's own test assembly must name the DiVoid
-/// defect it pins, so "remove the [Ignore]" stays a discoverable acceptance criterion rather than
-/// a permanently-skipped test nobody remembers to revisit. This reflects over the TEST assembly's
-/// own attributes (not into Pooshit.Ai's production internals - #114), which is exactly what a
-/// ledger test needs to do.
-/// </summary>
 [TestFixture, Parallelizable]
 public class IgnoreLedgerTests {
     static readonly Regex DiVoidReference = new(@"DiVoid #\d+", RegexOptions.Compiled);
 
     [Test, Parallelizable]
+    [Description("Closes R5's one weakness (design #9072 §10.1/§16): reflects over this assembly's own [Ignore] attributes (not production internals - #114) so a skipped test's reason must name a DiVoid defect, keeping 'remove the [Ignore]' a discoverable acceptance criterion.")]
     public void EveryIgnoredTest_ReasonNamesADiVoidDefect() {
         List<string> violations = [];
 

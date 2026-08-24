@@ -58,7 +58,7 @@ public class EvolveMechanicsTests {
     public void Evolve_DuplicateStructureHashAmongLeaders_ElitistBandIsCorrespondinglyShorter() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 7);
-        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 7); // same StructureHash as e0
+        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 7);
         PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1];
 
         int freshCounter = 0;
@@ -75,7 +75,7 @@ public class EvolveMechanicsTests {
             Rng = new SequenceRng(0) { FloatValues = [] },
             Threads = 1,
             Runs = 1,
-            Elitism = 2, // requests 2 elite slots; only 1 distinct structure is available
+            Elitism = 2,
             TargetFitness = -1.0f
         };
 
@@ -123,6 +123,7 @@ public class EvolveMechanicsTests {
 
 
     [Test, Parallelizable]
+    [Description("Re-scored fitness values are deliberately different from, and not in ascending order relative to, the construction values, so the final ordering can only be explained by the post-Evolve score - negative special-cased to sort last - not by fixture order or magnitude (R2).")]
     public void Evolve_AfterOneGeneration_EntriesAreAscendingByFitnessWithNegativesLast() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
@@ -130,18 +131,14 @@ public class EvolveMechanicsTests {
         PopulationEntry<MutatingFakeChromosome> e2 = Entry("e2", log, 2.0f, 2);
         PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2];
 
-        // elitism = 1 -> only e0 becomes elite; e1 and e2 feed the gene pool but are not copied forward
         int freshCounter = 0;
         Population<MutatingFakeChromosome> population = new(entries, r => new($"fresh{freshCounter++}", log, fitnessModifier: 1.0f));
 
-        // final re-scored fitness values are deliberately different from the construction values,
-        // and deliberately NOT in ascending numeric order, to prove the sort is driven by the
-        // re-scored value (with the negative special-cased to sort last) rather than by magnitude
         Dictionary<string, float> fitnessByLabel = new() {
             ["e0"] = 5.0f,
             ["e1"] = 1.0f,
             ["e2"] = 2.0f,
-            ["e0'1"] = -3.0f, // most negative raw value - must still sort LAST, not first
+            ["e0'1"] = -3.0f,
             ["e0'2"] = 2.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);

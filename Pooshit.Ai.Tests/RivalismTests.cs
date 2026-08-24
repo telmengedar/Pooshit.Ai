@@ -13,6 +13,7 @@ public class RivalismTests {
 
 
     [Test, Parallelizable]
+    [Description("Rivalism mutates cumulatively across rival iterations (each rival mutates the previous rival's result, not fresh from the parent - DiVoid #9047), giving the lineage e0 -> e0'1 (rival 1, worse) -> e0'1'2 (rival 2, better); the better-scoring rival must be kept and the worse one discarded.")]
     public void Evolve_RivalismGreaterThanOne_EvaluatesExactlyRivalismCandidatesAndKeepsTheBest() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
@@ -21,12 +22,11 @@ public class RivalismTests {
 
         Population<MutatingFakeChromosome> population = new(entries, r => new("fresh", log, fitnessModifier: 1.0f));
 
-        // candidate lineage: parent "e0" -> "e0'1" (rival 1, worse) -> "e0'1'2" (rival 2, kept - the best)
         Dictionary<string, float> fitnessByLabel = new() {
             ["e0"] = 0.0f,
             ["e1"] = 1.0f,
-            ["e0'1"] = 20.0f,   // rival 1 - worse
-            ["e0'1'2"] = 5.0f   // rival 2 - better, must be kept
+            ["e0'1"] = 20.0f,
+            ["e0'1'2"] = 5.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
