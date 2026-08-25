@@ -16,7 +16,7 @@ public enum ActivationFunc {
     BinaryStep,
 
     /// <summary>
-    /// fast/algebraic sigmoid 0.5 * (x / (1 + |x|)) + 0.5 — not the logistic function 1 / (1 + e^-x); saturates far more slowly and does not approach its asymptotes at realistic magnitudes
+    /// fast/algebraic sigmoid 0.5 * (x / (1 + |x|)) + 0.5 — not the logistic function 1 / (1 + e^-x)
     /// </summary>
     Sigmoid,
 
