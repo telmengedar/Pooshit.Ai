@@ -76,29 +76,34 @@ where T : class, IChromosome<T> {
     /// </summary>
     public PopulationEntry<T>[] Entries { get; private set; }
 
-    void Evolve(IRng rng, EvolutionSetup<T> setup) {
+    void Evolve(IRng rng, EvolutionSetup<T> setup, int generation) {
+        setup.OnNonFiniteFitness?.Invoke(generation, Entries.Count(entry => !float.IsFinite(entry.Fitness)));
+
         HashSet<int> structureHashes = [];
 
         int offset = 0;
         foreach (PopulationEntry<T> entry in Entries) {
-            if (entry.Fitness < 0.0f)
+            if (!IsValidFitness(entry.Fitness))
                 continue;
-            
+
             int structureHash = entry.Chromosome.StructureHash();
             if (!structureHashes.Add(structureHash))
                 continue;
 
             trainingBuffer[offset++] = entry;
-            
+
             if (offset >= setup.Elitism)
                 break;
         }
 
-        float modifiedMax = Entries.Max(e => (e.Fitness + 1.0f) / e.Chromosome.FitnessModifier);
+        float modifiedMax = Entries.Where(e => float.IsFinite(e.Fitness))
+                                    .Select(e => (e.Fitness + 1.0f) / e.Chromosome.FitnessModifier)
+                                    .DefaultIfEmpty(1.0f)
+                                    .Max();
 
         GenePool<T> genePool = new(Generator);
         foreach (PopulationEntry<T> entry in Entries) {
-            if (entry.Fitness < 0.0)
+            if (!IsValidFitness(entry.Fitness))
                 continue;
 
             float value = (modifiedMax - (entry.Fitness + 1.0f) / entry.Chromosome.FitnessModifier) / modifiedMax;
@@ -218,8 +223,10 @@ where T : class, IChromosome<T> {
         }
     }
 
+    static bool IsValidFitness(float fitness) => float.IsFinite(fitness) && fitness >= 0.0f;
+
     float GetOrderNumber(PopulationEntry<T> entry) {
-        if (entry.Fitness < 0.0)
+        if (!IsValidFitness(entry.Fitness))
             return float.MaxValue;
         return entry.Fitness;
     }
@@ -246,7 +253,7 @@ where T : class, IChromosome<T> {
         int bestRun = 0;
 
         for (int i = 0; i < setup.Runs; i++) {
-            Evolve(rng, setup);
+            Evolve(rng, setup, i);
             if (Entries[0].Fitness <= setup.TargetFitness)
                 break;
 
