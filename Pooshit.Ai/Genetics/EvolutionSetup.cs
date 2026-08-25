@@ -50,7 +50,7 @@ where T : IChromosome<T>
     public Action<int, float> AfterRun { get; set; }
 
     /// <summary>
-    /// invoked once per generation with the count of population entries carrying a NaN or infinite fitness that generation
+    /// invoked at the start of each generation with the generation index and the number of entries entering it with a NaN or infinite fitness
     /// </summary>
     public Action<int, int> OnNonFiniteFitness { get; set; }
     
