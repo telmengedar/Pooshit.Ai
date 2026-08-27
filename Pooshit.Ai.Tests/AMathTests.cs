@@ -32,10 +32,24 @@ public class AMathTests {
 
 
     [Test, Parallelizable]
+    [Description("-0.0f compares equal to +0.0f but carries the sign bit the bit hack reads - a guard written as 'number < 0.0f' misses it entirely")]
+    public void InverseSquareRoot_AtNegativeZero_ReturnsNaN() {
+        Assert.That(float.IsNaN((-0.0f).InverseSquareRoot()), Is.True);
+    }
+
+
+    [Test, Parallelizable]
     [TestCase(-1.0f)]
     [TestCase(-4.0f)]
-    public void InverseSquareRoot_NegativeArgument_OverflowsToPositiveInfinity(float value) {
-        Assert.That(value.InverseSquareRoot(), Is.EqualTo(float.PositiveInfinity));
+    public void InverseSquareRoot_NegativeArgument_ReturnsNaN(float value) {
+        Assert.That(float.IsNaN(value.InverseSquareRoot()), Is.True);
+    }
+
+
+    [Test, Parallelizable]
+    [Description("the discriminating case: pre-fix this returned a finite -4.55e-37 (reciprocal -2.2e+36) - wrong sign, undetectable by any IsNaN/IsInfinity check. W2: this is NOT the same class as -0.0f - the unguarded bit hack already produces NaN for -0.0001, so this case cannot catch a guard that misses negative zero")]
+    public void InverseSquareRoot_NegativeSmallMagnitude_ReturnsNaN() {
+        Assert.That(float.IsNaN((-0.0001f).InverseSquareRoot()), Is.True);
     }
 
 
@@ -55,13 +69,15 @@ public class AMathTests {
 
 
     [Test, Parallelizable]
-    public void Power_NegativeBase_ReturnsFiniteResult() {
-        Assert.That(double.IsFinite(AMath.Power(-2.0, 2.0)), Is.True);
+    [TestCase(-2.0)]
+    [TestCase(-100.0)]
+    public void Power_NegativeBase_ReturnsNaN(double a) {
+        Assert.That(double.IsNaN(AMath.Power(a, 2.0)), Is.True);
     }
 
 
     [Test, Parallelizable]
-    public void Power_ZeroBase_ReturnsFiniteResult() {
-        Assert.That(double.IsFinite(AMath.Power(0.0, 2.0)), Is.True);
+    public void Power_ZeroBase_ReturnsNaN() {
+        Assert.That(double.IsNaN(AMath.Power(0.0, 2.0)), Is.True);
     }
 }

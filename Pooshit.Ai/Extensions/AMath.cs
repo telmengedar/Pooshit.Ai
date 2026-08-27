@@ -7,20 +7,26 @@ public static class AMath {
     /// </summary>
     /// <param name="a">base</param>
     /// <param name="b">exponent</param>
-    /// <returns>approximation of a to the power of b</returns>
+    /// <returns>approximation of a to the power of b, or NaN if a is less than or equal to 0</returns>
     public static double Power(double a, double b) {
+        if (a <= 0.0)
+            return double.NaN;
+
         int tmp = (int)(BitConverter.DoubleToInt64Bits(a) >> 32);
         int tmp2 = (int)(b * (tmp - 1072632447) + 1072632447);
         return BitConverter.Int64BitsToDouble(((long)tmp2) << 32);
     }
-    
+
     /// <summary>
     /// computes an approximation of the inverse square root of a number
     /// </summary>
     /// <param name="number">number of which to compute inverse square root</param>
-    /// <returns>inverse square root</returns>
+    /// <returns>approximate inverse square root, or NaN if number is negative (including negative zero)</returns>
     public static float InverseSquareRoot(this float number )
     {
+        if (float.IsNegative(number))
+            return float.NaN;
+
         const float threehalfs = 1.5F;
 
         float x2 = number * 0.5F;

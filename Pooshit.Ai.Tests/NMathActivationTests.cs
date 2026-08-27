@@ -116,6 +116,21 @@ public class NMathActivationTests {
 
 
     [Test, Parallelizable]
+    [TestCase(-4.0f)]
+    [TestCase(-0.0001f, Description = "the discriminating case: pre-fix this produced a finite, wrong-signed, astronomically large value instead of being guarded")]
+    public void Activation_Sqrt_NegativeArgument_GuardsToZero(float value) {
+        Assert.That(value.Activation(ActivationFunc.Sqrt), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
+    [Description("-0.0f compares equal to +0.0f but is reachable from DynamicFFNet's weighted product (negative weight times zero input) and from Aggregate(Average) over an all-negative-zero group - a guard that misses it produces a finite, wrong-signed, astronomically large value")]
+    public void Activation_Sqrt_AtNegativeZero_GuardsToZero() {
+        Assert.That((-0.0f).Activation(ActivationFunc.Sqrt), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
     [TestCase(4.0f, 16.0f)]
     [TestCase(-3.0f, 9.0f)]
     public void Activation_Pow2_ReturnsSquare(float value, float expected) {

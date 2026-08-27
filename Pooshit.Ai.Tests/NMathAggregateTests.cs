@@ -66,32 +66,50 @@ public class NMathAggregateTests {
 
 
     [Test, Parallelizable]
+    [TestCase(new[] { -5.0f, -3.0f, -1.0f }, -2.8f)]
+    [TestCase(new[] { -10.0f, -10.0f, -10.0f }, -10.0f)]
+    public void Aggregate_AverageToMax_AllNegativeSequence_WeightsMeanAndTrueMax(float[] values, float expected) {
+        Assert.That(values.Aggregate(AggregateType.AverageToMax), Is.EqualTo(expected).Within(0.0001f));
+    }
+
+
+    [Test, Parallelizable]
+    public void Aggregate_EveryAggregateType_OnEmptySequence_ReturnsZero() {
+        float[] results = Enum.GetValues<AggregateType>()
+                               .Select(aggregate => Array.Empty<float>().Aggregate(aggregate))
+                               .ToArray();
+
+        Assert.That(results, Is.All.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
     public void Aggregate_SumOnEmptySequence_ReturnsZero() {
         Assert.That(Array.Empty<float>().Aggregate(AggregateType.Sum), Is.EqualTo(0.0f));
     }
 
 
     [Test, Parallelizable]
-    public void Aggregate_AverageOnEmptySequence_Throws() {
-        Assert.That(() => Array.Empty<float>().Aggregate(AggregateType.Average), Throws.InvalidOperationException);
+    public void Aggregate_AverageOnEmptySequence_ReturnsZero() {
+        Assert.That(Array.Empty<float>().Aggregate(AggregateType.Average), Is.EqualTo(0.0f));
     }
 
 
     [Test, Parallelizable]
-    public void Aggregate_MedianOnEmptySequence_Throws() {
-        Assert.That(() => Array.Empty<float>().Aggregate(AggregateType.Median), Throws.InstanceOf<IndexOutOfRangeException>());
+    public void Aggregate_MedianOnEmptySequence_ReturnsZero() {
+        Assert.That(Array.Empty<float>().Aggregate(AggregateType.Median), Is.EqualTo(0.0f));
     }
 
 
     [Test, Parallelizable]
-    public void Aggregate_MinOnEmptySequence_Throws() {
-        Assert.That(() => Array.Empty<float>().Aggregate(AggregateType.Min), Throws.InvalidOperationException);
+    public void Aggregate_MinOnEmptySequence_ReturnsZero() {
+        Assert.That(Array.Empty<float>().Aggregate(AggregateType.Min), Is.EqualTo(0.0f));
     }
 
 
     [Test, Parallelizable]
-    public void Aggregate_MaxOnEmptySequence_Throws() {
-        Assert.That(() => Array.Empty<float>().Aggregate(AggregateType.Max), Throws.InvalidOperationException);
+    public void Aggregate_MaxOnEmptySequence_ReturnsZero() {
+        Assert.That(Array.Empty<float>().Aggregate(AggregateType.Max), Is.EqualTo(0.0f));
     }
 
 
