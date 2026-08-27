@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "first recording";
+    const string Note = "DiVoid #9044: guard Compute/AMath.Power/InverseSquareRoot against non-finite and out-of-domain results, fix AverageToMax's max-init and empty-sequence aggregate behaviour";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone

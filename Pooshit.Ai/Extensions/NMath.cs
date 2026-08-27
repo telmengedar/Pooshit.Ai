@@ -13,7 +13,7 @@ public static class NMath {
     /// <param name="lhs">lhs neuron value</param>
     /// <param name="rhs">rhs neuron value or connection weight</param>
     /// <param name="op">operation to apply</param>
-    /// <returns>result</returns>
+    /// <returns>result, or 0.0 if the operation produces a non-finite value</returns>
     public static float Compute(float lhs, float rhs, OperationType op) {
         float result;
         switch (op) {
@@ -32,8 +32,6 @@ public static class NMath {
                 break;
             case OperationType.Div:
                 result = lhs / rhs;
-                if (float.IsNaN(result) || float.IsInfinity(result) || float.IsNegativeInfinity(result))
-                    result = 0.0f;
                 break;
             case OperationType.Sub:
                 result = lhs - rhs;
@@ -46,6 +44,8 @@ public static class NMath {
             break;
         }
 
+        if (float.IsNaN(result) || float.IsInfinity(result))
+            return 0.0f;
         return result;
     }
 
@@ -110,24 +110,27 @@ public static class NMath {
     /// </summary>
     /// <param name="input">input values</param>
     /// <param name="aggregate">aggregate func</param>
+    /// <returns>aggregated value, or 0.0 for an empty input sequence</returns>
     public static float Aggregate(this IEnumerable<float> input, AggregateType aggregate) {
+        float[] values = input.ToArray();
+        if (values.Length == 0)
+            return 0.0f;
+
         switch (aggregate) {
             default:
             case AggregateType.Sum:
-                return input.Sum();
+                return values.Sum();
             case AggregateType.Average:
-                return input.Average();
+                return values.Average();
             case AggregateType.Median:
-                float[] values = input.ToArray();
                 Array.Sort(values);
-                int middle = values.Length >> 1;
-                return values[middle];
+                return values[values.Length >> 1];
             case AggregateType.Min:
-                return input.Min();
+                return values.Min();
             case AggregateType.Max:
-                return input.Max();
+                return values.Max();
             case AggregateType.AverageToMax:
-                return AverageToMax(input);
+                return values.AverageToMax();
         }
     }
 
@@ -135,9 +138,9 @@ public static class NMath {
     /// function used to compute fitness value
     /// </summary>
     /// <param name="values">deviation values</param>
-    /// <returns>fitness value</returns>
+    /// <returns>fitness value, or 0.0 for an empty input sequence</returns>
     public static float AverageToMax(this IEnumerable<float> values) {
-        float max = 0.0f;
+        float max = float.NegativeInfinity;
         float sum = 0.0f;
         int count = 0;
         foreach (float value in values) {

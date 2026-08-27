@@ -34,8 +34,9 @@ public class AMathTests {
     [Test, Parallelizable]
     [TestCase(-1.0f)]
     [TestCase(-4.0f)]
-    public void InverseSquareRoot_NegativeArgument_OverflowsToPositiveInfinity(float value) {
-        Assert.That(value.InverseSquareRoot(), Is.EqualTo(float.PositiveInfinity));
+    [TestCase(-0.0001f, Description = "pre-fix this returned a finite -4.55e-37 (reciprocal -2.2e+36) - wrong sign, undetectable by any IsNaN/IsInfinity check")]
+    public void InverseSquareRoot_NegativeArgument_ReturnsNaN(float value) {
+        Assert.That(float.IsNaN(value.InverseSquareRoot()), Is.True);
     }
 
 
@@ -55,13 +56,15 @@ public class AMathTests {
 
 
     [Test, Parallelizable]
-    public void Power_NegativeBase_ReturnsFiniteResult() {
-        Assert.That(double.IsFinite(AMath.Power(-2.0, 2.0)), Is.True);
+    [TestCase(-2.0)]
+    [TestCase(-0.0001)]
+    public void Power_NegativeBase_ReturnsNaN(double a) {
+        Assert.That(double.IsNaN(AMath.Power(a, 2.0)), Is.True);
     }
 
 
     [Test, Parallelizable]
-    public void Power_ZeroBase_ReturnsFiniteResult() {
-        Assert.That(double.IsFinite(AMath.Power(0.0, 2.0)), Is.True);
+    public void Power_ZeroBase_ReturnsNaN() {
+        Assert.That(double.IsNaN(AMath.Power(0.0, 2.0)), Is.True);
     }
 }

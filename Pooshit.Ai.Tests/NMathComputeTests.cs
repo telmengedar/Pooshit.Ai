@@ -58,6 +58,30 @@ public class NMathComputeTests {
 
 
     [Test, Parallelizable]
+    [TestCase(float.MaxValue, float.MaxValue)]
+    [TestCase(float.MinValue, float.MinValue)]
+    public void Compute_Add_NonFiniteResult_GuardsToZero(float lhs, float rhs) {
+        Assert.That(NMath.Compute(lhs, rhs, OperationType.Add), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
+    [TestCase(float.MinValue, float.MaxValue)]
+    [TestCase(float.MaxValue, float.MinValue)]
+    public void Compute_Sub_NonFiniteResult_GuardsToZero(float lhs, float rhs) {
+        Assert.That(NMath.Compute(lhs, rhs, OperationType.Sub), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
+    [TestCase(float.MaxValue, 2.0f)]
+    [TestCase(float.MinValue, 2.0f)]
+    public void Compute_Multiply_NonFiniteResult_GuardsToZero(float lhs, float rhs) {
+        Assert.That(NMath.Compute(lhs, rhs, OperationType.Multiply), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
     [TestCase(6.0f, 2.0f, 2.0f)]
     [TestCase(1.0f, 9.0f, 1.0f)]
     public void Compute_Min_ReturnsSmaller(float lhs, float rhs, float expected) {
@@ -88,5 +112,21 @@ public class NMathComputeTests {
     public void Compute_InvPow_ApproximatesTruePowerWithinTolerance(float lhs, float rhs) {
         double expected = Math.Pow(rhs, Math.Abs(lhs));
         Assert.That(NMath.Compute(lhs, rhs, OperationType.InvPow), Is.EqualTo(expected).Within(15).Percent);
+    }
+
+
+    [Test, Parallelizable]
+    [TestCase(-6.0f, 2.0f)]
+    [TestCase(0.0f, 2.0f)]
+    public void Compute_Pow_BaseOutOfDomain_GuardsToZero(float lhs, float rhs) {
+        Assert.That(NMath.Compute(lhs, rhs, OperationType.Pow), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
+    [TestCase(2.0f, -6.0f)]
+    [TestCase(2.0f, 0.0f)]
+    public void Compute_InvPow_BaseOutOfDomain_GuardsToZero(float lhs, float rhs) {
+        Assert.That(NMath.Compute(lhs, rhs, OperationType.InvPow), Is.EqualTo(0.0f));
     }
 }

@@ -116,6 +116,14 @@ public class NMathActivationTests {
 
 
     [Test, Parallelizable]
+    [TestCase(-4.0f)]
+    [TestCase(-0.0001f, Description = "pre-fix this produced a finite, wrong-signed, astronomically large value instead of being guarded")]
+    public void Activation_Sqrt_NegativeArgument_GuardsToZero(float value) {
+        Assert.That(value.Activation(ActivationFunc.Sqrt), Is.EqualTo(0.0f));
+    }
+
+
+    [Test, Parallelizable]
     [TestCase(4.0f, 16.0f)]
     [TestCase(-3.0f, 9.0f)]
     public void Activation_Pow2_ReturnsSquare(float value, float expected) {
