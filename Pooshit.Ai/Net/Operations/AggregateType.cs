@@ -6,32 +6,32 @@ namespace Pooshit.Ai.Net.Operations;
 public enum AggregateType {
     
     /// <summary>
-    /// adds all values
+    /// sum of all values
     /// </summary>
     Sum,
-    
+
     /// <summary>
-    /// generate the average of all values
+    /// arithmetic mean of all values
     /// </summary>
     Average,
-    
+
     /// <summary>
-    /// generates the median of all values
+    /// middle value of the sorted values, or the upper of the two middle values for an even count — not the mean of the two middle values
     /// </summary>
     Median,
-    
+
     /// <summary>
-    /// generates the minimum of all values
+    /// smallest of all values
     /// </summary>
     Min,
-    
+
     /// <summary>
-    /// generates the maximum of all values
+    /// largest of all values
     /// </summary>
     Max,
-    
+
     /// <summary>
-    /// average of average and max
+    /// 0.9 times the average of all values plus 0.1 times the maximum value
     /// </summary>
     AverageToMax
 }
