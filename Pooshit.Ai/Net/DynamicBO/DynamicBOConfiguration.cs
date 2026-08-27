@@ -321,20 +321,8 @@ public class DynamicBOConfiguration : IMutatingChromosome<DynamicBOConfiguration
         }
     }
 
-    public int StructureHash() {
-        int hash = 0;
-        /*foreach (NeuronConfig neuron in Neurons) {
-            hash *= 397;
-            hash ^= neuron.StructureHash;
-        }*/
-        
-        foreach (BOConnection connection in Connections) {
-            hash *= 397;
-            hash ^= connection.StructureHash;
-        }
-        
-        return hash;
-    }
+    /// <inheritdoc />
+    public int StructureHash() => ChromosomeStructureHash.Combine(Neurons, Connections.Select(c => c.StructureHash));
 
     /// <inheritdoc />
     public float FitnessModifier => 1.0f + (Connections.Length * 0.01f + (Neurons.Length - InputCount - OutputCount) * 0.008f);
