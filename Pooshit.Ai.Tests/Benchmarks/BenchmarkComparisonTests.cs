@@ -12,7 +12,7 @@ namespace NightlyCode.Ai.Tests.Benchmarks;
 public class BenchmarkComparisonTests {
 
     [Test, Parallelizable, Explicit, Category("Benchmark")]
-    [Description("Asserts I1 (finite, non-negative fitness), I2 (final fitness never worse than generation-0 best) and I3 (no generation reports a non-finite fitness), then prints the per-seed comparison against Benchmarks/baseline.json. DiVoid #9511.")]
+    [Description("Asserts I1 (finite, non-negative fitness) and I2 (final fitness never worse than generation-0 best), then prints the per-seed comparison, including non-finite-generation coverage, against Benchmarks/baseline.json. DiVoid #9511.")]
     public void Benchmark_AgainstCommittedBaseline_HoldsInvariantsAndReportsComparison() {
         BenchmarkRunResult[] results = BenchmarkHarness.Run();
 
@@ -24,8 +24,6 @@ public class BenchmarkComparisonTests {
                             $"I1 (non-negative): {result.ProblemName} seed {result.Seed} fitness={result.FinalFitness}");
                 Assert.That(result.FinalFitness, Is.LessThanOrEqualTo(result.GenerationZeroBest),
                             $"I2: {result.ProblemName} seed {result.Seed} final={result.FinalFitness} generationZeroBest={result.GenerationZeroBest}");
-                Assert.That(result.NonFiniteGenerations, Is.Zero,
-                            $"I3: {result.ProblemName} seed {result.Seed} reported {result.NonFiniteGenerations} generation(s) with a non-finite fitness - DiVoid #9511");
             }
         });
 

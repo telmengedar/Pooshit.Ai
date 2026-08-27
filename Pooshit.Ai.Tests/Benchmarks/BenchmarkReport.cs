@@ -77,7 +77,7 @@ public static class BenchmarkReport {
         int totalGenerations = problemResults.Sum(r => r.Generations);
         int totalNonFiniteGenerations = problemResults.Sum(r => r.NonFiniteGenerations);
         Console.WriteLine($"non-finite coverage: {affectedSeeds}/{problemResults.Length} seeds observed a non-finite fitness " +
-                           $"({totalNonFiniteGenerations} of {totalGenerations} total generations affected) - I3 asserts this stays zero (DiVoid #9511)");
+                           $"({totalNonFiniteGenerations} of {totalGenerations} total generations affected) - reported, not asserted: I1 already guards the value that matters (DiVoid #9511)");
         Console.WriteLine();
     }
 

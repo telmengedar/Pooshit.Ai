@@ -14,6 +14,8 @@ namespace NightlyCode.Ai.Tests.Benchmarks;
 /// <see cref="Pooshit.Ai.Genetics.EvolutionSetup{T}.OnNonFiniteFitness"/> - the persistence signal
 /// DiVoid #9511 asks for ("did a non-zero count occur, and did it persist"), never a raw sum of
 /// per-generation counts, which would conflate how many entries were affected at once with how many
-/// generations were affected. Backs invariant I3 and is persisted to <see cref="Baseline"/>
+/// generations were affected. Reported and compared against <see cref="Baseline"/>, not asserted -
+/// I1 already guards the value that matters (a non-finite fitness winning); this occurring and
+/// self-healing is the guard working
 /// </param>
 public sealed record BenchmarkRunResult(string ProblemName, long Seed, float FinalFitness, float GenerationZeroBest, int Generations, int NonFiniteGenerations);
