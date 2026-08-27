@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9772: guard connection products (DynamicBONet's post-Compute weight multiply and Rhs==-1 passthrough, DynamicFFNet's unguarded product) against non-finite values before they reach Aggregate";
+    const string Note = "DiVoid #9043: fold neuron Aggregate/Activation into StructureHash so elitism no longer discards structurally distinct chromosomes with identical wiring; also fixes connection-order sensitivity and the zero-connection collision";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone
