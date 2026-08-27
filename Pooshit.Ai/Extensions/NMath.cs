@@ -48,7 +48,7 @@ public static class NMath {
     }
 
     /// <summary>
-    /// guards a connection's contribution to a neuron aggregate against a non-finite value
+    /// a value's finite form
     /// </summary>
     /// <param name="value">value to guard</param>
     /// <returns>value, or 0.0 if the value is NaN or infinite</returns>
