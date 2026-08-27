@@ -1,7 +1,7 @@
 {
-  "RecordedAt": "2026-08-27T12:23:19.6213335Z",
-  "Commit": "81a1b91",
-  "Note": "DiVoid #9044 \u002B QA #9771 CF1: guard Compute/AMath.Power/InverseSquareRoot against non-finite and out-of-domain results (including negative zero), fix AverageToMax\u0027s max-init and empty-sequence aggregate behaviour",
+  "RecordedAt": "2026-08-27T13:57:01.1383698Z",
+  "Commit": "81e6264",
+  "Note": "DiVoid #9772: guard connection products (DynamicBONet\u0027s post-Compute weight multiply and Rhs==-1 passthrough, DynamicFFNet\u0027s unguarded product) against non-finite values before they reach Aggregate",
   "Results": [
     {
       "ProblemName": "BinOp.MultiplyMinus",
@@ -48,7 +48,7 @@
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 8,
-      "FinalFitness": 0.15540972,
+      "FinalFitness": 0.14794725,
       "Generations": 500
     },
     {
