@@ -171,20 +171,24 @@ public class NonFiniteFitnessTests {
 
 
     [Test, Parallelizable]
-    [Description("R1 sibling of the NaN breeding-weight invariance test, with the NaN entry absent (DiVoid #9037).")]
-    public void Evolve_SameEntriesWithoutNaN_ProducesIdenticalBreedingOutcome() {
+    [Description("R1 sibling of the NaN breeding-weight invariance test: the NaN entry is replaced by a finite entry sitting exactly at modifiedMax, so it carries zero breeding weight (DiVoid #9037).")]
+    public void Evolve_NaNEntryReplacedByZeroWeightFiniteEntry_ProducesIdenticalBreedingOutcome() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = new() { Chromosome = new("e0", log, 0, fitnessModifier: 2.0f), Fitness = 1.0f, AncestryId = Guid.NewGuid() };
         PopulationEntry<MutatingFakeChromosome> e1 = new() { Chromosome = new("e1", log, 1, fitnessModifier: 1.0f), Fitness = 3.0f, AncestryId = Guid.NewGuid() };
-        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1];
+        PopulationEntry<MutatingFakeChromosome> e2 = new() { Chromosome = new("e2", log, 2, fitnessModifier: 1.0f), Fitness = 3.0f, AncestryId = Guid.NewGuid() };
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2];
 
         Population<MutatingFakeChromosome> population = new(entries, r => new("fresh", log, fitnessModifier: 1.0f));
 
         Dictionary<string, float> fitnessByLabel = new() {
             ["e0"] = 1.0f,
             ["e1"] = 3.0f,
+            ["e2"] = 3.0f,
             ["e0'1"] = 10.0f,
-            ["e0'2"] = 11.0f
+            ["fresh'1"] = 10.0f,
+            ["e0'2"] = 11.0f,
+            ["fresh'2"] = 11.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
@@ -198,8 +202,8 @@ public class NonFiniteFitnessTests {
 
         population.Train(setup);
 
-        Assert.That(population.Entries.Select(entry => entry.Chromosome.Label), Is.EquivalentTo(new[] { "e0", "e0'1" }),
-                    "with poison absent there is one fewer mutate slot (population size 2, not 3), but the SAME modifiedMax = 4.0 and weight(e0) = 0.5625 must still draw e0 as parent - the identical selection outcome the poisoned test relies on");
+        Assert.That(population.Entries.Select(entry => entry.Chromosome.Label), Is.EquivalentTo(new[] { "e0", "e0'1", "fresh'2" }),
+                    "modifiedMax = 4.0 and weight(e0) = 0.5625 are unchanged by the replacement, so the gene-pool slot still draws e0 - the identical selection outcome the poisoned test relies on");
     }
 
 

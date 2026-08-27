@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9511: continues recording NonFiniteGenerations (e.g. FeedForward.MultiplyMinus seed 7 = 1) - schema addition only. FinalFitness values are unchanged from master's own #9043 recording (832711f); this branch does not move them";
+    const string Note = "DiVoid #9054 item 2: the fresh-blood band now spans Elitism slots instead of Elitism-1, which changes the number of RNG draws per generation, so all 24 pairs move (12 improved, 12 regressed). FeedForward.MultiplyMinus seed 7 drops from 1 NonFiniteGenerations to 0; every other pair stays at 0";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone

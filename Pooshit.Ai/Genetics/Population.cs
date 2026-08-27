@@ -165,7 +165,7 @@ where T : class, IChromosome<T> {
 
     void Mutate(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset) {
         void Mutator(int i) {
-            if (Generator != null && i > trainingBuffer.Length - setup.Elitism) {
+            if (Generator != null && i >= trainingBuffer.Length - setup.Elitism) {
                 Mutate(trainingBuffer, rng, new() {
                     Chromosome = Generator(rng),
                     AncestryId = Guid.NewGuid() 
