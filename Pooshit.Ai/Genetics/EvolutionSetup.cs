@@ -48,6 +48,11 @@ where T : IChromosome<T>
     /// action executed after training run
     /// </summary>
     public Action<int, float> AfterRun { get; set; }
+
+    /// <summary>
+    /// invoked at the start of each generation with the generation index and the number of entries entering it with a NaN or infinite fitness
+    /// </summary>
+    public Action<int, int> OnNonFiniteFitness { get; set; }
     
     /// <summary>
     /// threads to use
