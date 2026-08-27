@@ -31,6 +31,18 @@ public abstract class BenchmarkProblem {
     /// </summary>
     /// <param name="seed">non-zero seed the run's <see cref="Rng"/> is constructed from</param>
     public abstract BenchmarkRunResult Run(long seed);
+
+    /// <summary>
+    /// counts how many of the given per-generation non-finite-entry counts are non-zero - the
+    /// persistence signal design #9511 asks for (did a non-zero count occur, and did it persist),
+    /// as opposed to a raw sum of the counts, which would conflate how many entries were affected
+    /// at once with how many generations were affected. Extracted as a pure function, mirroring
+    /// <see cref="BenchmarkReport.Median"/>, because a real training run cannot deterministically
+    /// exercise a chosen mix of affected and unaffected generations - the accumulation rule itself
+    /// is tested directly here rather than only through end-to-end wiring
+    /// </summary>
+    internal static int CountNonFiniteGenerations(IEnumerable<int> perGenerationNonFiniteCounts) =>
+        perGenerationNonFiniteCounts.Count(count => count > 0);
 }
 
 /// <summary>
@@ -68,6 +80,7 @@ where TNet : INeuronalNet<TChromosome> {
         float generationZeroBest = population.Entries.Min(entry => evaluator.EvaluateFitness(entry.Chromosome, rng, true));
 
         int generationsExecuted = 0;
+        List<int> nonFiniteCountsPerGeneration = [];
         EvolutionSetup<TChromosome> setup = new() {
             Evaluator = evaluator,
             Rng = rng,
@@ -75,13 +88,16 @@ where TNet : INeuronalNet<TChromosome> {
             Runs = runs,
             Rivalism = rivalism,
             TargetFitness = TargetFitness,
-            AfterRun = (generation, _) => generationsExecuted = generation + 1
+            AfterRun = (generation, _) => generationsExecuted = generation + 1,
+            // one entry per generation actually run - never wired outside the benchmark, where the
+            // ?.Invoke short-circuit means this observation costs nothing (design #9511)
+            OnNonFiniteFitness = (_, count) => nonFiniteCountsPerGeneration.Add(count)
         };
 
         PopulationEntry<TChromosome> result = population.Train(setup);
         if (result.Fitness <= TargetFitness)
             generationsExecuted++;
 
-        return new BenchmarkRunResult(Name, seed, result.Fitness, generationZeroBest, generationsExecuted);
+        return new BenchmarkRunResult(Name, seed, result.Fitness, generationZeroBest, generationsExecuted, CountNonFiniteGenerations(nonFiniteCountsPerGeneration));
     }
 }

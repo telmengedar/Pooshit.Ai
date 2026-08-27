@@ -10,11 +10,12 @@ public sealed class BaselineRunRecord {
 
     public BaselineRunRecord() { }
 
-    public BaselineRunRecord(string problemName, long seed, float finalFitness, int generations) {
+    public BaselineRunRecord(string problemName, long seed, float finalFitness, int generations, int? nonFiniteGenerations) {
         ProblemName = problemName;
         Seed = seed;
         FinalFitness = finalFitness;
         Generations = generations;
+        NonFiniteGenerations = nonFiniteGenerations;
     }
 
     /// <summary>
@@ -36,4 +37,13 @@ public sealed class BaselineRunRecord {
     /// generations executed for this (problem, seed) pair, as recorded
     /// </summary>
     public int Generations { get; set; }
+
+    /// <summary>
+    /// how many of <see cref="Generations"/> reported at least one entry with a non-finite fitness,
+    /// as recorded (design #9511) - the persistence signal for #9060's discriminating question
+    /// ("did a non-zero count occur, and did it persist"). <c>null</c> means this record predates
+    /// non-finite-generation tracking: a fact about the baseline's age, not a measured zero, and
+    /// must never be treated as one when comparing - see <see cref="BenchmarkReport"/>
+    /// </summary>
+    public int? NonFiniteGenerations { get; set; }
 }

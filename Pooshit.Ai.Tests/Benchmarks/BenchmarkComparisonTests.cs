@@ -12,7 +12,7 @@ namespace NightlyCode.Ai.Tests.Benchmarks;
 public class BenchmarkComparisonTests {
 
     [Test, Parallelizable, Explicit, Category("Benchmark")]
-    [Description("Runs every (problem, seed) pair once, asserts I1 (every final fitness is finite and non-negative) and I2 (every run's final fitness is at most its own generation-0 best, which elitism guarantees by construction at SampleCount = 0), then prints the per-seed table against Benchmarks/baseline.json. Quality itself is reported, never asserted.")]
+    [Description("Runs every (problem, seed) pair once, asserts I1 (every final fitness is finite and non-negative), I2 (every run's final fitness is at most its own generation-0 best, which elitism guarantees by construction at SampleCount = 0) and I3 (no generation in any run reports a non-finite fitness), then prints the per-seed table against Benchmarks/baseline.json. Quality itself is reported, never asserted - I3 is not quality: #9083 classifies a non-finite value as outright wrong rather than merely imprecise, the same bucket I1 already asserts against, so unlike a fitness delta it is asserted rather than only reported (DiVoid #9511).")]
     public void Benchmark_AgainstCommittedBaseline_HoldsInvariantsAndReportsComparison() {
         BenchmarkRunResult[] results = BenchmarkHarness.Run();
 
@@ -24,6 +24,8 @@ public class BenchmarkComparisonTests {
                             $"I1 (non-negative): {result.ProblemName} seed {result.Seed} fitness={result.FinalFitness}");
                 Assert.That(result.FinalFitness, Is.LessThanOrEqualTo(result.GenerationZeroBest),
                             $"I2: {result.ProblemName} seed {result.Seed} final={result.FinalFitness} generationZeroBest={result.GenerationZeroBest}");
+                Assert.That(result.NonFiniteGenerations, Is.Zero,
+                            $"I3: {result.ProblemName} seed {result.Seed} reported {result.NonFiniteGenerations} generation(s) with a non-finite fitness - DiVoid #9511");
             }
         });
 

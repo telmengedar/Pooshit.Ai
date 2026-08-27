@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9772: guard connection products (DynamicBONet's post-Compute weight multiply and Rhs==-1 passthrough, DynamicFFNet's unguarded product) against non-finite values before they reach Aggregate";
+    const string Note = "DiVoid #9511: record OnNonFiniteFitness generation counts alongside FinalFitness (schema addition only - no production code changed, so recorded fitness values are not expected to move)";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone
@@ -39,7 +39,7 @@ public class RecordBaselineTests {
             RecordedAt = DateTime.UtcNow,
             Commit = CurrentCommit(),
             Note = Note,
-            Results = results.Select(r => new BaselineRunRecord(r.ProblemName, r.Seed, r.FinalFitness, r.Generations)).ToArray()
+            Results = results.Select(r => new BaselineRunRecord(r.ProblemName, r.Seed, r.FinalFitness, r.Generations, r.NonFiniteGenerations)).ToArray()
         };
 
         string path = BenchmarkBaselineFile.Locate();
