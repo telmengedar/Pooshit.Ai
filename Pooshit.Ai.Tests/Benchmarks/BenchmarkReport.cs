@@ -73,10 +73,6 @@ public static class BenchmarkReport {
         string missingSuffix = missingBaseline > 0 ? $", {missingBaseline} absent from baseline" : "";
         Console.WriteLine($"paired verdict: improved on {improved}/{problemResults.Length} seeds, regressed on {regressed}/{problemResults.Length}, unchanged on {unchanged}/{problemResults.Length}{missingSuffix}");
 
-        // coverage statement, not a verdict - answers "did this run actually exercise the
-        // non-finite-fitness defect class, or only fail to observe it" (DiVoid #9511). Always
-        // printed, even when (as today) every count is zero: silence here would read as an
-        // omission rather than a measured absence, which is exactly the blind spot this closes.
         int affectedSeeds = problemResults.Count(r => r.NonFiniteGenerations > 0);
         int totalGenerations = problemResults.Sum(r => r.Generations);
         int totalNonFiniteGenerations = problemResults.Sum(r => r.NonFiniteGenerations);

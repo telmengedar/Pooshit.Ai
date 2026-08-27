@@ -89,8 +89,6 @@ where TNet : INeuronalNet<TChromosome> {
             Rivalism = rivalism,
             TargetFitness = TargetFitness,
             AfterRun = (generation, _) => generationsExecuted = generation + 1,
-            // one entry per generation actually run - never wired outside the benchmark, where the
-            // ?.Invoke short-circuit means this observation costs nothing (design #9511)
             OnNonFiniteFitness = (_, count) => nonFiniteCountsPerGeneration.Add(count)
         };
 
