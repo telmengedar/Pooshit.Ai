@@ -31,6 +31,12 @@ public abstract class BenchmarkProblem {
     /// </summary>
     /// <param name="seed">non-zero seed the run's <see cref="Rng"/> is constructed from</param>
     public abstract BenchmarkRunResult Run(long seed);
+
+    /// <summary>
+    /// counts how many of the given per-generation non-finite-entry counts are non-zero
+    /// </summary>
+    internal static int CountNonFiniteGenerations(IEnumerable<int> perGenerationNonFiniteCounts) =>
+        perGenerationNonFiniteCounts.Count(count => count > 0);
 }
 
 /// <summary>
@@ -68,6 +74,7 @@ where TNet : INeuronalNet<TChromosome> {
         float generationZeroBest = population.Entries.Min(entry => evaluator.EvaluateFitness(entry.Chromosome, rng, true));
 
         int generationsExecuted = 0;
+        List<int> nonFiniteCountsPerGeneration = [];
         EvolutionSetup<TChromosome> setup = new() {
             Evaluator = evaluator,
             Rng = rng,
@@ -75,13 +82,14 @@ where TNet : INeuronalNet<TChromosome> {
             Runs = runs,
             Rivalism = rivalism,
             TargetFitness = TargetFitness,
-            AfterRun = (generation, _) => generationsExecuted = generation + 1
+            AfterRun = (generation, _) => generationsExecuted = generation + 1,
+            OnNonFiniteFitness = (_, count) => nonFiniteCountsPerGeneration.Add(count)
         };
 
         PopulationEntry<TChromosome> result = population.Train(setup);
         if (result.Fitness <= TargetFitness)
             generationsExecuted++;
 
-        return new BenchmarkRunResult(Name, seed, result.Fitness, generationZeroBest, generationsExecuted);
+        return new BenchmarkRunResult(Name, seed, result.Fitness, generationZeroBest, generationsExecuted, CountNonFiniteGenerations(nonFiniteCountsPerGeneration));
     }
 }

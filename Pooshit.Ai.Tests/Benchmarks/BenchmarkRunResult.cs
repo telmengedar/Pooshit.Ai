@@ -9,4 +9,5 @@ namespace NightlyCode.Ai.Tests.Benchmarks;
 /// <param name="FinalFitness">the full-set re-score <see cref="Pooshit.Ai.Genetics.Population{T}.Train"/> returns</param>
 /// <param name="GenerationZeroBest">the best fitness present in the population before any generation ran</param>
 /// <param name="Generations">how many generations executed before the target fitness was reached or <c>Runs</c> was exhausted</param>
-public sealed record BenchmarkRunResult(string ProblemName, long Seed, float FinalFitness, float GenerationZeroBest, int Generations);
+/// <param name="NonFiniteGenerations">how many of <see cref="Generations"/> reported at least one non-finite entry</param>
+public sealed record BenchmarkRunResult(string ProblemName, long Seed, float FinalFitness, float GenerationZeroBest, int Generations, int NonFiniteGenerations);

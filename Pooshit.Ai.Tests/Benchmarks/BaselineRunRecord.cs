@@ -10,11 +10,12 @@ public sealed class BaselineRunRecord {
 
     public BaselineRunRecord() { }
 
-    public BaselineRunRecord(string problemName, long seed, float finalFitness, int generations) {
+    public BaselineRunRecord(string problemName, long seed, float finalFitness, int generations, int? nonFiniteGenerations) {
         ProblemName = problemName;
         Seed = seed;
         FinalFitness = finalFitness;
         Generations = generations;
+        NonFiniteGenerations = nonFiniteGenerations;
     }
 
     /// <summary>
@@ -36,4 +37,9 @@ public sealed class BaselineRunRecord {
     /// generations executed for this (problem, seed) pair, as recorded
     /// </summary>
     public int Generations { get; set; }
+
+    /// <summary>
+    /// how many of <see cref="Generations"/> reported at least one non-finite entry, or <c>null</c> if not recorded
+    /// </summary>
+    public int? NonFiniteGenerations { get; set; }
 }

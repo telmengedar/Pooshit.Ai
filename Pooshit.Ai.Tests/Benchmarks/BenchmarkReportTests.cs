@@ -31,4 +31,40 @@ public class BenchmarkReportTests {
     public void Median_EmptyArray_ReturnsNaN() {
         Assert.That(BenchmarkReport.Median([]), Is.NaN);
     }
+
+    [Test, Parallelizable]
+    [Description("Zero current matching zero baseline prints nothing, keeping the per-seed table as compact as before this field existed. DiVoid #9511.")]
+    public void FormatNonFinite_ZeroCurrentMatchingZeroBaseline_ReturnsEmpty() {
+        Assert.That(BenchmarkReport.FormatNonFinite(0, 0), Is.Empty);
+    }
+
+    [Test, Parallelizable]
+    [Description("A nonzero count matching baseline still prints 'unchanged' rather than staying silent. DiVoid #9511.")]
+    public void FormatNonFinite_NonZeroCurrentMatchingNonZeroBaseline_ReportsUnchanged() {
+        Assert.That(BenchmarkReport.FormatNonFinite(3, 3), Does.Contain("unchanged"));
+    }
+
+    [Test, Parallelizable]
+    [Description("A count differing from baseline is visually marked with '!!'. DiVoid #9511.")]
+    public void FormatNonFinite_CurrentDiffersFromBaseline_IsMarked() {
+        Assert.That(BenchmarkReport.FormatNonFinite(2, 0), Does.Contain("!!"));
+    }
+
+    [Test, Parallelizable]
+    [Description("The differs-from-baseline mark fires when the count drops too, not only when it rises. DiVoid #9511.")]
+    public void FormatNonFinite_CurrentBelowBaseline_IsMarked() {
+        Assert.That(BenchmarkReport.FormatNonFinite(0, 3), Does.Contain("!!"));
+    }
+
+    [Test, Parallelizable]
+    [Description("Zero current against an unrecorded (null) baseline prints nothing. DiVoid #9511.")]
+    public void FormatNonFinite_ZeroCurrentAgainstUnrecordedBaseline_ReturnsEmpty() {
+        Assert.That(BenchmarkReport.FormatNonFinite(0, null), Is.Empty);
+    }
+
+    [Test, Parallelizable]
+    [Description("A nonzero current count against an unrecorded (null) baseline reports 'not recorded', never a fabricated zero. DiVoid #9511.")]
+    public void FormatNonFinite_NonZeroCurrentAgainstUnrecordedBaseline_ReportsNotRecorded() {
+        Assert.That(BenchmarkReport.FormatNonFinite(2, null), Does.Contain("not recorded"));
+    }
 }

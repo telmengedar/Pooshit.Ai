@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9043: fold neuron Aggregate/Activation into StructureHash so elitism no longer discards structurally distinct chromosomes with identical wiring; also fixes connection-order sensitivity and the zero-connection collision";
+    const string Note = "DiVoid #9511: continues recording NonFiniteGenerations (e.g. FeedForward.MultiplyMinus seed 7 = 1) - schema addition only. FinalFitness values are unchanged from master's own #9043 recording (832711f); this branch does not move them";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone
@@ -27,7 +27,7 @@ public class RecordBaselineTests {
     const string RecordBaselineEnvironmentVariable = "POOSHIT_RECORD_BASELINE";
 
     [Test, Parallelizable, Explicit]
-    [Description("Runs the benchmark harness and overwrites Benchmarks/baseline.json in the source tree, located by walking up from the test binary to the .csproj rather than writing a build-output copy. Guarded by the POOSHIT_RECORD_BASELINE=1 environment variable in addition to [Explicit], because a name filter can select and run an [Explicit] test - never part of the default or benchmark-comparison lane.")]
+    [Description("Overwrites Benchmarks/baseline.json, guarded by [Explicit] plus the POOSHIT_RECORD_BASELINE=1 environment variable so a name filter alone cannot trigger it.")]
     public void RecordBaseline_Run_OverwritesCommittedBaselineFile() {
         if (Environment.GetEnvironmentVariable(RecordBaselineEnvironmentVariable) != "1")
             Assert.Ignore($"Set {RecordBaselineEnvironmentVariable}=1 to actually overwrite the committed baseline. " +
@@ -39,7 +39,7 @@ public class RecordBaselineTests {
             RecordedAt = DateTime.UtcNow,
             Commit = CurrentCommit(),
             Note = Note,
-            Results = results.Select(r => new BaselineRunRecord(r.ProblemName, r.Seed, r.FinalFitness, r.Generations)).ToArray()
+            Results = results.Select(r => new BaselineRunRecord(r.ProblemName, r.Seed, r.FinalFitness, r.Generations, r.NonFiniteGenerations)).ToArray()
         };
 
         string path = BenchmarkBaselineFile.Locate();

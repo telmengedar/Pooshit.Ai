@@ -12,7 +12,7 @@ namespace NightlyCode.Ai.Tests.Benchmarks;
 public class BenchmarkComparisonTests {
 
     [Test, Parallelizable, Explicit, Category("Benchmark")]
-    [Description("Runs every (problem, seed) pair once, asserts I1 (every final fitness is finite and non-negative) and I2 (every run's final fitness is at most its own generation-0 best, which elitism guarantees by construction at SampleCount = 0), then prints the per-seed table against Benchmarks/baseline.json. Quality itself is reported, never asserted.")]
+    [Description("Asserts I1 (finite, non-negative fitness) and I2 (final fitness never worse than generation-0 best), then prints the per-seed comparison, including non-finite-generation coverage, against Benchmarks/baseline.json. DiVoid #9511.")]
     public void Benchmark_AgainstCommittedBaseline_HoldsInvariantsAndReportsComparison() {
         BenchmarkRunResult[] results = BenchmarkHarness.Run();
 

@@ -44,4 +44,70 @@ public class BenchmarkProblemTests {
 
         Assert.That(result.Generations, Is.EqualTo(3));
     }
+
+    [Test, Parallelizable]
+    [Description("A well-behaved sample never produces a non-finite fitness, so NonFiniteGenerations is zero - the sibling proving the field varies with input (R1). DiVoid #9511.")]
+    public void Run_WellBehavedSamples_ReportsZeroNonFiniteGenerations() {
+        BenchmarkProblem<DynamicBOConfiguration, DynamicBONet> problem = new(
+            "Test.WellBehaved",
+            populationSize: 2,
+            generator: rng => new(["x"], ["y"], rng),
+            samples: () => [new(new { x = 1 }, new { y = 1 })],
+            runs: 3,
+            rivalism: 1,
+            targetFitness: float.Epsilon);
+
+        BenchmarkRunResult result = problem.Run(seed: 1);
+
+        Assert.That(result.NonFiniteGenerations, Is.Zero);
+    }
+
+    [Test, Parallelizable]
+    [Description("An expected output of NaN forces every generation's fitness non-finite, proving Run() actually wires OnNonFiniteFitness through to NonFiniteGenerations end-to-end. DiVoid #9511.")]
+    public void Run_ExpectedOutputIsNaN_ReportsNonFiniteGenerationsEqualToGenerationsExecuted() {
+        BenchmarkProblem<DynamicBOConfiguration, DynamicBONet> problem = new(
+            "Test.NonFiniteTarget",
+            populationSize: 2,
+            generator: rng => new(["x"], ["y"], rng),
+            samples: () => [new(new { x = 1 }, new { y = float.NaN })],
+            runs: 3,
+            rivalism: 1,
+            targetFitness: float.Epsilon);
+
+        BenchmarkRunResult result = problem.Run(seed: 1);
+
+        Assert.That(result.Generations, Is.EqualTo(3), "a NaN-based comparison against TargetFitness is never true, so Runs must be exhausted exactly like the well-behaved-but-unreachable case");
+        Assert.That(result.NonFiniteGenerations, Is.EqualTo(3), "every generation is scored against the same NaN target, so every one of the 3 executed generations must be affected");
+    }
+}
+
+/// <summary>
+/// pins <see cref="BenchmarkProblem.CountNonFiniteGenerations"/>
+/// </summary>
+[TestFixture, Parallelizable]
+public class BenchmarkProblemCountNonFiniteGenerationsTests {
+
+    [Test, Parallelizable]
+    [Description("An empty observation sequence counts zero affected generations. DiVoid #9511.")]
+    public void CountNonFiniteGenerations_EmptySequence_ReturnsZero() {
+        Assert.That(BenchmarkProblem.CountNonFiniteGenerations([]), Is.Zero);
+    }
+
+    [Test, Parallelizable]
+    [Description("All-zero per-generation counts count zero affected generations, killing a '>= 0' mutation of the '> 0' threshold. DiVoid #9511.")]
+    public void CountNonFiniteGenerations_AllZeroCounts_ReturnsZero() {
+        Assert.That(BenchmarkProblem.CountNonFiniteGenerations([0, 0, 0, 0]), Is.Zero);
+    }
+
+    [Test, Parallelizable]
+    [Description("Every generation reporting a nonzero count counts as affected - the fully-persistent case. DiVoid #9511.")]
+    public void CountNonFiniteGenerations_EveryGenerationNonZero_ReturnsGenerationCount() {
+        Assert.That(BenchmarkProblem.CountNonFiniteGenerations([1, 2, 3]), Is.EqualTo(3));
+    }
+
+    [Test, Parallelizable]
+    [Description("Counts affected generations, not affected entries: [0,3,0,1,0] is 2, not 4 (sum) or 1 (any-check). DiVoid #9511.")]
+    public void CountNonFiniteGenerations_MixedSequence_CountsAffectedGenerationsNotAffectedEntries() {
+        Assert.That(BenchmarkProblem.CountNonFiniteGenerations([0, 3, 0, 1, 0]), Is.EqualTo(2));
+    }
 }
