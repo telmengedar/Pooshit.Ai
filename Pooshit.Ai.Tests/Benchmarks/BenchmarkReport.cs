@@ -40,7 +40,7 @@ public static class BenchmarkReport {
 
     static void PrintProblem(BenchmarkProblem problem, BenchmarkRunResult[] problemResults, Baseline baseline) {
         Console.WriteLine($"--- {problem.Name} ---");
-        Console.WriteLine($"{"seed",-8}{"baseline",-16}{"current",-16}{"delta",-16}{"non-finite",-10}");
+        Console.WriteLine($"{"seed",-8}{"baseline",-16}{"current",-16}{"delta",-16}");
 
         int improved = 0;
         int regressed = 0;
@@ -82,12 +82,7 @@ public static class BenchmarkReport {
     }
 
     /// <summary>
-    /// per-seed non-finite suffix - silent for the boring case (nothing observed, nothing changed
-    /// from baseline) so the common-case table stays exactly as compact as before this field
-    /// existed; the moment there is anything to see, it prints. A count moving away from baseline
-    /// is a stronger signal than a fitness delta (design #9511) and is marked accordingly.
-    /// Internal and directly tested, mirroring <see cref="Median"/> - it is the only thing standing
-    /// between a report print and a silently swallowed non-finite regression
+    /// per-seed non-finite suffix, silent when there is nothing to report
     /// </summary>
     internal static string FormatNonFinite(int current, int? baselineValue) {
         if (baselineValue == null)

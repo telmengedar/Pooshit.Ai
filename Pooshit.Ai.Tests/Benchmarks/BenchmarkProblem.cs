@@ -33,13 +33,7 @@ public abstract class BenchmarkProblem {
     public abstract BenchmarkRunResult Run(long seed);
 
     /// <summary>
-    /// counts how many of the given per-generation non-finite-entry counts are non-zero - the
-    /// persistence signal design #9511 asks for (did a non-zero count occur, and did it persist),
-    /// as opposed to a raw sum of the counts, which would conflate how many entries were affected
-    /// at once with how many generations were affected. Extracted as a pure function, mirroring
-    /// <see cref="BenchmarkReport.Median"/>, because a real training run cannot deterministically
-    /// exercise a chosen mix of affected and unaffected generations - the accumulation rule itself
-    /// is tested directly here rather than only through end-to-end wiring
+    /// counts how many of the given per-generation non-finite-entry counts are non-zero
     /// </summary>
     internal static int CountNonFiniteGenerations(IEnumerable<int> perGenerationNonFiniteCounts) =>
         perGenerationNonFiniteCounts.Count(count => count > 0);

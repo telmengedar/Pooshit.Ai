@@ -3,10 +3,7 @@ using System.Text.Json;
 namespace NightlyCode.Ai.Tests.Benchmarks;
 
 /// <summary>
-/// pins how <see cref="BaselineRunRecord"/> deserializes across the schema boundary DiVoid #9511
-/// introduced. A baseline recorded before this change has no "NonFiniteGenerations" JSON property
-/// at all, and that absence must deserialize to null - a fact ("not measured") - never to 0, which
-/// would silently fabricate a measurement that was never taken
+/// pins <see cref="BaselineRunRecord.NonFiniteGenerations"/>'s JSON deserialization
 /// </summary>
 [TestFixture, Parallelizable]
 public class BaselineRunRecordTests {

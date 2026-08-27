@@ -82,11 +82,7 @@ public class BenchmarkProblemTests {
 }
 
 /// <summary>
-/// pins <see cref="BenchmarkProblem.CountNonFiniteGenerations"/> - the persistence rule DiVoid
-/// #9511 asks for (count affected GENERATIONS, never affected ENTRIES), extracted as a pure
-/// function exactly as <see cref="BenchmarkReport.Median"/> was, because <see cref="BenchmarkProblemTests"/>
-/// above cannot deterministically drive a real training run through a chosen mix of affected and
-/// unaffected generations - the accumulation rule itself is tested directly here instead
+/// pins <see cref="BenchmarkProblem.CountNonFiniteGenerations"/>
 /// </summary>
 [TestFixture, Parallelizable]
 public class BenchmarkProblemCountNonFiniteGenerationsTests {

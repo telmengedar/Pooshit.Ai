@@ -39,11 +39,7 @@ public sealed class BaselineRunRecord {
     public int Generations { get; set; }
 
     /// <summary>
-    /// how many of <see cref="Generations"/> reported at least one entry with a non-finite fitness,
-    /// as recorded (design #9511) - the persistence signal for #9060's discriminating question
-    /// ("did a non-zero count occur, and did it persist"). <c>null</c> means this record predates
-    /// non-finite-generation tracking: a fact about the baseline's age, not a measured zero, and
-    /// must never be treated as one when comparing - see <see cref="BenchmarkReport"/>
+    /// how many of <see cref="Generations"/> reported at least one non-finite entry, or <c>null</c> if not recorded
     /// </summary>
     public int? NonFiniteGenerations { get; set; }
 }
