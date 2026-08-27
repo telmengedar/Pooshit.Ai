@@ -290,15 +290,7 @@ public class DynamicFFConfiguration : IMutatingChromosome<DynamicFFConfiguration
     }
 
     /// <inheritdoc />
-    public int StructureHash() {
-        int hash = 0;
-        foreach (FFConnection connection in Connections) {
-            hash *= 397;
-            hash ^= connection.StructureHash;
-        }
-        
-        return hash;
-    }
+    public int StructureHash() => ChromosomeStructureHash.Combine(Neurons, Connections.Select(c => c.StructureHash));
 
     /// <inheritdoc />
     public float FitnessModifier => 1.0f + (Connections.Length * 0.01f + (Neurons.Length - InputCount - OutputCount) * 0.008f);

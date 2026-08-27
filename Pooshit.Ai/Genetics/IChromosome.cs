@@ -17,7 +17,7 @@ public interface IChromosome<T> {
     /// <summary>
     /// a hash value representing the chromosome structure (without weights)
     /// </summary>
-    /// <returns>hash value</returns>
+    /// <returns>hash value, comparable within a process only</returns>
     int StructureHash();
     
     /// <summary>

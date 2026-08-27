@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9511: record OnNonFiniteFitness generation counts alongside FinalFitness (schema addition only - no production code changed, so recorded fitness values are not expected to move)";
+    const string Note = "DiVoid #9043 (merged in): fold neuron Aggregate/Activation into StructureHash so elitism no longer discards structurally distinct chromosomes with identical wiring, and fixes the zero-connection collision that previously admitted exactly one generation-0 chromosome - this is what moves every value below. Continues recording NonFiniteGenerations per DiVoid #9511 (schema unchanged from the previous baseline)";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone
