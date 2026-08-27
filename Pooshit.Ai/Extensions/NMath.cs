@@ -44,10 +44,15 @@ public static class NMath {
             break;
         }
 
-        if (float.IsNaN(result) || float.IsInfinity(result))
-            return 0.0f;
-        return result;
+        return result.FiniteOrZero();
     }
+
+    /// <summary>
+    /// a value's finite form
+    /// </summary>
+    /// <param name="value">value to guard</param>
+    /// <returns>value, or 0.0 if the value is NaN or infinite</returns>
+    public static float FiniteOrZero(this float value) => float.IsFinite(value) ? value : 0.0f;
 
     /// <summary>
     /// executes the specified activation function

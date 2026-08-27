@@ -67,11 +67,11 @@ public class DynamicBONet : INeuronalNet<DynamicBOConfiguration> {
 
             this[group.Key] = group.Select(g => {
                                                if (g.Rhs == -1)
-                                                   return this[g.Lhs] * g.Weight;
+                                                   return (this[g.Lhs] * g.Weight).FiniteOrZero();
 
-                                               return NMath.Compute(this[g.Lhs],
+                                               return (NMath.Compute(this[g.Lhs],
                                                                     this[g.Rhs],
-                                                                    g.Operation) * g.Weight;
+                                                                    g.Operation) * g.Weight).FiniteOrZero();
                                            }).Aggregate(targetConfig.Aggregate)
                                    .Activation(targetConfig.Activation);
         }

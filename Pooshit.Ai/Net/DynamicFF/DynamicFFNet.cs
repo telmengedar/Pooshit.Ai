@@ -40,7 +40,7 @@ public class DynamicFFNet : INeuronalNet<DynamicFFConfiguration> {
         foreach (IGrouping<int, FFConnection> group in configuration.GroupedConnections) {
             NeuronConfig targetConfig = configuration[group.Key];
 
-            neurons[group.Key] = group.Select(g => neurons[g.Source] * g.Weight)
+            neurons[group.Key] = group.Select(g => (neurons[g.Source] * g.Weight).FiniteOrZero())
                                       .Aggregate(targetConfig.Aggregate)
                                       .Activation(targetConfig.Activation);
         }

@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9044 + QA #9771 CF1: guard Compute/AMath.Power/InverseSquareRoot against non-finite and out-of-domain results (including negative zero), fix AverageToMax's max-init and empty-sequence aggregate behaviour";
+    const string Note = "DiVoid #9772: guard connection products (DynamicBONet's post-Compute weight multiply and Rhs==-1 passthrough, DynamicFFNet's unguarded product) against non-finite values before they reach Aggregate";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone
