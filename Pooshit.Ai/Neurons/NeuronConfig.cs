@@ -62,5 +62,8 @@ public class NeuronConfig {
         return $"{Index}{(!string.IsNullOrEmpty(Name) ? $"({Name})" : "")} - {(Activation == ActivationFunc.None ? (Aggregate) : $"{Activation}({Aggregate})")}";
     }
 
+    /// <summary>
+    /// hash value representing this neuron's structural configuration, comparable within a process only
+    /// </summary>
     public int StructureHash => HashCode.Combine(OrderNumber, Aggregate, Activation);
 }

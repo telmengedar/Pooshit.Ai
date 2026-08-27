@@ -34,7 +34,7 @@ public class StructureHashTests {
 
 
     [Test, Parallelizable]
-    [Description("DiVoid #9043: pins the intended contract that neuron Aggregate/Activation participate in the structure hash. Verified two-sided (R5): red against the commented-out neuron fold, green once ChromosomeStructureHash.Combine folds NeuronConfig.StructureHash back in.")]
+    [Description("Chromosomes with identical connection topology but different neuron Aggregate/Activation hash unequal. DiVoid #9043")]
     public void StructureHash_BOConfiguration_DifferentNeuronConfiguration_IntendedToProduceDifferentHash() {
         DynamicBOConfiguration lhs = new(Neurons(AggregateType.Sum, ActivationFunc.None), [new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 1.0f }]);
         DynamicBOConfiguration rhs = new(Neurons(AggregateType.Max, ActivationFunc.Tanh), [new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 1.0f }]);
@@ -44,7 +44,7 @@ public class StructureHashTests {
 
 
     [Test, Parallelizable]
-    [Description("DiVoid #9043 coverage item 2: a structural fingerprint must be order-invariant. The same two connections listed in opposite order must hash equal; today's positional hash*=397 fold is order-sensitive and fails this. Sibling to DifferentConnectionTopology above (R1): that test moves the connection SET, this one moves only the LIST ORDER of an unchanged set.")]
+    [Description("The same connections listed in different order hash equal. DiVoid #9043")]
     public void StructureHash_BOConfiguration_SameConnectionsListedInDifferentOrder_ProducesEqualHash() {
         BOConnection first = new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 1.0f };
         BOConnection second = new() { Lhs = 1, Rhs = 0, Target = 2, Operation = OperationType.Add, Weight = 1.0f };
@@ -57,7 +57,7 @@ public class StructureHashTests {
 
 
     [Test, Parallelizable]
-    [Description("DiVoid #9043 coverage item 3: two structurally different fresh (zero-connection) genomes must not collide. Today's fold only walks Connections, so an empty connection list always hashes to 0 regardless of neuron configuration - every fresh genome collides with every other. Restoring the neuron fold fixes this as a side effect: neurons are always present, even with zero connections.")]
+    [Description("Chromosomes with no connections but different neuron configuration hash unequal. DiVoid #9043")]
     public void StructureHash_BOConfiguration_TwoDistinctZeroConnectionGenomes_ProduceDifferentHash() {
         DynamicBOConfiguration lhs = new(Neurons(AggregateType.Sum, ActivationFunc.None), []);
         DynamicBOConfiguration rhs = new(Neurons(AggregateType.Max, ActivationFunc.Tanh), []);
@@ -85,7 +85,7 @@ public class StructureHashTests {
 
 
     [Test, Parallelizable]
-    [Description("DiVoid #9043: pins the intended contract that neuron Aggregate/Activation participate in the structure hash. Verified two-sided (R5): red against the connection-only fold, green once ChromosomeStructureHash.Combine folds NeuronConfig.StructureHash back in.")]
+    [Description("Chromosomes with identical connection topology but different neuron Aggregate/Activation hash unequal. DiVoid #9043")]
     public void StructureHash_FFConfiguration_DifferentNeuronConfiguration_IntendedToProduceDifferentHash() {
         DynamicFFConfiguration lhs = new(Neurons(AggregateType.Sum, ActivationFunc.None), [new() { Source = 0, Target = 2, Weight = 1.0f }]);
         DynamicFFConfiguration rhs = new(Neurons(AggregateType.Max, ActivationFunc.Tanh), [new() { Source = 0, Target = 2, Weight = 1.0f }]);
@@ -95,7 +95,7 @@ public class StructureHashTests {
 
 
     [Test, Parallelizable]
-    [Description("DiVoid #9043 coverage item 2: a structural fingerprint must be order-invariant. The same two connections listed in opposite order must hash equal; today's positional hash*=397 fold is order-sensitive and fails this. Sibling to DifferentConnectionTopology above (R1): that test moves the connection SET, this one moves only the LIST ORDER of an unchanged set.")]
+    [Description("The same connections listed in different order hash equal. DiVoid #9043")]
     public void StructureHash_FFConfiguration_SameConnectionsListedInDifferentOrder_ProducesEqualHash() {
         FFConnection first = new() { Source = 0, Target = 2, Weight = 1.0f };
         FFConnection second = new() { Source = 1, Target = 2, Weight = 1.0f };
@@ -108,7 +108,7 @@ public class StructureHashTests {
 
 
     [Test, Parallelizable]
-    [Description("DiVoid #9043 coverage item 3: two structurally different fresh (zero-connection) genomes must not collide. Today's fold only walks Connections, so an empty connection list always hashes to 0 regardless of neuron configuration - every fresh genome collides with every other. Restoring the neuron fold fixes this as a side effect: neurons are always present, even with zero connections.")]
+    [Description("Chromosomes with no connections but different neuron configuration hash unequal. DiVoid #9043")]
     public void StructureHash_FFConfiguration_TwoDistinctZeroConnectionGenomes_ProduceDifferentHash() {
         DynamicFFConfiguration lhs = new(Neurons(AggregateType.Sum, ActivationFunc.None), []);
         DynamicFFConfiguration rhs = new(Neurons(AggregateType.Max, ActivationFunc.Tanh), []);

@@ -17,8 +17,10 @@ public static class ChromosomeStructureHash {
             hash.Add(neuron.StructureHash);
 
         int connectionHash = 0;
-        foreach (int connectionStructureHash in connectionHashes)
-            connectionHash += connectionStructureHash;
+        unchecked {
+            foreach (int connectionStructureHash in connectionHashes)
+                connectionHash += connectionStructureHash;
+        }
         hash.Add(connectionHash);
 
         return hash.ToHashCode();
