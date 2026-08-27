@@ -1,6 +1,6 @@
 {
-  "RecordedAt": "2026-08-27T17:01:40.7207495Z",
-  "Commit": "ffea9bb",
+  "RecordedAt": "2026-08-27T17:12:05.5690149Z",
+  "Commit": "2a23178",
   "Note": "DiVoid #9043 (merged in): fold neuron Aggregate/Activation into StructureHash so elitism no longer discards structurally distinct chromosomes with identical wiring, and fixes the zero-connection collision that previously admitted exactly one generation-0 chromosome - this is what moves every value below. Continues recording NonFiniteGenerations per DiVoid #9511 (schema unchanged from the previous baseline)",
   "Results": [
     {
