@@ -135,10 +135,11 @@ public static class NMath {
     }
 
     /// <summary>
-    /// function used to compute fitness value
+    /// weighted blend of a sequence's mean and maximum - 0.9 times the average plus 0.1 times the maximum.
+    /// Used both as a fitness fold over non-negative deviations and as the <see cref="AggregateType.AverageToMax"/> neuron aggregate over freely signed values
     /// </summary>
-    /// <param name="values">deviation values</param>
-    /// <returns>fitness value, or 0.0 for an empty input sequence</returns>
+    /// <param name="values">values to aggregate - non-negative deviations for a fitness fold, freely signed for a neuron aggregate</param>
+    /// <returns>weighted mean and maximum, or 0.0 for an empty input sequence</returns>
     public static float AverageToMax(this IEnumerable<float> values) {
         float max = float.NegativeInfinity;
         float sum = 0.0f;
@@ -153,6 +154,5 @@ public static class NMath {
             return 0.0f;
 
         return sum / count * 0.9f + max * 0.1f;
-        //return (sum / count + max) * 0.5f;
     }
 }

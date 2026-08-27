@@ -21,10 +21,10 @@ public static class AMath {
     /// computes an approximation of the inverse square root of a number
     /// </summary>
     /// <param name="number">number of which to compute inverse square root</param>
-    /// <returns>approximate inverse square root, or NaN if number is negative</returns>
+    /// <returns>approximate inverse square root, or NaN if number is negative (including negative zero)</returns>
     public static float InverseSquareRoot(this float number )
     {
-        if (number < 0.0f)
+        if (float.IsNegative(number))
             return float.NaN;
 
         const float threehalfs = 1.5F;
