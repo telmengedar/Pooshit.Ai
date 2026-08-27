@@ -1,150 +1,150 @@
 {
-  "RecordedAt": "2026-08-27T11:21:06.834942Z",
-  "Commit": "04417f7",
-  "Note": "DiVoid #9044: guard Compute/AMath.Power/InverseSquareRoot against non-finite and out-of-domain results, fix AverageToMax\u0027s max-init and empty-sequence aggregate behaviour",
+  "RecordedAt": "2026-08-27T12:23:19.6213335Z",
+  "Commit": "81a1b91",
+  "Note": "DiVoid #9044 \u002B QA #9771 CF1: guard Compute/AMath.Power/InverseSquareRoot against non-finite and out-of-domain results (including negative zero), fix AverageToMax\u0027s max-init and empty-sequence aggregate behaviour",
   "Results": [
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 1,
-      "FinalFitness": 0.04445048,
+      "FinalFitness": 0.1053977,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 2,
-      "FinalFitness": 0.16592006,
+      "FinalFitness": 0.2577799,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 3,
-      "FinalFitness": 0.15231794,
+      "FinalFitness": 0.1447388,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 4,
-      "FinalFitness": 0.46642503,
+      "FinalFitness": 0.14601922,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 5,
-      "FinalFitness": 0.21596543,
+      "FinalFitness": 0.501255,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 6,
-      "FinalFitness": 0.5377891,
+      "FinalFitness": 0.10708462,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 7,
-      "FinalFitness": 0.116216086,
+      "FinalFitness": 0.119468704,
       "Generations": 500
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 8,
-      "FinalFitness": 0.16150945,
+      "FinalFitness": 0.15540972,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 1,
-      "FinalFitness": 19.29724,
+      "FinalFitness": 19.262823,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 2,
-      "FinalFitness": 19,
+      "FinalFitness": 18.632288,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 3,
-      "FinalFitness": 17.70089,
+      "FinalFitness": 17.666668,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 4,
-      "FinalFitness": 18.285809,
+      "FinalFitness": 18.967026,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 5,
-      "FinalFitness": 19.716503,
+      "FinalFitness": 19.616634,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 6,
-      "FinalFitness": 15.9019575,
+      "FinalFitness": 18,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 7,
-      "FinalFitness": 19.330372,
+      "FinalFitness": 15.9942255,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 8,
-      "FinalFitness": 11,
+      "FinalFitness": 20.537252,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 1,
-      "FinalFitness": 11.457514,
+      "FinalFitness": 12.695391,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 2,
-      "FinalFitness": 10.454188,
+      "FinalFitness": 10.04639,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 3,
-      "FinalFitness": 13.15206,
+      "FinalFitness": 13.169501,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 4,
-      "FinalFitness": 12.059795,
+      "FinalFitness": 8.275848,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 5,
-      "FinalFitness": 8.421499,
+      "FinalFitness": 12.248761,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 6,
-      "FinalFitness": 12.759592,
+      "FinalFitness": 11.57544,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 7,
-      "FinalFitness": 11.783664,
+      "FinalFitness": 8.669257,
       "Generations": 500
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 8,
-      "FinalFitness": 13.194757,
+      "FinalFitness": 11.648418,
       "Generations": 500
     }
   ]
