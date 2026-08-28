@@ -22,6 +22,8 @@ A test double throws from every member the test does not deliberately exercise, 
 
 A double may deliberately ignore an input — `FakeNet` is a constant-zero oracle on purpose. Deliberately ignoring is allowed; silently ignoring is not. The difference is recording.
 
+**`SequenceRng`'s totality is one-sided, by design.** Over-consuming its script throws; under-consuming it does not, because scripting a superset is exactly what R5's fix-tolerance clause asks for. A mutant that *reduces* the draw count is therefore invisible to script exhaustion alone — when the property under test is how many times the production path drew, assert on the recorded `Bounds`, not on the script running out.
+
 Reviewer check: for each double member, is it throw, or is it record? A third answer is a finding.
 
 ## R4 — The enum-exhaustive rule
