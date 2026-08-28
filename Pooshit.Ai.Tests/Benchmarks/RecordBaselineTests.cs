@@ -16,7 +16,7 @@ public class RecordBaselineTests {
     /// why this recording was taken. Update this before re-recording, so the PR diff explains
     /// which change moved the baseline
     /// </summary>
-    const string Note = "DiVoid #9054 item 2: the fresh-blood band now spans Elitism slots instead of Elitism-1, which changes the number of RNG draws per generation, so all 24 pairs move (12 improved, 12 regressed). FeedForward.MultiplyMinus seed 7 drops from 1 NonFiniteGenerations to 0; every other pair stays at 0";
+    const string Note = "DiVoid #9047: each rival now mutates the parent instead of the previous rival's result, so with Rivalism = 5 the tournament compares five independent samples at the configured mutation depth instead of a chain whose depth grew with the rival index. All 24 pairs move; 22 improve, 2 regress (BinOp.MultiplyMinus seed 4, FeedForward.MultiplyMinus seed 6). All 24 pairs stay at 0 NonFiniteGenerations";
 
     /// <summary>
     /// the only thing that actually authorises overwriting the committed baseline. [Explicit] alone
