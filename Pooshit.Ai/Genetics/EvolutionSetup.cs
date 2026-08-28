@@ -4,7 +4,7 @@ using Pooshit.Ai.Genetics.Mutation;
 namespace Pooshit.Ai.Genetics;
 
 /// <summary>
-/// configuration values used for evolution
+/// configuration values used for evolution, of which each reproduction strategy reads only the subset which applies to it
 /// </summary>
 /// <typeparam name="T">type of chromosome to evolve</typeparam>
 public class EvolutionSetup<T> 
@@ -35,7 +35,7 @@ where T : IChromosome<T>
     public int Elitism { get; set; } = 10;
 
     /// <summary>
-    /// number of rivals which compete for next generation
+    /// number of rivals which compete for next generation, read only by the mutate reproduction strategy and without effect on cross based chromosome types
     /// </summary>
     public int Rivalism { get; set; } = 1;
     
