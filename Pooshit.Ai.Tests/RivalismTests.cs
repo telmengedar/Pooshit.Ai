@@ -61,7 +61,7 @@ public class RivalismTests {
 
 
     [Test, Parallelizable]
-    [Description("Contract: every rival mutation chain starts from the parent chromosome itself, never from a previous rival's result. DiVoid #9047.")]
+    [Description("Contract: every rival mutation chain starts from the parent chromosome itself, never from a previous rival's result. DiVoid #9047; the per-rival mutation-depth half of that independence is tracked by DiVoid #9931.")]
     public void Evolve_RivalismGreaterThanOne_EachRivalMutatesTheParentNotThePreviousRival() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
