@@ -13,9 +13,8 @@ public class RivalismTests {
 
 
     [Test, Parallelizable]
-    [Ignore("DiVoid #9047 - rivalism mutates cumulatively across rival iterations (each rival mutates the previous rival's result, not fresh from the parent), so independent sampling is not yet the case")]
-    [Description("Intended contract: with Rivalism = r, each of the r rivals is an independent mutation of the SAME parent (not a chain), and the best-scoring rival is kept. DiVoid #9047.")]
-    public void Evolve_RivalismGreaterThanOne_IntendedToSampleRivalsIndependentlyAndKeepTheBest() {
+    [Description("Contract: with Rivalism = r, each of the r rivals is an independent mutation of the SAME parent, and the best-scoring rival is kept. DiVoid #9047.")]
+    public void Evolve_RivalismGreaterThanOne_SamplesRivalsIndependentlyAndKeepsTheBest() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
         PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 1);
@@ -62,8 +61,8 @@ public class RivalismTests {
 
 
     [Test, Parallelizable]
-    [Description("Documents CURRENT (defective) behaviour, not the contract: rivalism mutates cumulatively, so the lineage is e0 -> e0'1 (rival 1, worse) -> e0'1'2 (rival 2, better) rather than two independent children of e0. DiVoid #9047. This test is expected to go red the day #9047 is fixed - see the sibling intended-contract pin above.")]
-    public void Evolve_RivalismGreaterThanOne_CandidatesCurrentlyChainCumulatively() {
+    [Description("Contract: every rival mutation chain starts from the parent chromosome itself, never from a previous rival's result. DiVoid #9047; the per-rival mutation-depth half of that independence is tracked by DiVoid #9931.")]
+    public void Evolve_RivalismGreaterThanOne_EachRivalMutatesTheParentNotThePreviousRival() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
         PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 1);
@@ -77,20 +76,20 @@ public class RivalismTests {
             ["e1"] = 1.0f,
             ["e2"] = 2.0f,
             ["e0'1"] = 20.0f,
-            ["e0'1'2"] = 5.0f,
             ["e0'2"] = 5.0f,
             ["e0'3"] = 20.0f,
+            ["e0'4"] = 5.0f,
+            ["e0'1'2"] = 5.0f,
             ["e0'3'4"] = 5.0f,
             ["fresh'1"] = 30.0f,
-            ["fresh'1'2"] = 31.0f,
             ["fresh'2"] = 31.0f,
             ["fresh'3"] = 30.0f,
-            ["fresh'3'4"] = 31.0f,
-            ["fresh'4"] = 31.0f
+            ["fresh'4"] = 31.0f,
+            ["fresh'1'2"] = 31.0f,
+            ["fresh'3'4"] = 31.0f
         };
-        StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
-            Evaluator = evaluator,
+            Evaluator = new StubFitnessEvaluator<MutatingFakeChromosome>(fitnessByLabel),
             Rng = new SequenceRng(0, 0, 0, 0) { FloatValues = [0.0f, 0.0f] },
             Threads = 1,
             Runs = 1,
@@ -101,13 +100,9 @@ public class RivalismTests {
 
         population.Train(setup);
 
-        int distinctCandidatesEvaluated = evaluator.Calls
-                                                    .Select(call => call.Label)
-                                                    .Where(label => label.StartsWith("e0'"))
-                                                    .Distinct()
-                                                    .Count();
-        Assert.That(distinctCandidatesEvaluated, Is.EqualTo(setup.Rivalism));
-        Assert.That(population.Entries.Any(entry => entry.Chromosome.Label == "e0'1'2"), Is.True, "the better-scoring rival must be kept");
-        Assert.That(population.Entries.Any(entry => entry.Chromosome.Label == "e0'1"), Is.False, "the worse-scoring rival must be discarded");
+        List<string> parentLineageReceivers = log.Where(call => call.ReceiverLabel.StartsWith("e0"))
+                                                 .Select(call => call.ReceiverLabel)
+                                                 .ToList();
+        Assert.That(parentLineageReceivers, Is.EqualTo(new[] { "e0", "e0" }));
     }
 }
