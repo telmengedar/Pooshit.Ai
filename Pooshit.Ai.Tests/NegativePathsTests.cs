@@ -17,9 +17,10 @@ public class NegativePathsTests {
 
 
     [Test, Parallelizable]
-    public void Population_Constructor_NegativeSize_ThrowsOverflowBeforeGuardCanRun() {
+    [Description("A negative size is rejected by the documented size guard, not by an OverflowException from allocating the buffer before the guard runs (DiVoid #9054 item 3).")]
+    public void Population_Constructor_NegativeSize_ThrowsArgumentException() {
         Assert.That(() => new Population<DynamicBOConfiguration>(-1, rng => new(["x"], ["y"], rng)),
-                    Throws.InstanceOf<OverflowException>());
+                    Throws.ArgumentException);
     }
 
 

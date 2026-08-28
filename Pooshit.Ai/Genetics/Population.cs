@@ -13,6 +13,9 @@ where T : class, IChromosome<T> {
     readonly Action<EvolutionSetup<T>, IRng, GenePool<T>, int> mutator;
 
     Population(int size) {
+        if (size <= 0)
+            throw new ArgumentException("Size of population has to be a positive integer");
+
         trainingBuffer = new PopulationEntry<T>[size];
         if (typeof(ICrossChromosome<T>).IsAssignableFrom(typeof(T))) {
             mutator = Cross;
@@ -32,8 +35,6 @@ where T : class, IChromosome<T> {
     public Population(int size, Func<IRng, T> generator, Rng rng=null)
     : this(size)
     {
-        if (size <= 0) 
-            throw new ArgumentException("Size of population has to be a positive integer");
         Generator = generator;
         rng ??= new();
         
@@ -60,8 +61,6 @@ where T : class, IChromosome<T> {
     public Population(PopulationEntry<T>[] population, Func<IRng, T> generator)
     : this(population.Length)
     {
-        if (population.Length <= 0)
-            throw new ArgumentException("Invalid population size");
         Generator = generator;
         Entries = population;
     }
@@ -83,6 +82,9 @@ where T : class, IChromosome<T> {
 
         int offset = 0;
         foreach (PopulationEntry<T> entry in Entries) {
+            if (offset >= setup.Elitism)
+                break;
+
             if (!IsValidFitness(entry.Fitness))
                 continue;
 
@@ -91,9 +93,6 @@ where T : class, IChromosome<T> {
                 continue;
 
             trainingBuffer[offset++] = entry;
-
-            if (offset >= setup.Elitism)
-                break;
         }
 
         float modifiedMax = Entries.Where(e => float.IsFinite(e.Fitness))

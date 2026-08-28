@@ -164,4 +164,45 @@ public class EvolveMechanicsTests {
         Assert.That(population.Entries[1].Chromosome.Label, Is.EqualTo("e0"), "5.0 is the second-lowest non-negative fitness");
         Assert.That(population.Entries[2].Chromosome.Label, Is.EqualTo("e0'1"), "a negative fitness must sort last regardless of magnitude");
     }
+
+
+    [Test, Parallelizable]
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [Description("Elitism is the exact number of entries carried into the next generation by reference - including zero, where no original may survive (DiVoid #9054 item 3).")]
+    public void Evolve_ElitismVaried_ExactlyThatManyOriginalsSurviveByReferenceIdentity(int elitism) {
+        List<MutateCall> log = [];
+        PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
+        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 1);
+        PopulationEntry<MutatingFakeChromosome> e2 = Entry("e2", log, 2.0f, 2);
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2];
+
+        int freshCounter = 0;
+        Population<MutatingFakeChromosome> population = new(entries, r => new($"fresh{freshCounter++}", log, fitnessModifier: 1.0f));
+
+        Dictionary<string, float> fitnessByLabel = new() {
+            ["e0"] = 0.0f,
+            ["e1"] = 1.0f,
+            ["e2"] = 2.0f,
+            ["e0'1"] = 3.0f,
+            ["e0'2"] = 4.0f,
+            ["e0'3"] = 5.0f,
+            ["fresh0'1"] = 6.0f,
+            ["fresh0'2"] = 7.0f
+        };
+        StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
+        EvolutionSetup<MutatingFakeChromosome> setup = new() {
+            Evaluator = evaluator,
+            Rng = new SequenceRng(0, 0, 0) { FloatValues = [0.0f, 0.0f, 0.0f] },
+            Threads = 1,
+            Runs = 1,
+            Elitism = elitism,
+            TargetFitness = -1.0f
+        };
+
+        population.Train(setup);
+
+        Assert.That(population.Entries.Where(entry => entries.Contains(entry)), Is.EquivalentTo(entries.Take(elitism)));
+    }
 }
