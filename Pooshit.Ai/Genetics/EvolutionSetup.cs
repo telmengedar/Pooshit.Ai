@@ -35,7 +35,7 @@ where T : IChromosome<T>
     public int Elitism { get; set; } = 10;
 
     /// <summary>
-    /// number of rivals which compete for next generation, read only by the mutate reproduction strategy and without effect on cross based chromosome types
+    /// number of rivals which compete for next generation, read only where the population binds the mutate reproduction strategy
     /// </summary>
     public int Rivalism { get; set; } = 1;
     
