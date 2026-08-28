@@ -13,12 +13,13 @@ public class ReproductionStrategyBindingTests {
         Dictionary<string, float> fitnessByLabel = new() {
             ["gen0"] = 1.0f,
             ["gen1"] = 2.0f,
-            ["gen0'1"] = 3.0f
+            ["gen0'1"] = 3.0f,
+            ["gen0'2"] = 4.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
             Evaluator = evaluator,
-            Rng = new SequenceRng(0) { FloatValues = [0.0f] },
+            Rng = new SequenceRng(0, 0) { FloatValues = [0.0f, 0.0f] },
             Threads = 1,
             Runs = 1,
             Elitism = 0,
@@ -44,7 +45,7 @@ public class ReproductionStrategyBindingTests {
         StubFitnessEvaluator<CrossingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<CrossingFakeChromosome> setup = new() {
             Evaluator = evaluator,
-            Rng = new SequenceRng { FloatValues = [0.0f, 0.0f] },
+            Rng = new SequenceRng { FloatValues = [0.0f, 0.0f, 0.0f, 0.0f] },
             Threads = 1,
             Runs = 1,
             Elitism = 0,
@@ -71,7 +72,7 @@ public class ReproductionStrategyBindingTests {
         StubFitnessEvaluator<AmbidextrousFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<AmbidextrousFakeChromosome> setup = new() {
             Evaluator = evaluator,
-            Rng = new SequenceRng { FloatValues = [0.0f, 0.0f] },
+            Rng = new SequenceRng { FloatValues = [0.0f, 0.0f, 0.0f, 0.0f] },
             Threads = 1,
             Runs = 1,
             Elitism = 0,
