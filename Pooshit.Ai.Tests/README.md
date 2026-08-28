@@ -1,6 +1,6 @@
 # Test rules
 
-Seven rules against assertions that cannot fail. Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
+Seven rules against assertions that do not constrain what they appear to — six against assertions that cannot fail (R1–R6), one against assertions that fail correctly while their subject is never reached (R7). Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
 
 ## R1 — The sibling-variation rule
 
@@ -23,6 +23,8 @@ A test double throws from every member the test does not deliberately exercise, 
 A double may deliberately ignore an input — `FakeNet` is a constant-zero oracle on purpose. Deliberately ignoring is allowed; silently ignoring is not. The difference is recording.
 
 **`SequenceRng`'s totality is one-sided, by design.** Over-consuming its script throws; under-consuming it does not, because scripting a superset is exactly what R5's fix-tolerance clause asks for. A mutant that *reduces* the draw count is therefore invisible to script exhaustion alone — when the property under test is how many times the production path drew, assert on the recorded `Bounds`, not on the script running out.
+
+**R3 and R7 are two halves of one instrument, not competitors.** R3 obliges the double to **record**; R7 obliges you to **count what it recorded**. R3's `Bounds` closes the gap where a mutant reduces the draw count; R7 closes the gap where the draws never happened at all.
 
 Reviewer check: for each double member, is it throw, or is it record? A third answer is a finding.
 
@@ -64,6 +66,6 @@ R1–R6 all ask *can this assertion fail?* R7 is orthogonal: the assertion can f
 
 **#9998**'s gene-pool eviction trap is the same category arriving by a different route — there the fixture stops entering its own branch when an ancestry is evicted on its fifth draw. Both are *the assertion no longer reaches its subject*.
 
-Fix direction: observe where production consumes the value — the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, the evaluator's call log — never a setup field the production code wrote.
+Fix direction: observe where production consumes the value — the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, the evaluator's call log — never a setup field the production code wrote. **The instrument is R3's**: R3 obliges the double to record, R7 obliges you to count what it recorded.
 
 Reviewer check: ask the fixture how many times the consumer ran. A test asserting a per-generation quantity over N generations should show N observations, and asserting that count is the whole check.

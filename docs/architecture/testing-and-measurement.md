@@ -364,9 +364,9 @@ It is also the lane's **only** end-to-end exercise of the real net families. Tha
 
 ## 10. Cross-Cutting Concerns
 
-### 10.1 The seven rules against assertions that cannot fail
+### 10.1 The seven rules against assertions that do not constrain what they appear to
 
-This is the most valuable part of this document, measured by what has actually cost time on this repo. Three QA rounds on PR #1 were spent on tests that *looked* like guards and could not fail: a `Sum` assertion satisfiable by several different multisets, and a fake that silently discarded the parameter it was meant to constrain. The problem is not test count. It is that **an assertion's inability to fail is invisible at review time.** Reviewer vigilance has already been tried; it caught these three times at a cost of three rounds.
+This is the most valuable part of this document, measured by what has actually cost time on this repo. Three QA rounds on PR #1 were spent on tests that *looked* like guards and could not fail: a `Sum` assertion satisfiable by several different multisets, and a fake that silently discarded the parameter it was meant to constrain. The problem is not test count. It is that **an assertion that does not constrain what it appears to is invisible at review time.** That covers two distinct failures, and the distinction matters when reading the rules below: an assertion may be unable to fail at all (R1–R6), or it may fail perfectly well while its subject was never reached (R7). Reviewer vigilance has already been tried; it caught the first kind three times at a cost of three rounds, and did not catch the second at all across four rounds.
 
 Each rule below converts an invisible property into a visible artefact — something a reviewer can see the *absence* of.
 
@@ -398,6 +398,8 @@ Reviewer check: *name the pre-image the assertion pins down.* If the answer is "
 `SequenceRng` already embodies this and is the template: unscripted methods throw `NotSupportedException`, `NextInt(max)` records the bound it was asked for, and a scripted value outside that bound throws rather than being quietly clamped. **Its totality is one-sided, by design:** over-consumption throws, under-consumption does not, because a fixture that scripts a superset is the pattern R5's fix-tolerance clause asks for. The recording half is what closes the gap — a mutant that *reduces* the draw count is invisible unless a test asserts on `Bounds`, which is the instrument to reach for whenever the property under test is how many times the production path drew (#9936). `FakeNet` is the counter-example: `this[string name] => 0.0f`, `SetInputValues` discards, `Update` discards. That shape is exactly how a test stops measuring what it claims to.
 
 The rule has a subtlety worth stating, because a naive reading forbids a legitimate pattern: a double may *deliberately* ignore an input — `FakeNet` is a constant-zero oracle on purpose, so the evaluator's distance equals the expected value. **Deliberately ignoring is allowed; silently ignoring is not.** The difference is recording. If the double records what it was handed, a test can assert on it and a reviewer can see the value was observed rather than dropped.
+
+**R3 and R7 are two halves of one instrument rather than competitors.** R3 obliges the double to **record**; **R7** obliges you to **count what it recorded**. R3's `Bounds` closes the gap where a mutant *reduces* the draw count; R7 closes the gap where the draws never happened at all. Recording without counting leaves the second gap open, which is exactly how the fixture behind R7 stayed green.
 
 Reviewer check: *for each double member, is it throw, or is it record?* A third answer is a finding.
 
@@ -478,7 +480,7 @@ The instance that produced the rule: `AdaptiveMutationEscalationTests`' reset fi
 
 This is the second instance of the category, not the first: **#9998**'s gene-pool eviction trap is the same failure arriving through a different door — there a resource limit fires and the fixture stops entering its own branch, here the subject was never entered at all and a shared mutable field hid it. Both are *the assertion no longer reaches its subject*; neither is *the assertion cannot fail*.
 
-The fix direction is always the same: **find where production consumes the value and observe it there.** In this project that means the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, or the evaluator's call log — never a setup field the production code itself wrote. A test whose observable disappears under a refactor is an opportunity rather than a cost; being forced off the field and onto the consumer is what surfaced this one.
+The fix direction is always the same: **find where production consumes the value and observe it there.** In this project that means the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, or the evaluator's call log — never a setup field the production code itself wrote. **The instrument is R3's**: R3 obliges the double to record, R7 obliges you to count what it recorded. A test whose observable disappears under a refactor is an opportunity rather than a cost; being forced off the field and onto the consumer is what surfaced this one.
 
 Reviewer check: *ask the fixture how many times the consumer ran.* A test asserting a per-generation quantity over N generations should show N observations at the consumer, and the cheapest way to make that visible is to assert it — `Assert.That(rng.Bounds, Has.Count.EqualTo(140))` is the entire check, and it fails loudly the day a configuration change stops the subject running.
 
