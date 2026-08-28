@@ -346,7 +346,7 @@ This section is the work inventory. It specifies *what must be asserted*, not ho
 | Gene-pool ancestry eviction | A lineage drawn 5 times is removed from the pool; subsequent draws cannot return it. Written to the intended contract; if the intended retirement count is disputed, R5 applies. |
 | Fresh-blood band (`Mutate` strategy) | With a `Generator` returning a marked chromosome, the number of slots carrying the marker equals `Elitism`. Held since #9054 item 2 landed; the band is `i >= trainingBuffer.Length - setup.Elitism` and the R5 pin runs un-`[Ignore]`d. |
 | Rivalism | With `Rivalism = r`, exactly `r` candidates are evaluated per slot (assert via the stub evaluator's call log) and the best is kept. Each of the `r` rivals mutates the parent itself, and draws its **own** mutation depth from `Mutation.Runs` — asserted as `r` recorded draws of that bound per slot, and as the per-rival chain shape in the reproduction log (#9931, #9936). |
-| Adaptive mutation escalation | When the leader's structure hash is unchanged across generations, the mutation depth bound the mutate strategy requests escalates on the documented schedule; when it changes, the bound resets to 1 and the schedule re-anchors to that generation. Observable on the bounds a recording `IRng` captures from `NextInt`, which is the value's consumer — `Train` holds the escalated depth in local training state and leaves the caller's setup untouched (#9054 item 1). |
+| Adaptive mutation escalation | When the leader's structure hash is unchanged across generations, the mutation depth bound the mutate strategy requests escalates on the documented schedule and saturates at the `Math.Min` ceiling of 50; when it changes, the bound resets to 1 and the schedule re-anchors to that generation. Observable on the bounds a recording `IRng` captures from `NextInt`, which is the value's consumer — `Train` holds the escalated depth in local training state and leaves the caller's setup untouched (#9054 item 1). |
 | Early exit on `TargetFitness` | With a stub returning a fitness at or below target, `Train` stops after the generation that reached it. Assert via the `AfterRun` invocation count. |
 | The seam's guard | `setup.Rng` set together with `Threads > 1` throws; either alone does not. |
 
@@ -364,7 +364,7 @@ It is also the lane's **only** end-to-end exercise of the real net families. Tha
 
 ## 10. Cross-Cutting Concerns
 
-### 10.1 The six rules against assertions that cannot fail
+### 10.1 The seven rules against assertions that cannot fail
 
 This is the most valuable part of this document, measured by what has actually cost time on this repo. Three QA rounds on PR #1 were spent on tests that *looked* like guards and could not fail: a `Sum` assertion satisfiable by several different multisets, and a fake that silently discarded the parameter it was meant to constrain. The problem is not test count. It is that **an assertion's inability to fail is invisible at review time.** Reviewer vigilance has already been tried; it caught these three times at a cost of three rounds.
 
@@ -469,7 +469,22 @@ Reviewer check: *was this expected value derived, or captured?* For a `float`-pr
 
 ---
 
-**These six rules go in the test project as a short `README.md`.** Not in agent memory, not in a DiVoid node only — in the directory where someone about to write a test will trip over them.
+**R7 — The reached-subject rule** (added 2026-08-28, from #10068).
+*An assertion being reachable is not the same as its subject being reached. Where production parks a value on a shared object and reads it back elsewhere, assert at the read, and pin the number of observations the consumer made.*
+
+R1 through R6 all ask the same question in different costumes: **can this assertion fail?** R7 is orthogonal by construction, and that is the whole reason it needs its own number — the assertion *can* fail, precisely, on a quantity that had **no effect whatsoever** in the fixture's configuration. No amount of sharpening R1 reaches it, because the sibling exists, varies the input, and moves the output.
+
+The instance that produced the rule: `AdaptiveMutationEscalationTests`' reset fixture pinned `Train`'s stagnation ladder by reading `setup.Mutation.Runs` back off the setup across 140 generations, with four precise index/value assertions including the re-anchoring behaviour. It ran a population of **2** at **`Elitism = 2`** — every entry is an elite, `offset` reaches 2 from generation 1, and the reproduction loop executes zero times. The consumer (`Mutate`'s `1 + rng.NextInt(...)`) ran **once in 140 generations**. The test was green because the ladder writes the field whether or not anything reads it. It had passed four QA rounds and violated none of R1–R6.
+
+This is the second instance of the category, not the first: **#9998**'s gene-pool eviction trap is the same failure arriving through a different door — there a resource limit fires and the fixture stops entering its own branch, here the subject was never entered at all and a shared mutable field hid it. Both are *the assertion no longer reaches its subject*; neither is *the assertion cannot fail*.
+
+The fix direction is always the same: **find where production consumes the value and observe it there.** In this project that means the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, or the evaluator's call log — never a setup field the production code itself wrote. A test whose observable disappears under a refactor is an opportunity rather than a cost; being forced off the field and onto the consumer is what surfaced this one.
+
+Reviewer check: *ask the fixture how many times the consumer ran.* A test asserting a per-generation quantity over N generations should show N observations at the consumer, and the cheapest way to make that visible is to assert it — `Assert.That(rng.Bounds, Has.Count.EqualTo(140))` is the entire check, and it fails loudly the day a configuration change stops the subject running.
+
+---
+
+**These seven rules go in the test project as a short `README.md`.** Not in agent memory, not in a DiVoid node only — in the directory where someone about to write a test will trip over them.
 
 ### 10.2 Determinism hazard inventory
 
@@ -612,7 +627,7 @@ Training must not end worse than it started. At `SampleCount = 0` — the defaul
 | R-3 | The behavioural serialization round-trip fails because the round trip is lossy on input-neuron `Activation`/`Aggregate` (which the existing tests blank before comparing). | Medium | Low | File as a defect; `[Ignore]` per R5; keep the structural test meanwhile. |
 | R-4 | Benchmarks are too slow and stop being run. | Low | High | 3 problems × 8 seeds, `Runs` capped per problem, parallel across pairs. If it exceeds a few minutes, reduce `Runs` before reducing seeds — seed count is what makes the distribution meaningful. |
 | R-5 | The baseline drifts stale because nobody re-records after a behaviour-changing merge. | Medium | Medium | The report header prints the baseline's `recordedAt`, `commit` and `note` alongside the current numbers, so staleness is visible every time the lane is run. |
-| R-6 | The six rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
+| R-6 | The rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
 | R-7 | The `Threads > 1` guard breaks an existing caller. | Very low | Low | The guard fires only when `setup.Rng` is set, and that property does not exist yet. Every current caller passes `null` by omission. |
 | R-8 | Mechanics tests over-fit to private implementation detail and become churn on every refactor. | Medium | Medium | Assert only on observables: `Entries` ordering and reference identity, and double call logs. Never reach into internals via reflection or `InternalsVisibleTo`. |
 

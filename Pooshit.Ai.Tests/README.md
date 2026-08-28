@@ -1,6 +1,6 @@
 # Test rules
 
-Six rules against assertions that cannot fail. Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
+Seven rules against assertions that cannot fail. Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
 
 ## R1 — The sibling-variation rule
 
@@ -55,3 +55,15 @@ An expected value obtained by running the code and pasting the output is still d
 For a `double` literal pinning `float` arithmetic, the check is mechanical: a `float` widened to `double` leaves 29 low zero bits; a symbolically-derived rational does not. Where the mantissa technique does not apply, ask the implementer how the number was obtained and require the derivation in the return.
 
 Reviewer check: was this expected value derived, or captured? For a `float`-precision literal, check the trailing mantissa bits.
+
+## R7 — The reached-subject rule
+
+An assertion being reachable is not the same as its subject being reached. Where production parks a value on a shared object and reads it back elsewhere, assert at the read, and pin the number of observations the consumer made.
+
+R1–R6 all ask *can this assertion fail?* R7 is orthogonal: the assertion can fail, precisely, on a quantity that had no effect in the fixture's configuration. The instance (DiVoid #10068): a fixture pinned `Train`'s mutation-depth ladder by reading `setup.Mutation.Runs` back off the setup across 140 generations — but ran a population of 2 at `Elitism = 2`, so every entry was an elite, nothing reproduced, and the consumer ran **once in 140 generations**. Green, precise, and measuring nothing. It violated none of R1–R6.
+
+**#9998**'s gene-pool eviction trap is the same category arriving by a different route — there the fixture stops entering its own branch when an ancestry is evicted on its fifth draw. Both are *the assertion no longer reaches its subject*.
+
+Fix direction: observe where production consumes the value — the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, the evaluator's call log — never a setup field the production code wrote.
+
+Reviewer check: ask the fixture how many times the consumer ran. A test asserting a per-generation quantity over N generations should show N observations, and asserting that count is the whole check.

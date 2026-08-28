@@ -44,6 +44,35 @@ public class AdaptiveMutationEscalationTests {
 
 
     [Test, Parallelizable]
+    [Description("Escalation saturates at the schedule's Math.Min ceiling: the rung that would be 51 is capped to 50, while the rung below it still carries the uncapped 46.")]
+    public void Train_StagnationPastTheTenthEscalationRung_MutationDepthBoundSaturatesAtFifty() {
+        List<MutateCall> log = [];
+        const int constantStructureHash = 42;
+        PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, constantStructureHash);
+        PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, constantStructureHash);
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1];
+
+        Population<MutatingFakeChromosome> population = new(entries, r => new("fresh", log, constantStructureHash, 1.0f));
+
+        RecordingRng rng = new(new Rng(20260824));
+        EvolutionSetup<MutatingFakeChromosome> setup = new() {
+            Evaluator = new PhaseAwareFitnessEvaluator<MutatingFakeChromosome>((_, _) => 1.0f),
+            Rng = rng,
+            Threads = 1,
+            Runs = 642,
+            Elitism = 1,
+            TargetFitness = -1.0f
+        };
+
+        population.Train(setup);
+
+        Assert.That(rng.Bounds, Has.Count.EqualTo(642), "population size 2 at Elitism 1 reproduces exactly one slot per generation, so each generation contributes exactly one mutation depth draw");
+        Assert.That(rng.Bounds[640], Is.EqualTo(46), "generation 640 runs on the depth set after generation 639: 1 + (639 >> 6) * 5 = 46, still below the ceiling");
+        Assert.That(rng.Bounds[641], Is.EqualTo(50), "generation 641 runs on the depth set after generation 640, where 1 + (640 >> 6) * 5 = 51 is capped to 50");
+    }
+
+
+    [Test, Parallelizable]
     [Description("Escalates on StructureHash 1 for 70 generations (reaching a depth bound of 6), then flips scoring via AfterRun so a fresh-blood entry (StructureHash 99) becomes the new leader at generation 70, forcing a reset to 1 and proving escalation resumes counting from the new bestRun (bound 6 at generation 135, not 65) rather than a stale one.")]
     public void Train_LeaderStructureHashChangesAfterEscalating_MutationDepthBoundResetsThenReescalatesFromTheNewBestRun() {
         List<MutateCall> log = [];
