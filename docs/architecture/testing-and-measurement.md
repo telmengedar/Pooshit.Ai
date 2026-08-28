@@ -159,7 +159,7 @@ The project already has `FakeChromosome`, `FakeNet`, `SequenceRng`. **Extend the
 
 | Component | Responsibility | Does NOT own |
 |---|---|---|
-| `BenchmarkProblem` | One named, self-contained training problem: chromosome family, net type, sample set, setup template, `TargetFitness`. **Constructs a fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per run** (see hazards H7/H8 in §10.2 — `Train` mutates its setup, and the evaluator caches indexed samples and pools nets). | Seeds. Baselines. Reporting. |
+| `BenchmarkProblem` | One named, self-contained training problem: chromosome family, net type, sample set, setup template, `TargetFitness`. **Constructs a fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per run** (see hazard H7 in §10.2 — the evaluator caches indexed samples and pools nets). | Seeds. Baselines. Reporting. |
 | `BenchmarkHarness` | Execute every (problem, seed) pair, each at `Threads = 1`, parallelising **across pairs**. Produce one run result per pair. | Judging quality. Asserting anything. |
 | `BenchmarkComparison` (the `[Explicit]` test) | Load the committed baseline, run the harness, assert the two **invariants** (§11.3), print the comparison table. | Asserting that quality did not regress. |
 | `RecordBaseline` (an `[Explicit]` test) | Run the harness and overwrite `Benchmarks/baseline.json` in the source tree. | Running as part of any other lane. |
@@ -307,7 +307,7 @@ Three edits. Nothing else in `Pooshit.Ai` is touched.
 | Aspect | Contract |
 |---|---|
 | Input | The problem set (code) + the seed set (code) + the committed baseline (file). |
-| Isolation | A fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per (problem, seed). Non-negotiable — see hazards H7 and H8 in §10.2. |
+| Isolation | A fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per (problem, seed). Non-negotiable for the evaluator and the population — see hazard H7 in §10.2. |
 | Threading | Every individual run is `Threads = 1`. Parallelism is across (problem, seed) pairs only. |
 | Output | An in-memory result set; a printed comparison table; and — from `RecordBaseline` only — the rewritten baseline file. |
 | Assertions | I1 and I2 (§11.3) only. |
@@ -346,7 +346,7 @@ This section is the work inventory. It specifies *what must be asserted*, not ho
 | Gene-pool ancestry eviction | A lineage drawn 5 times is removed from the pool; subsequent draws cannot return it. Written to the intended contract; if the intended retirement count is disputed, R5 applies. |
 | Fresh-blood band (`Mutate` strategy) | With a `Generator` returning a marked chromosome, the number of slots carrying the marker equals `Elitism`. Held since #9054 item 2 landed; the band is `i >= trainingBuffer.Length - setup.Elitism` and the R5 pin runs un-`[Ignore]`d. |
 | Rivalism | With `Rivalism = r`, exactly `r` candidates are evaluated per slot (assert via the stub evaluator's call log) and the best is kept. Each of the `r` rivals mutates the parent itself, and draws its **own** mutation depth from `Mutation.Runs` — asserted as `r` recorded draws of that bound per slot, and as the per-rival chain shape in the reproduction log (#9931, #9936). |
-| Adaptive mutation escalation | When the leader's structure hash is unchanged across generations, `setup.Mutation.Runs` escalates on the documented schedule; when it changes, it resets to 1. Observable directly on the setup object — which is also the test that documents `Train`'s in/out mutation of its own setup. |
+| Adaptive mutation escalation | When the leader's structure hash is unchanged across generations, the mutation depth bound the mutate strategy requests escalates on the documented schedule; when it changes, the bound resets to 1 and the schedule re-anchors to that generation. Observable on the bounds a recording `IRng` captures from `NextInt`, which is the value's consumer — `Train` holds the escalated depth in local training state and leaves the caller's setup untouched (#9054 item 1). |
 | Early exit on `TargetFitness` | With a stub returning a fitness at or below target, `Train` stops after the generation that reached it. Assert via the `AfterRun` invocation count. |
 | The seam's guard | `setup.Rng` set together with `Threads > 1` throws; either alone does not. |
 
@@ -484,11 +484,11 @@ Every source of non-determinism in a training run, and its disposition at `Threa
 | H5 | `GenePool.Next` mutates shared ancestry state (`originCount`, `Remove`) under a lock | order-dependent, but the order is deterministic at 1 thread | none. **This is the single reason parallel determinism is out of reach** — see §11.2 |
 | H6 | `Guid.NewGuid()` for `AncestryId` | values vary run to run, but are used only as dictionary keys and equality filters, never for ordering or selection (A4) | none; documented. If the determinism test fails and everything else is accounted for, this is the suspect |
 | H7 | `SamplesEvaluator` caches `indexedSamples` from the first chromosome and pools nets in a `ConcurrentStack` | pop/push order deterministic at 1 thread, but state **carries across runs** | harness contract: **fresh evaluator per run** |
-| H8 | `Train` writes `setup.Mutation.Runs` (in/out parameter, #9029) | a second `Train` on the same setup object does not start from the configured value | harness contract: **fresh `EvolutionSetup` per run** |
+| H8 | `Train` wrote `setup.Mutation.Runs` on both strategy paths, making the setup an in/out parameter (#9029) — **closed by #9054 item 1**: the escalated depth is local training state, threaded from `Train` through `Evolve` into the mutate strategy | none remaining. Before the fix a second `Train` sharing a setup did not start from the configured value, and the write also landed on the cross path, which never reads it | none needed. `BenchmarkProblem` still builds a fresh `EvolutionSetup` per run, which is now hygiene rather than a correctness requirement |
 | H9 | `float` non-associativity and libm differences across machines/runtimes (A2) | identical within one process | **never compare against a committed literal fitness** — §11.3 |
 | H10 | `Rng`'s clock fallback when the seed is `0` (#9038 item 4) | a caller writing `new Rng(0)` gets a clock seed, not seed zero | not fixed here. The harness and tests use non-zero seeds. Documented in P1's XML doc as a caveat; it disappears when #9038 lands |
 
-H7 and H8 are the two that would silently corrupt a benchmark rather than fail loudly. They are stated as harness contracts precisely because there is no compiler support for them.
+H7 is the one that would silently corrupt a benchmark rather than fail loudly. It is stated as a harness contract precisely because there is no compiler support for it. H8 was the other and is closed in production rather than by contract.
 
 ### 10.3 Error handling, observability, performance
 
@@ -766,7 +766,7 @@ PR 1's hardened `SequenceRng` (`NextFloat`/`NextDouble`/`NextLong`/`NextInt()`) 
 
 ### PR 4 — The measurement lane *(test project + one data file)*
 
-16. Build the three `BenchmarkProblem`s from §15 Q1, each constructing a **fresh** `EvolutionSetup`, `SamplesEvaluator` and `Population` per run (§10.2 H7, H8 — not optional, and there is no compiler support for it).
+16. Build the three `BenchmarkProblem`s from §15 Q1, each constructing a **fresh** `EvolutionSetup`, `SamplesEvaluator` and `Population` per run (§10.2 H7 — not optional, and there is no compiler support for it).
 17. Build `BenchmarkHarness`: every pair at `Threads = 1`, parallel across pairs, producing `(ProblemName, Seed) → (FinalFitness, Generations)`.
 18. Build `BenchmarkComparison` `[Explicit, Category("Benchmark")]`: assert I1 and I2; print the per-seed paired table, the per-problem distribution summary, the baseline's `recordedAt`/`commit`/`note` header, and the pairing caveat from §11.3 whenever an RNG-implementation change makes pairing void.
 19. Build `RecordBaseline` `[Explicit]`: locate the source file by walking up from the test binary's directory until the `.csproj` is found, and overwrite `Benchmarks/baseline.json`. The walk-up is a handful of lines and removes the manual copy step that would otherwise kill adoption of the one workflow this design most needs to be frictionless.
