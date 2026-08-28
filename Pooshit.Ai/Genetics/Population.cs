@@ -192,17 +192,17 @@ where T : class, IChromosome<T> {
         float mutationScale = (float)i / Entries.Length;
         mutationRange *= mutationScale;
 
-        T chromosome = current.Chromosome;
         if (setup.Rivalism > 1) {
             List<PopulationEntry<T>> candidates = [];
             
             for (int l = 0; l < setup.Rivalism; ++l) {
+                T rival = current.Chromosome;
                 int runs = 1 + rng.NextInt(setup.Mutation.Runs);
                 for (int k = 0; k < runs; ++k)
-                    chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
+                    rival = ((IMutatingChromosome<T>)rival).Mutate(rng, mutationRange);
                 candidates.Add(new() {
-                    Chromosome = chromosome,
-                    Fitness = setup.Evaluator.EvaluateFitness(chromosome, rng, false),
+                    Chromosome = rival,
+                    Fitness = setup.Evaluator.EvaluateFitness(rival, rng, false),
                     AncestryId = current.AncestryId
                 });
             }
@@ -211,6 +211,7 @@ where T : class, IChromosome<T> {
             next[i] = candidates.First();
         }
         else {
+            T chromosome = current.Chromosome;
             int runs = 1 + rng.NextInt(setup.Mutation.Runs);
             for (int k = 0; k < runs; ++k)
                 chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
