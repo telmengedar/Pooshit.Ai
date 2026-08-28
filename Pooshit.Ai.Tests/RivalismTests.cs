@@ -19,20 +19,28 @@ public class RivalismTests {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
         PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 1);
-        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1];
+        PopulationEntry<MutatingFakeChromosome> e2 = Entry("e2", log, 2.0f, 2);
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2];
 
         Population<MutatingFakeChromosome> population = new(entries, r => new("fresh", log, fitnessModifier: 1.0f));
 
         Dictionary<string, float> fitnessByLabel = new() {
             ["e0"] = 0.0f,
             ["e1"] = 1.0f,
+            ["e2"] = 2.0f,
             ["e0'1"] = 20.0f,
-            ["e0'2"] = 5.0f
+            ["e0'2"] = 5.0f,
+            ["e0'3"] = 20.0f,
+            ["e0'4"] = 5.0f,
+            ["fresh'1"] = 30.0f,
+            ["fresh'2"] = 31.0f,
+            ["fresh'3"] = 30.0f,
+            ["fresh'4"] = 31.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
             Evaluator = evaluator,
-            Rng = new SequenceRng(0, 0) { FloatValues = [0.0f] },
+            Rng = new SequenceRng(0, 0, 0, 0) { FloatValues = [0.0f, 0.0f] },
             Threads = 1,
             Runs = 1,
             Elitism = 1,
@@ -59,20 +67,31 @@ public class RivalismTests {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> e0 = Entry("e0", log, 0.0f, 0);
         PopulationEntry<MutatingFakeChromosome> e1 = Entry("e1", log, 1.0f, 1);
-        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1];
+        PopulationEntry<MutatingFakeChromosome> e2 = Entry("e2", log, 2.0f, 2);
+        PopulationEntry<MutatingFakeChromosome>[] entries = [e0, e1, e2];
 
         Population<MutatingFakeChromosome> population = new(entries, r => new("fresh", log, fitnessModifier: 1.0f));
 
         Dictionary<string, float> fitnessByLabel = new() {
             ["e0"] = 0.0f,
             ["e1"] = 1.0f,
+            ["e2"] = 2.0f,
             ["e0'1"] = 20.0f,
-            ["e0'1'2"] = 5.0f
+            ["e0'1'2"] = 5.0f,
+            ["e0'2"] = 5.0f,
+            ["e0'3"] = 20.0f,
+            ["e0'3'4"] = 5.0f,
+            ["fresh'1"] = 30.0f,
+            ["fresh'1'2"] = 31.0f,
+            ["fresh'2"] = 31.0f,
+            ["fresh'3"] = 30.0f,
+            ["fresh'3'4"] = 31.0f,
+            ["fresh'4"] = 31.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
             Evaluator = evaluator,
-            Rng = new SequenceRng(0, 0) { FloatValues = [0.0f] },
+            Rng = new SequenceRng(0, 0, 0, 0) { FloatValues = [0.0f, 0.0f] },
             Threads = 1,
             Runs = 1,
             Elitism = 1,

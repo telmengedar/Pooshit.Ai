@@ -1,173 +1,173 @@
 {
-  "RecordedAt": "2026-08-27T17:48:17.50057Z",
-  "Commit": "63d0ade",
-  "Note": "DiVoid #9511: continues recording NonFiniteGenerations (e.g. FeedForward.MultiplyMinus seed 7 = 1) - schema addition only. FinalFitness values are unchanged from master\u0027s own #9043 recording (832711f); this branch does not move them",
+  "RecordedAt": "2026-08-27T20:16:10.8867073Z",
+  "Commit": "1c9779a",
+  "Note": "DiVoid #9054 item 2: the fresh-blood band now spans Elitism slots instead of Elitism-1, which changes the number of RNG draws per generation, so all 24 pairs move (12 improved, 12 regressed). FeedForward.MultiplyMinus seed 7 drops from 1 NonFiniteGenerations to 0; every other pair stays at 0",
   "Results": [
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 1,
-      "FinalFitness": 0.46719387,
+      "FinalFitness": 0.5059175,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 2,
-      "FinalFitness": 0.117698155,
+      "FinalFitness": 0.23735873,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 3,
-      "FinalFitness": 0.10878448,
+      "FinalFitness": 0.13881151,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 4,
-      "FinalFitness": 0.42440996,
+      "FinalFitness": 0.06412957,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 5,
-      "FinalFitness": 0.1045239,
+      "FinalFitness": 0.5209344,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 6,
-      "FinalFitness": 0.3098877,
+      "FinalFitness": 0.5397211,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 7,
-      "FinalFitness": 0.4981029,
+      "FinalFitness": 0.44034842,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "BinOp.MultiplyMinus",
       "Seed": 8,
-      "FinalFitness": 0.12709221,
+      "FinalFitness": 0.41120255,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 1,
-      "FinalFitness": 19.666668,
+      "FinalFitness": 19.228817,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 2,
-      "FinalFitness": 18.27446,
+      "FinalFitness": 17.681719,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 3,
-      "FinalFitness": 19.733797,
+      "FinalFitness": 19.456255,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 4,
-      "FinalFitness": 16,
+      "FinalFitness": 18,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 5,
-      "FinalFitness": 19.052256,
+      "FinalFitness": 19.514067,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 6,
-      "FinalFitness": 16.333334,
+      "FinalFitness": 17.724276,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 7,
-      "FinalFitness": 18.293959,
+      "FinalFitness": 18.158213,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.Gender",
       "Seed": 8,
-      "FinalFitness": 20.625734,
+      "FinalFitness": 19.369568,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 1,
-      "FinalFitness": 12.699656,
+      "FinalFitness": 14.125035,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 2,
-      "FinalFitness": 10.899661,
+      "FinalFitness": 13.103106,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 3,
-      "FinalFitness": 10.909231,
+      "FinalFitness": 12.904359,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 4,
-      "FinalFitness": 13.763652,
+      "FinalFitness": 9.987188,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 5,
-      "FinalFitness": 12.292744,
+      "FinalFitness": 8.574834,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 6,
-      "FinalFitness": 10.435458,
+      "FinalFitness": 9.733519,
       "Generations": 500,
       "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 7,
-      "FinalFitness": 14.242904,
+      "FinalFitness": 13.542433,
       "Generations": 500,
-      "NonFiniteGenerations": 1
+      "NonFiniteGenerations": 0
     },
     {
       "ProblemName": "FeedForward.MultiplyMinus",
       "Seed": 8,
-      "FinalFitness": 13.450166,
+      "FinalFitness": 11.902614,
       "Generations": 500,
       "NonFiniteGenerations": 0
     }

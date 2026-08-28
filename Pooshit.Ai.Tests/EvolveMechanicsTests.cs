@@ -33,7 +33,9 @@ public class EvolveMechanicsTests {
             ["e4"] = 7.0f,
             ["e0'1"] = 10.0f,
             ["e0'2"] = 11.0f,
-            ["fresh0'3"] = 12.0f
+            ["fresh0'3"] = 12.0f,
+            ["fresh0'2"] = 13.0f,
+            ["fresh1'3"] = 14.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
@@ -89,7 +91,7 @@ public class EvolveMechanicsTests {
 
 
     [Test, Parallelizable]
-    [Description("Elitism = 1 leaves TWO reproduction slots that both draw from the gene pool (no fresh blood), so a scripted NextFloat = 0.0 always selects population[0] - the first entry the gene-pool-building loop adds. If the negative-fitness entry were wrongly included, being first in construction order it would BE population[0] and every descendant would carry its label; excluding it correctly makes e1 population[0] instead.")]
+    [Description("Elitism = 1 over three entries leaves one gene-pool slot, so a scripted NextFloat = 0.0 selects population[0] - which would be the negative-fitness entry, first in construction order, if it were wrongly admitted.")]
     public void Evolve_NegativeFitnessEntry_ExcludedFromElitismAndGenePool() {
         List<MutateCall> log = [];
         PopulationEntry<MutatingFakeChromosome> negative = Entry("negative", log, -1.0f, 0);
@@ -104,7 +106,8 @@ public class EvolveMechanicsTests {
             ["e1"] = 1.0f,
             ["e2"] = 2.0f,
             ["e1'1"] = 10.0f,
-            ["e1'2"] = 11.0f
+            ["e1'2"] = 11.0f,
+            ["fresh'2"] = 11.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
@@ -141,7 +144,8 @@ public class EvolveMechanicsTests {
             ["e1"] = 1.0f,
             ["e2"] = 2.0f,
             ["e0'1"] = -3.0f,
-            ["e0'2"] = 2.0f
+            ["e0'2"] = 2.0f,
+            ["fresh0'2"] = 2.0f
         };
         StubFitnessEvaluator<MutatingFakeChromosome> evaluator = new(fitnessByLabel);
         EvolutionSetup<MutatingFakeChromosome> setup = new() {
@@ -156,9 +160,8 @@ public class EvolveMechanicsTests {
         population.Train(setup);
 
         Assert.That(population.Entries, Has.Length.EqualTo(3));
-        Assert.That(population.Entries[0].Chromosome.Label, Is.EqualTo("e0'2"), "2.0 is the lowest non-negative fitness");
+        Assert.That(population.Entries.Select(entry => entry.Fitness), Is.EqualTo(new[] { 2.0f, 5.0f, -3.0f }), "ordering follows the re-scored fitness, with the negative last regardless of magnitude");
         Assert.That(population.Entries[1].Chromosome.Label, Is.EqualTo("e0"), "5.0 is the second-lowest non-negative fitness");
         Assert.That(population.Entries[2].Chromosome.Label, Is.EqualTo("e0'1"), "a negative fitness must sort last regardless of magnitude");
-        Assert.That(population.Entries[2].Fitness, Is.EqualTo(-3.0f), "the raw fitness value is preserved even though it sorts last");
     }
 }
