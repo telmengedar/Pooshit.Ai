@@ -482,6 +482,17 @@ This is the second instance of the category, not the first: **#9998**'s gene-poo
 
 The fix direction is always the same: **find where production consumes the value and observe it there.** In this project that means the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, or the evaluator's call log — never a setup field the production code itself wrote. **The instrument is R3's**: R3 obliges the double to record, R7 obliges you to count what it recorded. A test whose observable disappears under a refactor is an opportunity rather than a cost; being forced off the field and onto the consumer is what surfaced this one.
 
+**A mutation matrix can substitute for the count, under two preconditions — and it is the *kill* that carries the evidence.**
+
+Under the RIP model, reachability is a **necessary** condition for a kill: a mutation confined to a single call site can only flip a verdict if that site executed, so **a kill entails the mutated site ran**. That makes a per-site mutant a valid reached-subject probe. Two things it is not. The **survival** half carries nothing — a fixture that reaches a site zero times survives every mutant of it, so survival is consistent with any reachability at all. And **disjointness** between per-site mutants establishes **non-redundancy** — both sides covered rather than one twice — which is worth having and is a different property.
+
+The substitute is valid only where both of these hold:
+
+1. **Each mutant is textually confined to one call site, and the kill is the evidence.** A mutant of a shared helper is killed by any caller and carries no per-site information.
+2. **The mutated site IS the consumer** — no shared-object hop between the mutation and the observable.
+
+**Precondition 2 is where this rule's own founding instance fails the substitute.** Mutating `Train`'s ladder arithmetic killed the old `AdaptiveMutationEscalationTests`: the **write** site was reached and the test went red, exactly as kill-implies-reached predicts — while `rng.NextInt`, the site that actually mattered, ran **once in 140 generations**. The entailment held perfectly and told you nothing, because it certified the wrong site. **A kill proves reachability of the mutated site, never of a consumer downstream of it.** Where the two are separated by a shared object — the mailbox shape this rule is about — count the observations; the matrix cannot stand in.
+
 Reviewer check: *ask the fixture how many times the consumer ran.* A test asserting a per-generation quantity over N generations should show N observations at the consumer, and the cheapest way to make that visible is to assert it — `Assert.That(rng.Bounds, Has.Count.EqualTo(140))` is the entire check, and it fails loudly the day a configuration change stops the subject running.
 
 ---
@@ -615,7 +626,7 @@ Training must not end worse than it started. At `SampleCount = 0` — the defaul
 | **Diagnosability** | The determinism test compares *trajectories*, so a failure names the generation where two runs diverged. The stub evaluator's call log names which chromosome was scored when. |
 | **Speed** | The default lane contains no long training. The one end-to-end test is 20 individuals × 30 generations. Demos become `[Explicit]`. |
 | **Survivability across fixes** | I1/I2 are monotone in quality; the baseline is a record with provenance; R5 turns pending fixes into `[Ignore]`d tests that go green when the fix lands. |
-| **Resistance to unfailable assertions** | Five named rules (§10.1), each converting an invisible property into an artefact whose absence a reviewer can see. |
+| **Resistance to assertions that do not constrain what they appear to** | Seven named rules (§10.1), each converting an invisible property into an artefact whose absence a reviewer can see. |
 | **Extensibility** | Adding a benchmark problem is one entry plus a re-record. Adding a mechanics test needs no new infrastructure. Parallel determinism, if it is ever wanted, attaches at the same `IRng` injection point — with nothing built for it now. |
 
 ---
@@ -624,14 +635,14 @@ Training must not end worse than it started. At `SampleCount = 0` — the defaul
 
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| R-1 | The determinism test **fails on arrival** — a source of non-determinism remains that §10.2 did not find. | Medium | High: Phase 2 blocks. | This is the test doing its job. The trajectory comparison names the first divergent generation. Work the hazard table (H5, H6, H7 are the candidates). **Do not weaken the test to pass.** If the cause is a defect, file it and `[Ignore]` per R5. |
-| R-2 | I2 (final ≤ generation-0 best) **fails on arrival** because #9039's stale net state makes an elite re-score differently. | Medium | Medium | The benchmark lane is `[Explicit]`; a red benchmark breaks no build. A first-run violation is a genuine finding about elitism — file it, keep the assertion. This is precisely the value the lane is being built for. |
-| R-3 | The behavioural serialization round-trip fails because the round trip is lossy on input-neuron `Activation`/`Aggregate` (which the existing tests blank before comparing). | Medium | Low | File as a defect; `[Ignore]` per R5; keep the structural test meanwhile. |
-| R-4 | Benchmarks are too slow and stop being run. | Low | High | 3 problems × 8 seeds, `Runs` capped per problem, parallel across pairs. If it exceeds a few minutes, reduce `Runs` before reducing seeds — seed count is what makes the distribution meaningful. |
-| R-5 | The baseline drifts stale because nobody re-records after a behaviour-changing merge. | Medium | Medium | The report header prints the baseline's `recordedAt`, `commit` and `note` alongside the current numbers, so staleness is visible every time the lane is run. |
-| R-6 | The rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
-| R-7 | The `Threads > 1` guard breaks an existing caller. | Very low | Low | The guard fires only when `setup.Rng` is set, and that property does not exist yet. Every current caller passes `null` by omission. |
-| R-8 | Mechanics tests over-fit to private implementation detail and become churn on every refactor. | Medium | Medium | Assert only on observables: `Entries` ordering and reference identity, and double call logs. Never reach into internals via reflection or `InternalsVisibleTo`. |
+| RK-1 | The determinism test **fails on arrival** — a source of non-determinism remains that §10.2 did not find. | Medium | High: Phase 2 blocks. | This is the test doing its job. The trajectory comparison names the first divergent generation. Work the hazard table (H5, H6, H7 are the candidates). **Do not weaken the test to pass.** If the cause is a defect, file it and `[Ignore]` per R5. |
+| RK-2 | I2 (final ≤ generation-0 best) **fails on arrival** because #9039's stale net state makes an elite re-score differently. | Medium | Medium | The benchmark lane is `[Explicit]`; a red benchmark breaks no build. A first-run violation is a genuine finding about elitism — file it, keep the assertion. This is precisely the value the lane is being built for. |
+| RK-3 | The behavioural serialization round-trip fails because the round trip is lossy on input-neuron `Activation`/`Aggregate` (which the existing tests blank before comparing). | Medium | Low | File as a defect; `[Ignore]` per R5; keep the structural test meanwhile. |
+| RK-4 | Benchmarks are too slow and stop being run. | Low | High | 3 problems × 8 seeds, `Runs` capped per problem, parallel across pairs. If it exceeds a few minutes, reduce `Runs` before reducing seeds — seed count is what makes the distribution meaningful. |
+| RK-5 | The baseline drifts stale because nobody re-records after a behaviour-changing merge. | Medium | Medium | The report header prints the baseline's `recordedAt`, `commit` and `note` alongside the current numbers, so staleness is visible every time the lane is run. |
+| RK-6 | The rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
+| RK-7 | The `Threads > 1` guard breaks an existing caller. | Very low | Low | The guard fires only when `setup.Rng` is set, which is opt-in — every caller that leaves it unset is unaffected. Both the property and the guard shipped in `29e3286`, and the risk did not materialise. |
+| RK-8 | Mechanics tests over-fit to private implementation detail and become churn on every refactor. | Medium | Medium | Assert only on observables: `Entries` ordering and reference identity, and double call logs. Never reach into internals via reflection or `InternalsVisibleTo`. |
 
 ---
 
