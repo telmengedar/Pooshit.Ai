@@ -49,16 +49,23 @@ public class SamplesEvaluator<TChromosome, TNet> : IFitnessEvaluator<TChromosome
     /// </summary>
     public Action<TNet, TChromosome> InputGenerator { get; set; }
 
+    static int ResolveNeuronIndex(TChromosome chromosome, string key, string role) {
+        NeuronConfig neuron = chromosome.Neurons.FirstOrDefault(n => n.Name == key);
+        if (neuron == null)
+            throw new ArgumentException($"Training sample {role} key '{key}' names no neuron of the chromosome");
+        return neuron.Index;
+    }
+
     IEnumerable<IndexedTrainingSample> TranslateSamples(TChromosome chromosome) {
         foreach (TrainingSample sample in samples) {
             yield return new() {
                 InputArray = sample.InputArray,
                 Inputs = sample.Inputs?.Select(i => new NeuronValue {
-                    Index = chromosome.Neurons.FirstOrDefault(n => n.Name == i.Key)?.Index ?? -1,
+                    Index = ResolveNeuronIndex(chromosome, i.Key, "input"),
                     Value = i.Value
                 }).ToArray(),
                 Outputs = sample.Outputs.Select(i => new NeuronValue {
-                    Index = chromosome.Neurons.FirstOrDefault(n => n.Name == i.Key)?.Index ?? -1,
+                    Index = ResolveNeuronIndex(chromosome, i.Key, "output"),
                     Value = i.Value
                 }).ToArray()
             };
