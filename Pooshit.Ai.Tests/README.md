@@ -68,11 +68,16 @@ R1–R6 all ask *can this assertion fail?* R7 is orthogonal: the assertion can f
 
 Fix direction: observe where production consumes the value — the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, the evaluator's call log — never a setup field the production code wrote. **The instrument is R3's**: R3 obliges the double to record, R7 obliges you to count what it recorded.
 
-**A mutation matrix can substitute for the count, under two preconditions — and it is the *kill* that carries the evidence,** not the survival and not the disjointness. Reachability is necessary for a kill, so a mutant confined to one call site can only be killed if that site ran. Survival proves nothing (a fixture reaching a site zero times survives every mutant of it); disjointness proves **non-redundancy**, which is a different property. Both preconditions must hold:
+**A mutation matrix does not substitute for the count in the shape this rule is about** — and a kill *looks* like evidence, which is exactly what makes reaching for it tempting. Both placements of the mutant fail, for different reasons:
+
+- **At the write site**, precondition 2 fails by construction: a kill certifies the *write* ran, which the defective test already demonstrated. Mutating `Train`'s ladder killed the old test while `rng.NextInt` ran **once in 140 generations**.
+- **At the consumer site**, precondition 2 is *satisfied* — which is where a reader hunting for the cheap route lands — and it fails on **circularity**: the mutant certifies something only if it is **killed**, and it is killed only if the test observes the consumer, in which case the count was already in hand. **Killed only by tests that do not need it; survives on exactly the tests that do.**
+
+**A kill proves reachability of the mutated site, never of a consumer downstream of it.** Across a shared-object hop, count the observations.
+
+**The narrow periphery** where a matrix does carry the evidence is the case where the mutated site and the consumer coincide — and there it is the **kill**, not the survival and not the disjointness. Reachability is necessary for a kill, so a mutant confined to one call site can only be killed if that site ran. Survival proves nothing (a fixture reaching a site zero times survives every mutant of it); disjointness proves **non-redundancy**, a different property. Both must hold:
 
 1. each mutant is textually confined to **one call site**, and the kill is the evidence — a mutant of a shared helper is killed by any caller and carries no per-site information;
 2. **the mutated site IS the consumer** — no shared-object hop between the mutation and the observable.
-
-R7's own founding instance fails precondition 2: mutating `Train`'s ladder killed the old test because the **write** site was reached, while `rng.NextInt` — the site that mattered — ran once in 140 generations. **A kill proves reachability of the mutated site, never of a consumer downstream of it.** Across a shared-object hop, count the observations; the matrix cannot stand in.
 
 Reviewer check: ask the fixture how many times the consumer ran. A test asserting a per-generation quantity over N generations should show N observations, and asserting that count is the whole check.
