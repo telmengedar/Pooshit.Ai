@@ -9,6 +9,8 @@ class RecordingRng : IRng {
 
     public int CallCount { get; private set; }
 
+    public List<int> Bounds { get; } = [];
+
     public long NextLong() {
         ++CallCount;
         return inner.NextLong();
@@ -21,6 +23,7 @@ class RecordingRng : IRng {
 
     public int NextInt(int max) {
         ++CallCount;
+        Bounds.Add(max);
         return inner.NextInt(max);
     }
 

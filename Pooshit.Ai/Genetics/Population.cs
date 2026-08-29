@@ -10,7 +10,7 @@ namespace Pooshit.Ai.Genetics;
 public class Population<T> 
 where T : class, IChromosome<T> {
     PopulationEntry<T>[] trainingBuffer;
-    readonly Action<EvolutionSetup<T>, IRng, GenePool<T>, int> mutator;
+    readonly Action<EvolutionSetup<T>, IRng, GenePool<T>, int, int> mutator;
 
     Population(int size) {
         if (size <= 0)
@@ -75,7 +75,7 @@ where T : class, IChromosome<T> {
     /// </summary>
     public PopulationEntry<T>[] Entries { get; private set; }
 
-    void Evolve(IRng rng, EvolutionSetup<T> setup, int generation) {
+    void Evolve(IRng rng, EvolutionSetup<T> setup, int generation, int mutationRuns) {
         setup.OnNonFiniteFitness?.Invoke(generation, Entries.Count(entry => !float.IsFinite(entry.Fitness)));
 
         HashSet<int> structureHashes = [];
@@ -110,7 +110,7 @@ where T : class, IChromosome<T> {
             genePool.Add(entry);
         }
 
-        mutator(setup, rng, genePool, offset);
+        mutator(setup, rng, genePool, offset, mutationRuns);
         if (setup.Threads > 1) {
             Parallel.ForEach(trainingBuffer,
                              new() { MaxDegreeOfParallelism = setup.Threads },
@@ -124,7 +124,7 @@ where T : class, IChromosome<T> {
         (Entries, trainingBuffer) = (trainingBuffer, Entries);
     }
 
-    void Cross(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset) {
+    void Cross(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset, int mutationRuns) {
         for (int i = offset; i < trainingBuffer.Length; ++i) {
             PopulationEntry<T> firstChromosome = genePool.Next(rng);
             PopulationEntry<T> secondChromosome = genePool.Next(rng);
@@ -162,16 +162,16 @@ where T : class, IChromosome<T> {
         }
     }
 
-    void Mutate(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset) {
+    void Mutate(EvolutionSetup<T> setup, IRng rng, GenePool<T> genePool, int offset, int mutationRuns) {
         void Mutator(int i) {
             if (Generator != null && i >= trainingBuffer.Length - setup.Elitism) {
                 Mutate(trainingBuffer, rng, new() {
                     Chromosome = Generator(rng),
                     AncestryId = Guid.NewGuid() 
-                }, setup, i);
+                }, setup, i, mutationRuns);
             }
             else
-                Mutate(trainingBuffer, rng, genePool.Next(rng), setup, i);
+                Mutate(trainingBuffer, rng, genePool.Next(rng), setup, i, mutationRuns);
         }
 
         if (setup.Threads > 1) {
@@ -185,7 +185,7 @@ where T : class, IChromosome<T> {
         }
     }
     
-    void Mutate(PopulationEntry<T>[] next, IRng rng, PopulationEntry<T> current, EvolutionSetup<T> setup, int i) {
+    void Mutate(PopulationEntry<T>[] next, IRng rng, PopulationEntry<T> current, EvolutionSetup<T> setup, int i, int mutationRuns) {
         float mutationRange = setup.Mutation.Range;
 
         float mutationScale = (float)i / Entries.Length;
@@ -196,7 +196,7 @@ where T : class, IChromosome<T> {
             
             for (int l = 0; l < setup.Rivalism; ++l) {
                 T rival = current.Chromosome;
-                int runs = 1 + rng.NextInt(setup.Mutation.Runs);
+                int runs = 1 + rng.NextInt(mutationRuns);
                 for (int k = 0; k < runs; ++k)
                     rival = ((IMutatingChromosome<T>)rival).Mutate(rng, mutationRange);
                 candidates.Add(new() {
@@ -211,7 +211,7 @@ where T : class, IChromosome<T> {
         }
         else {
             T chromosome = current.Chromosome;
-            int runs = 1 + rng.NextInt(setup.Mutation.Runs);
+            int runs = 1 + rng.NextInt(mutationRuns);
             for (int k = 0; k < runs; ++k)
                 chromosome = ((IMutatingChromosome<T>)chromosome).Mutate(rng, mutationRange);
 
@@ -251,17 +251,18 @@ where T : class, IChromosome<T> {
         
         int bestStructure = Entries[0].Chromosome.StructureHash();
         int bestRun = 0;
+        int mutationRuns = setup.Mutation.Runs;
 
         for (int i = 0; i < setup.Runs; i++) {
-            Evolve(rng, setup, i);
+            Evolve(rng, setup, i, mutationRuns);
             if (Entries[0].Fitness <= setup.TargetFitness)
                 break;
 
             int structure = Entries[0].Chromosome.StructureHash();
             if (structure == bestStructure)
-                setup.Mutation.Runs = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
+                mutationRuns = Math.Min(50, 1 + ((i - bestRun) >> 6) * 5);
             else {
-                setup.Mutation.Runs = 1;
+                mutationRuns = 1;
                 bestStructure = structure;
                 bestRun = i;
             }

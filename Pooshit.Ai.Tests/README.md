@@ -1,6 +1,6 @@
 # Test rules
 
-Six rules against assertions that cannot fail. Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
+Seven rules against assertions that do not constrain what they appear to — six against assertions that cannot fail (R1–R6), one against assertions that fail correctly while their subject is never reached (R7). Full rationale: `docs/architecture/testing-and-measurement.md` §10.1 (DiVoid #9072). Three QA rounds on PR #1 were spent on tests that looked like guards and could not fail — a `Sum` assertion satisfiable by several different multisets, and a test fake that silently discarded the parameter it existed to constrain. These rules exist so the next reviewer does not have to rediscover that the hard way.
 
 ## R1 — The sibling-variation rule
 
@@ -23,6 +23,8 @@ A test double throws from every member the test does not deliberately exercise, 
 A double may deliberately ignore an input — `FakeNet` is a constant-zero oracle on purpose. Deliberately ignoring is allowed; silently ignoring is not. The difference is recording.
 
 **`SequenceRng`'s totality is one-sided, by design.** Over-consuming its script throws; under-consuming it does not, because scripting a superset is exactly what R5's fix-tolerance clause asks for. A mutant that *reduces* the draw count is therefore invisible to script exhaustion alone — when the property under test is how many times the production path drew, assert on the recorded `Bounds`, not on the script running out.
+
+**R3 and R7 are two halves of one instrument, not competitors.** R3 obliges the double to **record**; R7 obliges you to **count what it recorded**. R3's `Bounds` closes the gap where a mutant reduces the draw count; R7 closes the gap where the draws never happened at all.
 
 Reviewer check: for each double member, is it throw, or is it record? A third answer is a finding.
 
@@ -55,3 +57,27 @@ An expected value obtained by running the code and pasting the output is still d
 For a `double` literal pinning `float` arithmetic, the check is mechanical: a `float` widened to `double` leaves 29 low zero bits; a symbolically-derived rational does not. Where the mantissa technique does not apply, ask the implementer how the number was obtained and require the derivation in the return.
 
 Reviewer check: was this expected value derived, or captured? For a `float`-precision literal, check the trailing mantissa bits.
+
+## R7 — The reached-subject rule
+
+An assertion being reachable is not the same as its subject being reached. Where production parks a value on a shared object and reads it back elsewhere, assert at the read, and pin the number of observations the consumer made.
+
+R1–R6 all ask *can this assertion fail?* R7 is orthogonal: the assertion can fail, precisely, on a quantity that had no effect in the fixture's configuration. The instance (DiVoid #10068): a fixture pinned `Train`'s mutation-depth ladder by reading `setup.Mutation.Runs` back off the setup across 140 generations — but ran a population of 2 at `Elitism = 2`, so every entry was an elite, nothing reproduced, and the consumer ran **once in 140 generations**. Green, precise, and measuring nothing. It violated none of R1–R6.
+
+**#9998**'s gene-pool eviction trap is the same category arriving by a different route — there the fixture stops entering its own branch when an ancestry is evicted on its fifth draw. Both are *the assertion no longer reaches its subject*.
+
+Fix direction: observe where production consumes the value — the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, the evaluator's call log — never a setup field the production code wrote. **The instrument is R3's**: R3 obliges the double to record, R7 obliges you to count what it recorded.
+
+**A mutation matrix does not substitute for the count in the shape this rule is about** — and a kill *looks* like evidence, which is exactly what makes reaching for it tempting. Both placements of the mutant fail, for different reasons:
+
+- **At the write site**, precondition 2 fails by construction: a kill certifies the *write* ran, which the defective test already demonstrated. Mutating `Train`'s ladder killed the old test while `rng.NextInt` ran **once in 140 generations**.
+- **At the consumer site**, precondition 2 is *satisfied* — which is where a reader hunting for the cheap route lands — and it fails on **circularity**: the mutant certifies something only if it is **killed**, and it is killed only if the test observes the consumer, in which case the count was already in hand. **Killed only by tests that do not need it; survives on exactly the tests that do.**
+
+**A kill proves reachability of the mutated site, never of a consumer downstream of it.** Across a shared-object hop, count the observations.
+
+**The narrow periphery** where a matrix does carry the evidence is the case where the mutated site and the consumer coincide — and there it is the **kill**, not the survival and not the disjointness. Reachability is necessary for a kill, so a mutant confined to one call site can only be killed if that site ran. Survival proves nothing (a fixture reaching a site zero times survives every mutant of it); disjointness proves **non-redundancy**, a different property. Both must hold:
+
+1. each mutant is textually confined to **one call site**, and the kill is the evidence — a mutant of a shared helper is killed by any caller and carries no per-site information;
+2. **the mutated site IS the consumer** — no shared-object hop between the mutation and the observable.
+
+Reviewer check: ask the fixture how many times the consumer ran. A test asserting a per-generation quantity over N generations should show N observations, and asserting that count is the whole check.

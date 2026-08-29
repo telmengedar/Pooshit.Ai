@@ -43,7 +43,7 @@ public abstract class BenchmarkProblem {
 /// a <see cref="BenchmarkProblem"/> for a concrete chromosome/net family. Every <see cref="Run"/>
 /// call constructs a fresh <see cref="Genetics.EvolutionSetup{T}"/>, a fresh
 /// <see cref="SamplesEvaluator{TChromosome,TNet}"/> and a fresh <see cref="Population{T}"/> -
-/// non-optional, see design #9072 §10.2 H7/H8
+/// non-optional, see design #9072 §10.2 H7
 /// </summary>
 /// <typeparam name="TChromosome">type of chromosome trained</typeparam>
 /// <typeparam name="TNet">type of neuronal net the chromosome configures</typeparam>

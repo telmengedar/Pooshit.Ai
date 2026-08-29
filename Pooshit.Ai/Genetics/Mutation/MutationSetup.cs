@@ -26,7 +26,7 @@ public class MutationSetup {
     public float IncestFactor { get; set; } = 7.5f;
 
     /// <summary>
-    /// number of mutation runs, read only where the population binds the mutate reproduction strategy
+    /// number of mutation runs, read once per training run under either binding and consumed only where the population binds the mutate reproduction strategy
     /// </summary>
     public int Runs { get; set; } = 1;
 }

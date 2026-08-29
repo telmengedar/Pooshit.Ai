@@ -159,7 +159,7 @@ The project already has `FakeChromosome`, `FakeNet`, `SequenceRng`. **Extend the
 
 | Component | Responsibility | Does NOT own |
 |---|---|---|
-| `BenchmarkProblem` | One named, self-contained training problem: chromosome family, net type, sample set, setup template, `TargetFitness`. **Constructs a fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per run** (see hazards H7/H8 in §10.2 — `Train` mutates its setup, and the evaluator caches indexed samples and pools nets). | Seeds. Baselines. Reporting. |
+| `BenchmarkProblem` | One named, self-contained training problem: chromosome family, net type, sample set, setup template, `TargetFitness`. **Constructs a fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per run** (see hazard H7 in §10.2 — the evaluator caches indexed samples and pools nets). | Seeds. Baselines. Reporting. |
 | `BenchmarkHarness` | Execute every (problem, seed) pair, each at `Threads = 1`, parallelising **across pairs**. Produce one run result per pair. | Judging quality. Asserting anything. |
 | `BenchmarkComparison` (the `[Explicit]` test) | Load the committed baseline, run the harness, assert the two **invariants** (§11.3), print the comparison table. | Asserting that quality did not regress. |
 | `RecordBaseline` (an `[Explicit]` test) | Run the harness and overwrite `Benchmarks/baseline.json` in the source tree. | Running as part of any other lane. |
@@ -307,7 +307,7 @@ Three edits. Nothing else in `Pooshit.Ai` is touched.
 | Aspect | Contract |
 |---|---|
 | Input | The problem set (code) + the seed set (code) + the committed baseline (file). |
-| Isolation | A fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per (problem, seed). Non-negotiable — see hazards H7 and H8 in §10.2. |
+| Isolation | A fresh `EvolutionSetup`, a fresh `SamplesEvaluator` and a fresh `Population` per (problem, seed). Non-negotiable for the evaluator and the population — see hazard H7 in §10.2. |
 | Threading | Every individual run is `Threads = 1`. Parallelism is across (problem, seed) pairs only. |
 | Output | An in-memory result set; a printed comparison table; and — from `RecordBaseline` only — the rewritten baseline file. |
 | Assertions | I1 and I2 (§11.3) only. |
@@ -346,7 +346,7 @@ This section is the work inventory. It specifies *what must be asserted*, not ho
 | Gene-pool ancestry eviction | A lineage drawn 5 times is removed from the pool; subsequent draws cannot return it. Written to the intended contract; if the intended retirement count is disputed, R5 applies. |
 | Fresh-blood band (`Mutate` strategy) | With a `Generator` returning a marked chromosome, the number of slots carrying the marker equals `Elitism`. Held since #9054 item 2 landed; the band is `i >= trainingBuffer.Length - setup.Elitism` and the R5 pin runs un-`[Ignore]`d. |
 | Rivalism | With `Rivalism = r`, exactly `r` candidates are evaluated per slot (assert via the stub evaluator's call log) and the best is kept. Each of the `r` rivals mutates the parent itself, and draws its **own** mutation depth from `Mutation.Runs` — asserted as `r` recorded draws of that bound per slot, and as the per-rival chain shape in the reproduction log (#9931, #9936). |
-| Adaptive mutation escalation | When the leader's structure hash is unchanged across generations, `setup.Mutation.Runs` escalates on the documented schedule; when it changes, it resets to 1. Observable directly on the setup object — which is also the test that documents `Train`'s in/out mutation of its own setup. |
+| Adaptive mutation escalation | When the leader's structure hash is unchanged across generations, the mutation depth bound the mutate strategy requests escalates on the documented schedule and saturates at the `Math.Min` ceiling of 50; when it changes, the bound resets to 1 and the schedule re-anchors to that generation. Observable on the bounds a recording `IRng` captures from `NextInt`, which is the value's consumer — `Train` holds the escalated depth in local training state and leaves the caller's setup untouched (#9054 item 1). |
 | Early exit on `TargetFitness` | With a stub returning a fitness at or below target, `Train` stops after the generation that reached it. Assert via the `AfterRun` invocation count. |
 | The seam's guard | `setup.Rng` set together with `Threads > 1` throws; either alone does not. |
 
@@ -364,9 +364,9 @@ It is also the lane's **only** end-to-end exercise of the real net families. Tha
 
 ## 10. Cross-Cutting Concerns
 
-### 10.1 The six rules against assertions that cannot fail
+### 10.1 The seven rules against assertions that do not constrain what they appear to
 
-This is the most valuable part of this document, measured by what has actually cost time on this repo. Three QA rounds on PR #1 were spent on tests that *looked* like guards and could not fail: a `Sum` assertion satisfiable by several different multisets, and a fake that silently discarded the parameter it was meant to constrain. The problem is not test count. It is that **an assertion's inability to fail is invisible at review time.** Reviewer vigilance has already been tried; it caught these three times at a cost of three rounds.
+This is the most valuable part of this document, measured by what has actually cost time on this repo. Three QA rounds on PR #1 were spent on tests that *looked* like guards and could not fail: a `Sum` assertion satisfiable by several different multisets, and a fake that silently discarded the parameter it was meant to constrain. The problem is not test count. It is that **an assertion that does not constrain what it appears to is invisible at review time.** That covers two distinct failures, and the distinction matters when reading the rules below: an assertion may be unable to fail at all (R1–R6), or it may fail perfectly well while its subject was never reached (R7). Reviewer vigilance has already been tried; it caught the first kind three times at a cost of three rounds, and did not catch the second at all across four rounds.
 
 Each rule below converts an invisible property into a visible artefact — something a reviewer can see the *absence* of.
 
@@ -398,6 +398,8 @@ Reviewer check: *name the pre-image the assertion pins down.* If the answer is "
 `SequenceRng` already embodies this and is the template: unscripted methods throw `NotSupportedException`, `NextInt(max)` records the bound it was asked for, and a scripted value outside that bound throws rather than being quietly clamped. **Its totality is one-sided, by design:** over-consumption throws, under-consumption does not, because a fixture that scripts a superset is the pattern R5's fix-tolerance clause asks for. The recording half is what closes the gap — a mutant that *reduces* the draw count is invisible unless a test asserts on `Bounds`, which is the instrument to reach for whenever the property under test is how many times the production path drew (#9936). `FakeNet` is the counter-example: `this[string name] => 0.0f`, `SetInputValues` discards, `Update` discards. That shape is exactly how a test stops measuring what it claims to.
 
 The rule has a subtlety worth stating, because a naive reading forbids a legitimate pattern: a double may *deliberately* ignore an input — `FakeNet` is a constant-zero oracle on purpose, so the evaluator's distance equals the expected value. **Deliberately ignoring is allowed; silently ignoring is not.** The difference is recording. If the double records what it was handed, a test can assert on it and a reviewer can see the value was observed rather than dropped.
+
+**R3 and R7 are two halves of one instrument rather than competitors.** R3 obliges the double to **record**; **R7** obliges you to **count what it recorded**. R3's `Bounds` closes the gap where a mutant *reduces* the draw count; R7 closes the gap where the draws never happened at all. Recording without counting leaves the second gap open, which is exactly how the fixture behind R7 stayed green.
 
 Reviewer check: *for each double member, is it throw, or is it record?* A third answer is a finding.
 
@@ -469,7 +471,36 @@ Reviewer check: *was this expected value derived, or captured?* For a `float`-pr
 
 ---
 
-**These six rules go in the test project as a short `README.md`.** Not in agent memory, not in a DiVoid node only — in the directory where someone about to write a test will trip over them.
+**R7 — The reached-subject rule** (added 2026-08-28, from #10068).
+*An assertion being reachable is not the same as its subject being reached. Where production parks a value on a shared object and reads it back elsewhere, assert at the read, and pin the number of observations the consumer made.*
+
+R1 through R6 all ask the same question in different costumes: **can this assertion fail?** R7 is orthogonal by construction, and that is the whole reason it needs its own number — the assertion *can* fail, precisely, on a quantity that had **no effect whatsoever** in the fixture's configuration. No amount of sharpening R1 reaches it, because the sibling exists, varies the input, and moves the output.
+
+The instance that produced the rule: `AdaptiveMutationEscalationTests`' reset fixture pinned `Train`'s stagnation ladder by reading `setup.Mutation.Runs` back off the setup across 140 generations, with four precise index/value assertions including the re-anchoring behaviour. It ran a population of **2** at **`Elitism = 2`** — every entry is an elite, `offset` reaches 2 from generation 1, and the reproduction loop executes zero times. The consumer (`Mutate`'s `1 + rng.NextInt(...)`) ran **once in 140 generations**. The test was green because the ladder writes the field whether or not anything reads it. It had passed four QA rounds and violated none of R1–R6.
+
+This is the second instance of the category, not the first: **#9998**'s gene-pool eviction trap is the same failure arriving through a different door — there a resource limit fires and the fixture stops entering its own branch, here the subject was never entered at all and a shared mutable field hid it. Both are *the assertion no longer reaches its subject*; neither is *the assertion cannot fail*.
+
+The fix direction is always the same: **find where production consumes the value and observe it there.** In this project that means the recorded `NextInt` bound (`SequenceRng.Bounds`, `RecordingRng.Bounds`), the reproduction log, or the evaluator's call log — never a setup field the production code itself wrote. **The instrument is R3's**: R3 obliges the double to record, R7 obliges you to count what it recorded. A test whose observable disappears under a refactor is an opportunity rather than a cost; being forced off the field and onto the consumer is what surfaced this one.
+
+**A mutation matrix does not substitute for the count in the shape this rule is about.** That is worth ruling out explicitly rather than leaving it implied, because a kill *looks* like evidence — a confident positive signal, produced by machinery the reader already trusts, in exactly the case where it certifies nothing. The mailbox shape admits two placements for the mutant, and **both fail, for different reasons**:
+
+- **Mutate the write site.** Precondition 2 below fails by construction: a kill certifies the *write* ran, which the defective test already demonstrated. Mutating `Train`'s ladder arithmetic killed the old `AdaptiveMutationEscalationTests` exactly as kill-implies-reached predicts — while `rng.NextInt`, the site that actually mattered, ran **once in 140 generations**. The entailment held perfectly and certified the wrong site.
+- **Mutate the consumer site.** Precondition 2 is *satisfied* here, which is why a reader hunting for the cheap route lands on it — and it fails on **circularity** instead. The mutant certifies something only if it is **killed**, and it is killed only if the test observes the consumer, in which case R7 is already satisfied and the count was already in hand. Otherwise it survives, and survival carries nothing. **It is killed only by tests that do not need it, and survives on exactly the tests that do.**
+
+**A kill proves reachability of the mutated site, never of a consumer downstream of it.** Where the two are separated by a shared object, count the observations.
+
+**The narrow periphery where a matrix does carry the evidence** is the case where the mutated site and the consumer coincide — and there it is the **kill** that carries it. Under the RIP model, reachability is a **necessary** condition for a kill: a mutation confined to a single call site can only flip a verdict if that site executed, so **a kill entails the mutated site ran**. Two things it is not. The **survival** half carries nothing — a fixture that reaches a site zero times survives every mutant of it, so survival is consistent with any reachability at all. And **disjointness** between per-site mutants establishes **non-redundancy** — both sides covered rather than one twice — which is worth having and is a different property.
+
+Both of these must hold:
+
+1. **Each mutant is textually confined to one call site, and the kill is the evidence.** A mutant of a shared helper is killed by any caller and carries no per-site information.
+2. **The mutated site IS the consumer** — no shared-object hop between the mutation and the observable.
+
+Reviewer check: *ask the fixture how many times the consumer ran.* A test asserting a per-generation quantity over N generations should show N observations at the consumer, and the cheapest way to make that visible is to assert it — `Assert.That(rng.Bounds, Has.Count.EqualTo(140))` is the entire check, and it fails loudly the day a configuration change stops the subject running.
+
+---
+
+**These seven rules go in the test project as a short `README.md`.** Not in agent memory, not in a DiVoid node only — in the directory where someone about to write a test will trip over them.
 
 ### 10.2 Determinism hazard inventory
 
@@ -484,11 +515,11 @@ Every source of non-determinism in a training run, and its disposition at `Threa
 | H5 | `GenePool.Next` mutates shared ancestry state (`originCount`, `Remove`) under a lock | order-dependent, but the order is deterministic at 1 thread | none. **This is the single reason parallel determinism is out of reach** — see §11.2 |
 | H6 | `Guid.NewGuid()` for `AncestryId` | values vary run to run, but are used only as dictionary keys and equality filters, never for ordering or selection (A4) | none; documented. If the determinism test fails and everything else is accounted for, this is the suspect |
 | H7 | `SamplesEvaluator` caches `indexedSamples` from the first chromosome and pools nets in a `ConcurrentStack` | pop/push order deterministic at 1 thread, but state **carries across runs** | harness contract: **fresh evaluator per run** |
-| H8 | `Train` writes `setup.Mutation.Runs` (in/out parameter, #9029) | a second `Train` on the same setup object does not start from the configured value | harness contract: **fresh `EvolutionSetup` per run** |
+| H8 | `Train` wrote `setup.Mutation.Runs` on both strategy paths, making the setup an in/out parameter (#9029) — **closed by #9054 item 1**: the escalated depth is local training state, threaded from `Train` through `Evolve` into the mutate strategy | none remaining. Before the fix a second `Train` sharing a setup did not start from the configured value, and the write also landed on the cross path, which never reads it | none needed. `BenchmarkProblem` still builds a fresh `EvolutionSetup` per run, which is now hygiene rather than a correctness requirement |
 | H9 | `float` non-associativity and libm differences across machines/runtimes (A2) | identical within one process | **never compare against a committed literal fitness** — §11.3 |
 | H10 | `Rng`'s clock fallback when the seed is `0` (#9038 item 4) | a caller writing `new Rng(0)` gets a clock seed, not seed zero | not fixed here. The harness and tests use non-zero seeds. Documented in P1's XML doc as a caveat; it disappears when #9038 lands |
 
-H7 and H8 are the two that would silently corrupt a benchmark rather than fail loudly. They are stated as harness contracts precisely because there is no compiler support for them.
+H7 is the one that would silently corrupt a benchmark rather than fail loudly. It is stated as a harness contract precisely because there is no compiler support for it. H8 was the other and is closed in production rather than by contract.
 
 ### 10.3 Error handling, observability, performance
 
@@ -598,7 +629,7 @@ Training must not end worse than it started. At `SampleCount = 0` — the defaul
 | **Diagnosability** | The determinism test compares *trajectories*, so a failure names the generation where two runs diverged. The stub evaluator's call log names which chromosome was scored when. |
 | **Speed** | The default lane contains no long training. The one end-to-end test is 20 individuals × 30 generations. Demos become `[Explicit]`. |
 | **Survivability across fixes** | I1/I2 are monotone in quality; the baseline is a record with provenance; R5 turns pending fixes into `[Ignore]`d tests that go green when the fix lands. |
-| **Resistance to unfailable assertions** | Five named rules (§10.1), each converting an invisible property into an artefact whose absence a reviewer can see. |
+| **Resistance to assertions that do not constrain what they appear to** | Seven named rules (§10.1), each converting an invisible property into an artefact whose absence a reviewer can see. |
 | **Extensibility** | Adding a benchmark problem is one entry plus a re-record. Adding a mechanics test needs no new infrastructure. Parallel determinism, if it is ever wanted, attaches at the same `IRng` injection point — with nothing built for it now. |
 
 ---
@@ -607,14 +638,14 @@ Training must not end worse than it started. At `SampleCount = 0` — the defaul
 
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| R-1 | The determinism test **fails on arrival** — a source of non-determinism remains that §10.2 did not find. | Medium | High: Phase 2 blocks. | This is the test doing its job. The trajectory comparison names the first divergent generation. Work the hazard table (H5, H6, H7 are the candidates). **Do not weaken the test to pass.** If the cause is a defect, file it and `[Ignore]` per R5. |
-| R-2 | I2 (final ≤ generation-0 best) **fails on arrival** because #9039's stale net state makes an elite re-score differently. | Medium | Medium | The benchmark lane is `[Explicit]`; a red benchmark breaks no build. A first-run violation is a genuine finding about elitism — file it, keep the assertion. This is precisely the value the lane is being built for. |
-| R-3 | The behavioural serialization round-trip fails because the round trip is lossy on input-neuron `Activation`/`Aggregate` (which the existing tests blank before comparing). | Medium | Low | File as a defect; `[Ignore]` per R5; keep the structural test meanwhile. |
-| R-4 | Benchmarks are too slow and stop being run. | Low | High | 3 problems × 8 seeds, `Runs` capped per problem, parallel across pairs. If it exceeds a few minutes, reduce `Runs` before reducing seeds — seed count is what makes the distribution meaningful. |
-| R-5 | The baseline drifts stale because nobody re-records after a behaviour-changing merge. | Medium | Medium | The report header prints the baseline's `recordedAt`, `commit` and `note` alongside the current numbers, so staleness is visible every time the lane is run. |
-| R-6 | The six rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
-| R-7 | The `Threads > 1` guard breaks an existing caller. | Very low | Low | The guard fires only when `setup.Rng` is set, and that property does not exist yet. Every current caller passes `null` by omission. |
-| R-8 | Mechanics tests over-fit to private implementation detail and become churn on every refactor. | Medium | Medium | Assert only on observables: `Entries` ordering and reference identity, and double call logs. Never reach into internals via reflection or `InternalsVisibleTo`. |
+| RK-1 | The determinism test **fails on arrival** — a source of non-determinism remains that §10.2 did not find. | Medium | High: Phase 2 blocks. | This is the test doing its job. The trajectory comparison names the first divergent generation. Work the hazard table (H5, H6, H7 are the candidates). **Do not weaken the test to pass.** If the cause is a defect, file it and `[Ignore]` per R5. |
+| RK-2 | I2 (final ≤ generation-0 best) **fails on arrival** because #9039's stale net state makes an elite re-score differently. | Medium | Medium | The benchmark lane is `[Explicit]`; a red benchmark breaks no build. A first-run violation is a genuine finding about elitism — file it, keep the assertion. This is precisely the value the lane is being built for. |
+| RK-3 | The behavioural serialization round-trip fails because the round trip is lossy on input-neuron `Activation`/`Aggregate` (which the existing tests blank before comparing). | Medium | Low | File as a defect; `[Ignore]` per R5; keep the structural test meanwhile. |
+| RK-4 | Benchmarks are too slow and stop being run. | Low | High | 3 problems × 8 seeds, `Runs` capped per problem, parallel across pairs. If it exceeds a few minutes, reduce `Runs` before reducing seeds — seed count is what makes the distribution meaningful. |
+| RK-5 | The baseline drifts stale because nobody re-records after a behaviour-changing merge. | Medium | Medium | The report header prints the baseline's `recordedAt`, `commit` and `note` alongside the current numbers, so staleness is visible every time the lane is run. |
+| RK-6 | The rules in §10.1 decay into folklore. | Medium | High — this is the failure that produced the current suite. | They live as a `README.md` in the test project, and QA review of each test PR checks them by name. A rule nobody can point at is not a rule. |
+| RK-7 | The `Threads > 1` guard breaks an existing caller. | Very low | Low | The guard fires only when `setup.Rng` is set, which is opt-in — every caller that leaves it unset is unaffected. Both the property and the guard shipped in `29e3286`, and the risk did not materialise. |
+| RK-8 | Mechanics tests over-fit to private implementation detail and become churn on every refactor. | Medium | Medium | Assert only on observables: `Entries` ordering and reference identity, and double call logs. Never reach into internals via reflection or `InternalsVisibleTo`. |
 
 ---
 
@@ -766,7 +797,7 @@ PR 1's hardened `SequenceRng` (`NextFloat`/`NextDouble`/`NextLong`/`NextInt()`) 
 
 ### PR 4 — The measurement lane *(test project + one data file)*
 
-16. Build the three `BenchmarkProblem`s from §15 Q1, each constructing a **fresh** `EvolutionSetup`, `SamplesEvaluator` and `Population` per run (§10.2 H7, H8 — not optional, and there is no compiler support for it).
+16. Build the three `BenchmarkProblem`s from §15 Q1, each constructing a **fresh** `EvolutionSetup`, `SamplesEvaluator` and `Population` per run (§10.2 H7 — not optional, and there is no compiler support for it).
 17. Build `BenchmarkHarness`: every pair at `Threads = 1`, parallel across pairs, producing `(ProblemName, Seed) → (FinalFitness, Generations)`.
 18. Build `BenchmarkComparison` `[Explicit, Category("Benchmark")]`: assert I1 and I2; print the per-seed paired table, the per-problem distribution summary, the baseline's `recordedAt`/`commit`/`note` header, and the pairing caveat from §11.3 whenever an RNG-implementation change makes pairing void.
 19. Build `RecordBaseline` `[Explicit]`: locate the source file by walking up from the test binary's directory until the `.csproj` is found, and overwrite `Benchmarks/baseline.json`. The walk-up is a handful of lines and removes the manual copy step that would otherwise kill adoption of the one workflow this design most needs to be frictionless.
