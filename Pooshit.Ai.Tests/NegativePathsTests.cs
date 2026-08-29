@@ -43,14 +43,40 @@ public class NegativePathsTests {
 
 
     [Test, Parallelizable]
-    public void SamplesEvaluator_SampleOutputKeyNamesUnknownNeuron_ThrowsIndexOutOfRange() {
+    [Description("A sample output key naming no neuron is rejected at sample translation with the offending key in the message, not by an out-of-range access deep inside evaluation (DiVoid #9046 defect 2).")]
+    public void SamplesEvaluator_SampleOutputKeyNamesUnknownNeuron_ThrowsArgumentExceptionNamingTheKey() {
         SamplesEvaluator<DynamicBOConfiguration, DynamicBONet> evaluator = new([
             new(new float[] { 1.0f }, new Dictionary<string, float> { ["nonexistent"] = 2.0f })
         ]);
         DynamicBOConfiguration chromosome = new(["x"], ["y"]);
 
         Assert.That(() => evaluator.EvaluateFitness(chromosome, new SequenceRng(), true),
-                    Throws.InstanceOf<IndexOutOfRangeException>());
+                    Throws.ArgumentException.With.Message.Contains("nonexistent").And.Message.Contains("output"));
+    }
+
+
+    [Test, Parallelizable]
+    [Description("A sample input key naming no neuron is rejected at sample translation with the offending key in the message, not by an out-of-range access deep inside evaluation (DiVoid #9046 defect 2).")]
+    public void SamplesEvaluator_SampleInputKeyNamesUnknownNeuron_ThrowsArgumentExceptionNamingTheKey() {
+        SamplesEvaluator<DynamicBOConfiguration, DynamicBONet> evaluator = new([
+            new(new Dictionary<string, float> { ["mistyped"] = 1.0f }, new Dictionary<string, float> { ["y"] = 2.0f })
+        ]);
+        DynamicBOConfiguration chromosome = new(["x"], ["y"]);
+
+        Assert.That(() => evaluator.EvaluateFitness(chromosome, new SequenceRng(), true),
+                    Throws.ArgumentException.With.Message.Contains("mistyped").And.Message.Contains("input"));
+    }
+
+
+    [Test, Parallelizable]
+    [Description("The sibling of the two unknown-key tests: the same fixture shape with resolvable keys reaches evaluation and completes, so the rejection above is the key resolving and not the fixture failing earlier.")]
+    public void SamplesEvaluator_SampleKeysNameExistingNeurons_TranslatesAndEvaluates() {
+        SamplesEvaluator<DynamicBOConfiguration, DynamicBONet> evaluator = new([
+            new(new Dictionary<string, float> { ["x"] = 1.0f }, new Dictionary<string, float> { ["y"] = 2.0f })
+        ]);
+        DynamicBOConfiguration chromosome = new(["x"], ["y"]);
+
+        Assert.That(() => evaluator.EvaluateFitness(chromosome, new SequenceRng(), true), Throws.Nothing);
     }
 
 
