@@ -35,7 +35,7 @@ public class StructureHashTests {
 
     [Test, Parallelizable]
     [Description("Chromosomes with identical connection topology but different neuron Aggregate/Activation hash unequal. DiVoid #9043")]
-    public void StructureHash_BOConfiguration_DifferentNeuronConfiguration_IntendedToProduceDifferentHash() {
+    public void StructureHash_BOConfiguration_DifferentNeuronConfiguration_ProducesDifferentHash() {
         DynamicBOConfiguration lhs = new(Neurons(AggregateType.Sum, ActivationFunc.None), [new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 1.0f }]);
         DynamicBOConfiguration rhs = new(Neurons(AggregateType.Max, ActivationFunc.Tanh), [new() { Lhs = 0, Rhs = 1, Target = 2, Operation = OperationType.Multiply, Weight = 1.0f }]);
 
@@ -86,7 +86,7 @@ public class StructureHashTests {
 
     [Test, Parallelizable]
     [Description("Chromosomes with identical connection topology but different neuron Aggregate/Activation hash unequal. DiVoid #9043")]
-    public void StructureHash_FFConfiguration_DifferentNeuronConfiguration_IntendedToProduceDifferentHash() {
+    public void StructureHash_FFConfiguration_DifferentNeuronConfiguration_ProducesDifferentHash() {
         DynamicFFConfiguration lhs = new(Neurons(AggregateType.Sum, ActivationFunc.None), [new() { Source = 0, Target = 2, Weight = 1.0f }]);
         DynamicFFConfiguration rhs = new(Neurons(AggregateType.Max, ActivationFunc.Tanh), [new() { Source = 0, Target = 2, Weight = 1.0f }]);
 
